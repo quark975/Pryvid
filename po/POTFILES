@@ -1,0 +1,4 @@
+data/dev.quark97.Pryvid.desktop.in
+data/dev.quark97.Pryvid.appdata.xml.in
+data/dev.quark97.Pryvid.gschema.xml
+src/window.ui
