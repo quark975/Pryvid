@@ -6,6 +6,8 @@ edition = "2021"
 [dependencies]
 gettext-rs = { version = "0.7", features = ["gettext-system"] }
 gtk = { version = "0.6", package = "gtk4" }
+serde = { version = "1.0.171", features = ["derive"] }
+ureq = { version = "2.7.1", features = ["json"] }
 
 [dependencies.adw]
 package = "libadwaita"

@@ -1,8 +1,10 @@
-use gtk::prelude::*;
 use adw::subclass::prelude::*;
+use gio::Settings;
+use gtk::prelude::*;
 use gtk::{gio, glib};
 
 use crate::config::VERSION;
+use crate::widgets::OnboardingWindow;
 use crate::widgets::PryvidWindow;
 
 mod imp {
@@ -38,8 +40,15 @@ mod imp {
             let window = if let Some(window) = application.active_window() {
                 window
             } else {
-                let window = PryvidWindow::new(&*application);
-                window.upcast()
+                let application_id = &application.application_id().unwrap();
+                let settings = Settings::new(application_id);
+                if settings.boolean("first-run") {
+                    let window = OnboardingWindow::new(&*application);
+                    window.upcast()
+                } else {
+                    let window = PryvidWindow::new(&*application);
+                    window.upcast()
+                }
             };
 
             // Ask the window manager/compositor to present the window

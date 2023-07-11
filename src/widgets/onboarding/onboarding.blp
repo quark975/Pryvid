@@ -1,0 +1,49 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $OnboardingWindow: Adw.ApplicationWindow {
+  default-width: 400;
+  default-height: 600;
+
+  title: "Pryvid";
+
+  Box {
+    orientation: vertical;
+    valign: fill;
+    halign: fill;
+
+    Adw.HeaderBar {
+      show-title: true;
+
+      styles [ "flat" ]
+    }
+
+    Box {
+      orientation: vertical;
+      vexpand: true;
+      valign: center;
+      halign: center;
+      spacing: 10;
+      width-request: 300;
+
+      Label {
+        label: "Welcome to Pryvid!";
+
+        styles [ "title-1" ]
+      }
+
+      Label {
+        label: "A Native GNOME Frontend to Invidious";
+      }
+
+      Button getstarted {
+        label: "Get Started";
+        halign: center;
+
+        margin-top: 30;
+
+        styles [ "pill", "suggested-action" ]
+      }
+    }
+  }
+}

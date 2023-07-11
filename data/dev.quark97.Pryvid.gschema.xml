@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="pryvid">
 	<schema id="dev.quark97.Pryvid" path="/dev/quark97/Pryvid/">
+	  <key name="first-run" type="b">
+	    <default>true</default>
+      <summary>Whether its the very first run of Pryvid</summary>
+	  </key>
 	</schema>
 </schemalist>

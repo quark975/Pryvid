@@ -5,6 +5,7 @@ blueprints = custom_target('blueprints',
   input: files(
     'widgets/help-overlay/help-overlay.blp',
     'widgets/window/window.blp',
+    'widgets/onboarding/onboarding.blp',
   ),
   output: '.',
   command: [find_program('blueprint-compiler'), 'batch-compile', '@OUTPUT@', '@CURRENT_SOURCE_DIR@', '@INPUT@'],
