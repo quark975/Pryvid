@@ -2,16 +2,22 @@ use adw::subclass::prelude::*;
 use gio::Settings;
 use gtk::prelude::*;
 use gtk::{gio, glib};
+use std::{cell::OnceCell, sync::Arc};
 
 use crate::config::VERSION;
-use crate::widgets::OnboardingWindow;
-use crate::widgets::PryvidWindow;
+use crate::widgets::onboarding::OnboardingWindow;
+use crate::widgets::window::PryvidWindow;
 
 mod imp {
+
+    use crate::config::APP_ID;
+
     use super::*;
 
     #[derive(Debug, Default)]
-    pub struct PryvidApplication {}
+    pub struct PryvidApplication {
+        pub settings: OnceCell<Arc<Settings>>,
+    }
 
     #[glib::object_subclass]
     impl ObjectSubclass for PryvidApplication {
@@ -23,6 +29,7 @@ mod imp {
     impl ObjectImpl for PryvidApplication {
         fn constructed(&self) {
             self.parent_constructed();
+
             let obj = self.obj();
             obj.setup_gactions();
             obj.set_accels_for_action("app.quit", &["<primary>q"]);
@@ -40,8 +47,7 @@ mod imp {
             let window = if let Some(window) = application.active_window() {
                 window
             } else {
-                let application_id = &application.application_id().unwrap();
-                let settings = Settings::new(application_id);
+                let settings = Settings::new(APP_ID);
                 if settings.boolean("first-run") {
                     let window = OnboardingWindow::new(&*application);
                     window.upcast()

@@ -5,5 +5,8 @@
 	    <default>true</default>
       <summary>Whether its the very first run of Pryvid</summary>
 	  </key>
+    <key name="instances" type="s">
+      <default>"[]"</default>
+    </key>
 	</schema>
 </schemalist>

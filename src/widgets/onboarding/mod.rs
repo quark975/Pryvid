@@ -4,7 +4,7 @@ use glib::clone;
 use gtk::prelude::*;
 use gtk::{gio, glib};
 
-use crate::widgets::PryvidWindow;
+use crate::widgets::window::PryvidWindow;
 
 mod imp {
     use super::*;

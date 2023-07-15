@@ -1,10 +1,11 @@
+mod api;
 mod application;
 mod config;
 mod widgets;
 
 use self::application::PryvidApplication;
 
-use config::{GETTEXT_PACKAGE, LOCALEDIR, PKGDATADIR};
+use config::{APP_ID, GETTEXT_PACKAGE, LOCALEDIR, PKGDATADIR};
 use gettextrs::{bind_textdomain_codeset, bindtextdomain, textdomain};
 use gtk::prelude::*;
 use gtk::{gio, glib};
@@ -24,7 +25,7 @@ fn main() -> glib::ExitCode {
     // Create a new GtkApplication. The application manages our main loop,
     // application windows, integration with the window manager/compositor, and
     // desktop features such as file opening and single-instance applications.
-    let app = PryvidApplication::new("dev.quark97.Pryvid", &gio::ApplicationFlags::empty());
+    let app = PryvidApplication::new(APP_ID, &gio::ApplicationFlags::empty());
 
     // Run the application. This function will block until the application
     // exits. Upon return, we have our exit code to return to the shell. (This
