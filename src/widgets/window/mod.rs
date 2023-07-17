@@ -1,14 +1,18 @@
 use crate::api::{fetch_instances, Instance, Instances, InvidiousClient};
 use crate::application::PryvidApplication;
+use crate::appmodel::AppModel;
 use crate::config::APP_ID;
 use adw::subclass::prelude::*;
 use gio::Settings;
 use glib::clone;
+use gtk::gio::SimpleAction;
 use gtk::glib::{BoolError, MainContext, Priority};
 use gtk::prelude::*;
 use gtk::{gio, glib};
 use std::sync::Arc;
 use std::{cell::OnceCell, thread};
+
+use super::preferences::PryvidPreferencesWindow;
 
 mod imp {
 
@@ -23,7 +27,7 @@ mod imp {
         #[template_child]
         pub label: TemplateChild<gtk::EditableLabel>,
 
-        pub invidious: OnceCell<Arc<InvidiousClient>>,
+        pub model: OnceCell<Arc<AppModel>>,
     }
 
     #[glib::object_subclass]
@@ -41,15 +45,7 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for PryvidWindow {
-        fn constructed(&self) {
-            self.parent_constructed();
-
-            let obj = self.obj();
-            obj.setup_invidious();
-            obj.fetch_startup();
-        }
-    }
+    impl ObjectImpl for PryvidWindow {}
     impl WidgetImpl for PryvidWindow {}
     impl WindowImpl for PryvidWindow {}
     impl ApplicationWindowImpl for PryvidWindow {}
@@ -63,59 +59,26 @@ glib::wrapper! {
 }
 
 impl PryvidWindow {
-    pub fn new<P: glib::IsA<gtk::Application>>(application: &P) -> Self {
-        glib::Object::builder()
+    pub fn new<P: glib::IsA<gtk::Application>>(application: &P, model: Arc<AppModel>) -> Self {
+        let window: Self = glib::Object::builder()
             .property("application", application)
-            .build()
+            .build();
+
+        // Setup window
+        window.imp().model.set(model).unwrap();
+        window.fetch_startup();
+
+        window
     }
 
-    fn setup_invidious(&self) {
-        // TODO: Handle errors a little better
-        let instances = self.load_instances().unwrap();
-        let invidious = Arc::new(InvidiousClient::new(instances));
-        match self.imp().invidious.set(invidious) {
-            Err(_) => panic!("`invidious` should not be set before calling `setup_invidious`"),
-            _ => (),
-        }
-    }
-
-    fn invidious(&self) -> Arc<InvidiousClient> {
-        self.imp()
-            .invidious
-            .get()
-            .expect("`invidious` should be set with `setup_invidious`")
-            .clone()
-    }
-
-    fn save_instances(&self) -> Result<(), BoolError> {
-        let settings = Settings::new(APP_ID);
-        let invidious = self.invidious();
-        let instances = invidious.instances.read().unwrap();
-        Ok(settings.set(
-            "instances",
-            serde_json::to_string(&instances.to_vec())
-                .unwrap()
-                .to_string(),
-        )?)
-    }
-
-    fn load_instances(&self) -> Result<Instances, serde_json::Error> {
-        let settings = Settings::new(APP_ID);
-        let instances: String = settings.get("instances");
-        Ok(serde_json::from_str(&settings.string("instances"))?)
+    fn model(&self) -> Arc<AppModel> {
+        self.imp().model.get().unwrap().clone()
     }
 
     fn fetch_startup(&self) {
         let (sender, receiver) = MainContext::channel(Priority::default());
-        let invidious = self.invidious();
+        let invidious = self.model().invidious();
         let imp = self.imp();
-
-        {
-            let instances = invidious.instances.read().unwrap();
-            let instance = instances.get(0).unwrap();
-
-            invidious.select_instance(Some(instance));
-        }
 
         thread::spawn(move || {
             sender

@@ -3,10 +3,15 @@ use gio::Settings;
 use glib::clone;
 use gtk::prelude::*;
 use gtk::{gio, glib};
+use std::{cell::OnceCell, sync::Arc};
 
+use crate::api::InvidiousClient;
+use crate::appmodel::AppModel;
+use crate::config::APP_ID;
 use crate::widgets::window::PryvidWindow;
 
 mod imp {
+
     use super::*;
 
     #[derive(Debug, Default, gtk::CompositeTemplate)]
@@ -14,6 +19,8 @@ mod imp {
     pub struct OnboardingWindow {
         #[template_child]
         pub getstarted: TemplateChild<gtk::Button>,
+
+        pub model: OnceCell<Arc<AppModel>>,
     }
 
     #[glib::object_subclass]
@@ -52,25 +59,29 @@ glib::wrapper! {
 }
 
 impl OnboardingWindow {
-    pub fn new<P: glib::IsA<gtk::Application>>(application: &P) -> Self {
-        glib::Object::builder()
+    pub fn new<P: glib::IsA<gtk::Application>>(application: &P, model: Arc<AppModel>) -> Self {
+        let window: Self = glib::Object::builder()
             .property("application", application)
-            .build()
+            .build();
+        window.imp().model.set(model);
+        window
+    }
+
+    fn model(&self) -> Arc<AppModel> {
+        self.imp().model.get().unwrap().clone()
     }
 
     fn setup_callbacks(&self) {
         let imp = self.imp();
-        imp.getstarted
-            .connect_clicked(clone!(@weak self as _self => move |_| {
-                let application = _self.application().unwrap();
-                let app_id = application.application_id().unwrap();
-                // TODO: Could store settings on application, minor optimization
-                let settings = Settings::new(&app_id);
-                settings.set_boolean("first-run", false).expect("Could not set setting.");
-
-                let window = PryvidWindow::new(&application);
-                _self.close();
-                window.present();
-            }));
+        // imp.getstarted
+        //     .connect_clicked(clone!(@weak self as _self => move |_| {
+        //         // TODO: Could store settings on application, minor optimization
+        //         let settings = Settings::new(APP_ID);
+        //         settings.set_boolean("first-run", false).expect("Could not set setting.");
+        //
+        //         let window = PryvidWindow::new(&_self.application().unwrap().clone(), self.model());
+        //         _self.close();
+        //         window.present();
+        //     }));
     }
 }

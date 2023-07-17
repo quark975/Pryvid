@@ -7,7 +7,10 @@ project('pryvid', 'rust',
 i18n = import('i18n')
 gnome = import('gnome')
 
+application_id = 'dev.quark97.Pryvid'
 
+datadir = join_paths(get_option('prefix'), get_option('datadir'))
+pkgdatadir = join_paths(datadir, meson.project_name())
 
 subdir('data')
 subdir('src')

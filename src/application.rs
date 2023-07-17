@@ -1,11 +1,15 @@
 use adw::subclass::prelude::*;
 use gio::Settings;
+use gtk::glib::BoolError;
 use gtk::prelude::*;
 use gtk::{gio, glib};
 use std::{cell::OnceCell, sync::Arc};
 
-use crate::config::VERSION;
+use crate::api::{Instances, InvidiousClient};
+use crate::appmodel::AppModel;
+use crate::config::{APP_ID, VERSION};
 use crate::widgets::onboarding::OnboardingWindow;
+use crate::widgets::preferences::PryvidPreferencesWindow;
 use crate::widgets::window::PryvidWindow;
 
 mod imp {
@@ -16,7 +20,7 @@ mod imp {
 
     #[derive(Debug, Default)]
     pub struct PryvidApplication {
-        pub settings: OnceCell<Arc<Settings>>,
+        pub model: OnceCell<Arc<AppModel>>,
     }
 
     #[glib::object_subclass]
@@ -33,6 +37,7 @@ mod imp {
             let obj = self.obj();
             obj.setup_gactions();
             obj.set_accels_for_action("app.quit", &["<primary>q"]);
+            obj.setup_model();
         }
     }
 
@@ -49,10 +54,10 @@ mod imp {
             } else {
                 let settings = Settings::new(APP_ID);
                 if settings.boolean("first-run") {
-                    let window = OnboardingWindow::new(&*application);
+                    let window = OnboardingWindow::new(&*application, self.obj().model());
                     window.upcast()
                 } else {
-                    let window = PryvidWindow::new(&*application);
+                    let window = PryvidWindow::new(&*application, self.obj().model());
                     window.upcast()
                 }
             };
@@ -80,6 +85,45 @@ impl PryvidApplication {
             .build()
     }
 
+    fn model(&self) -> Arc<AppModel> {
+        self.imp()
+            .model
+            .get()
+            .expect("`model` should be set by calling `setup_model`")
+            .clone()
+    }
+
+    fn setup_model(&self) {
+        // Setup Invidious
+        // TODO: Handle errors a little better
+        let instances = self.load_instances().unwrap();
+        let invidious = Arc::new(InvidiousClient::new(instances));
+        let model = Arc::new(AppModel::new(invidious));
+        match self.imp().model.set(model) {
+            Err(_) => panic!("`model` should not be set before calling `setup_model`"),
+            _ => (),
+        }
+    }
+
+    fn save_instances(&self) -> Result<(), BoolError> {
+        let settings = Settings::new(APP_ID);
+        let invidious = self.model().invidious();
+        let instances = invidious.instances.read().unwrap();
+        Ok(settings.set(
+            "instances",
+            serde_json::to_string(&instances.to_vec())
+                .unwrap()
+                .to_string(),
+        )?)
+    }
+
+    fn load_instances(&self) -> Result<Instances, serde_json::Error> {
+        let settings = Settings::new(APP_ID);
+        settings.set_boolean("first-run", true);
+        let instances: String = settings.get("instances");
+        Ok(serde_json::from_str(&settings.string("instances"))?)
+    }
+
     fn setup_gactions(&self) {
         let quit_action = gio::ActionEntry::builder("quit")
             .activate(move |app: &Self, _, _| app.quit())
@@ -87,7 +131,30 @@ impl PryvidApplication {
         let about_action = gio::ActionEntry::builder("about")
             .activate(move |app: &Self, _, _| app.show_about())
             .build();
-        self.add_action_entries([quit_action, about_action]);
+        let preferences_action = gio::ActionEntry::builder("preferences")
+            .activate(move |app: &Self, _, _| {
+                let pref_window = PryvidPreferencesWindow::new();
+                if let Some(main_window) = app.active_window() {
+                    pref_window.set_transient_for(Some(&main_window));
+                }
+                pref_window.present();
+            })
+            .build();
+        let getstarted_action = gio::ActionEntry::builder("getstarted")
+            .activate(move |app: &Self, _, _| {
+                if let Some(active_window) = app.active_window() {
+                    active_window.close()
+                }
+                let window = PryvidWindow::new(&*app, app.model());
+                window.present();
+            })
+            .build();
+        self.add_action_entries([
+            quit_action,
+            about_action,
+            preferences_action,
+            getstarted_action,
+        ]);
     }
 
     fn show_about(&self) {

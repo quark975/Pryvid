@@ -1,0 +1,15 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $PryvidPreferencesWindow : Adw.PreferencesWindow {
+  Adw.PreferencesPage {
+    title: "Instances";
+    name: "instances";
+    description: "Add, remove, and update your Invidious instances";
+    icon-name: "server-pick-symbolic";
+
+    ListBox instances {
+
+    }
+  }
+}

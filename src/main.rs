@@ -1,5 +1,6 @@
 mod api;
 mod application;
+mod appmodel;
 mod config;
 mod widgets;
 
@@ -18,9 +19,13 @@ fn main() -> glib::ExitCode {
     textdomain(GETTEXT_PACKAGE).expect("Unable to switch to the text domain");
 
     // Load resources
-    let resources = gio::Resource::load(PKGDATADIR.to_owned() + "/pryvid.gresource")
+    for resource in ["ui", "resources"] {
+        let resources = gio::Resource::load(
+            PKGDATADIR.to_owned() + &format!("/{}.gresource", resource.to_string()),
+        )
         .expect("Could not load resources");
-    gio::resources_register(&resources);
+        gio::resources_register(&resources);
+    }
 
     // Create a new GtkApplication. The application manages our main loop,
     // application windows, integration with the window manager/compositor, and

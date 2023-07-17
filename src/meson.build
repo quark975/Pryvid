@@ -1,4 +1,3 @@
-pkgdatadir = join_paths(get_option('prefix'), get_option('datadir'), meson.project_name())
 gnome = import('gnome')
 
 blueprints = custom_target('blueprints',
@@ -6,13 +5,14 @@ blueprints = custom_target('blueprints',
     'widgets/help-overlay/help-overlay.blp',
     'widgets/window/window.blp',
     'widgets/onboarding/onboarding.blp',
+    'widgets/preferences/preferences.blp',
   ),
   output: '.',
   command: [find_program('blueprint-compiler'), 'batch-compile', '@OUTPUT@', '@CURRENT_SOURCE_DIR@', '@INPUT@'],
 )
 
-gnome.compile_resources('pryvid',
-  'pryvid.gresource.xml',
+gnome.compile_resources('ui',
+  'ui.gresource.xml',
   gresource_bundle: true,
   install: true,
   install_dir: pkgdatadir,
@@ -24,6 +24,7 @@ conf.set_quoted('VERSION', meson.project_version())
 conf.set_quoted('GETTEXT_PACKAGE', 'pryvid')
 conf.set_quoted('LOCALEDIR', join_paths(get_option('prefix'), get_option('localedir')))
 conf.set_quoted('PKGDATADIR', pkgdatadir)
+conf.set_quoted('APP_ID', application_id)
 
 configure_file(
     input: 'config.rs.in',

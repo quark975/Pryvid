@@ -3,8 +3,8 @@ use rand::{self, seq::SliceRandom};
 use serde::Serialize;
 use serde::{self, Deserialize};
 use std::io;
-use std::sync::Arc;
 use std::sync::RwLock;
+use std::sync::{Arc, PoisonError};
 use thiserror::Error;
 use ureq::{self, Agent, AgentBuilder};
 
@@ -18,6 +18,14 @@ pub enum Error {
     IoError(#[from] io::Error),
     #[error("no known instances")]
     NoInstances,
+    #[error("thread with lock panicked")]
+    PoisonError,
+}
+
+impl<T> From<PoisonError<T>> for Error {
+    fn from(value: PoisonError<T>) -> Self {
+        Self::PoisonError
+    }
 }
 
 // Responses
@@ -115,6 +123,7 @@ impl InvidiousClient {
         }
     }
 
+    // Manage Instances
     pub fn get_instance(&self) -> Result<Arc<Instance>, Error> {
         if let Some(ref instance) = *self.selected.read().unwrap() {
             return Ok(instance.clone());
@@ -132,8 +141,7 @@ impl InvidiousClient {
     pub fn push_instance(&self, instance: Instance) -> Result<(), Error> {
         if self
             .instances
-            .read()
-            .unwrap()
+            .read()?
             .iter()
             .position(|x| x.uri == instance.uri)
             .is_some()
@@ -143,6 +151,13 @@ impl InvidiousClient {
             self.instances.write().unwrap().push(Arc::new(instance));
             Ok(())
         }
+    }
+
+    pub fn remove_instance(&self, instance: Arc<Instance>) -> Result<(), Error> {
+        let mut instances = self.instances.write()?;
+        let position = instances.iter().position(|x| *x == instance).unwrap();
+        instances.remove(position);
+        Ok(())
     }
 
     pub fn select_instance(&self, instance: Option<&Arc<Instance>>) {
@@ -164,6 +179,7 @@ impl InvidiousClient {
         }
     }
 
+    // API Requests
     pub fn stats(&self) -> Result<StatsResponse, Error> {
         let instance = self.get_instance()?;
         let data: StatsResponse = self
