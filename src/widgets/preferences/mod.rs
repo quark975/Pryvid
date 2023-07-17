@@ -1,6 +1,5 @@
 use adw::subclass::prelude::*;
 use gio::Settings;
-use glib::clone;
 use gtk::prelude::*;
 use gtk::{gio, glib};
 

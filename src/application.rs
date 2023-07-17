@@ -119,8 +119,8 @@ impl PryvidApplication {
 
     fn load_instances(&self) -> Result<Instances, serde_json::Error> {
         let settings = Settings::new(APP_ID);
-        settings.set_boolean("first-run", true);
-        let instances: String = settings.get("instances");
+        // Only used in testing
+        settings.set_boolean("first-run", true).unwrap();
         Ok(serde_json::from_str(&settings.string("instances"))?)
     }
 

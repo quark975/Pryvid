@@ -1,18 +1,11 @@
-use crate::api::{fetch_instances, Instance, Instances, InvidiousClient};
-use crate::application::PryvidApplication;
 use crate::appmodel::AppModel;
-use crate::config::APP_ID;
 use adw::subclass::prelude::*;
-use gio::Settings;
 use glib::clone;
-use gtk::gio::SimpleAction;
-use gtk::glib::{BoolError, MainContext, Priority};
+use gtk::glib::{MainContext, Priority};
 use gtk::prelude::*;
 use gtk::{gio, glib};
 use std::sync::Arc;
 use std::{cell::OnceCell, thread};
-
-use super::preferences::PryvidPreferencesWindow;
 
 mod imp {
 

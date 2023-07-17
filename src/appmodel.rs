@@ -1,4 +1,4 @@
-use std::{cell::OnceCell, sync::Arc};
+use std::sync::Arc;
 
 use crate::api::InvidiousClient;
 

@@ -1,14 +1,9 @@
 use adw::subclass::prelude::*;
-use gio::Settings;
-use glib::clone;
 use gtk::prelude::*;
 use gtk::{gio, glib};
 use std::{cell::OnceCell, sync::Arc};
 
-use crate::api::InvidiousClient;
 use crate::appmodel::AppModel;
-use crate::config::APP_ID;
-use crate::widgets::window::PryvidWindow;
 
 mod imp {
 
@@ -38,14 +33,7 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for OnboardingWindow {
-        fn constructed(&self) {
-            self.parent_constructed();
-
-            let obj = self.obj();
-            obj.setup_callbacks();
-        }
-    }
+    impl ObjectImpl for OnboardingWindow {}
     impl WidgetImpl for OnboardingWindow {}
     impl WindowImpl for OnboardingWindow {}
     impl ApplicationWindowImpl for OnboardingWindow {}
@@ -63,25 +51,11 @@ impl OnboardingWindow {
         let window: Self = glib::Object::builder()
             .property("application", application)
             .build();
-        window.imp().model.set(model);
+        window.imp().model.set(model).unwrap();
         window
     }
 
     fn model(&self) -> Arc<AppModel> {
         self.imp().model.get().unwrap().clone()
-    }
-
-    fn setup_callbacks(&self) {
-        let imp = self.imp();
-        // imp.getstarted
-        //     .connect_clicked(clone!(@weak self as _self => move |_| {
-        //         // TODO: Could store settings on application, minor optimization
-        //         let settings = Settings::new(APP_ID);
-        //         settings.set_boolean("first-run", false).expect("Could not set setting.");
-        //
-        //         let window = PryvidWindow::new(&_self.application().unwrap().clone(), self.model());
-        //         _self.close();
-        //         window.present();
-        //     }));
     }
 }

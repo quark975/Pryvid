@@ -23,7 +23,7 @@ pub enum Error {
 }
 
 impl<T> From<PoisonError<T>> for Error {
-    fn from(value: PoisonError<T>) -> Self {
+    fn from(_: PoisonError<T>) -> Self {
         Self::PoisonError
     }
 }
@@ -36,7 +36,7 @@ pub struct StatsResponse {
     pub open_registrations: bool,
 }
 
-pub type InstancesResponse = Vec<(String, InstanceResponse)>;
+type InstancesResponse = Vec<(String, InstanceResponse)>;
 
 #[derive(Debug, Deserialize)]
 pub struct InstanceResponse {
