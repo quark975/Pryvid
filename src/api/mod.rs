@@ -63,8 +63,8 @@ pub struct Instance {
 
 #[derive(Debug)]
 pub struct InvidiousClient {
-    pub instances: RwLock<Instances>,
-    pub selected: RwLock<Option<Arc<Instance>>>,
+    instances: RwLock<Instances>,
+    selected: RwLock<Option<Arc<Instance>>>,
     agent: Agent,
 }
 
@@ -123,25 +123,23 @@ impl InvidiousClient {
         }
     }
 
-    // Manage Instances
+    // Instances
+    pub fn instances(&self) -> Vec<Arc<Instance>> {
+        self.instances.read().unwrap().clone()
+    }
     pub fn get_instance(&self) -> Result<Arc<Instance>, Error> {
         if let Some(ref instance) = *self.selected.read().unwrap() {
             return Ok(instance.clone());
         }
 
-        Ok(self
-            .instances
-            .read()
-            .unwrap()
+        Ok(self.instances()
             .choose(&mut rand::thread_rng())
             .ok_or(Error::NoInstances)?
             .clone())
     }
 
     pub fn push_instance(&self, instance: Instance) -> Result<(), Error> {
-        if self
-            .instances
-            .read()?
+        if self.instances()
             .iter()
             .position(|x| x.uri == instance.uri)
             .is_some()
@@ -163,12 +161,7 @@ impl InvidiousClient {
     pub fn select_instance(&self, instance: Option<&Arc<Instance>>) {
         let mut current = self.selected.write().unwrap();
         if let Some(instance) = instance {
-            if let Some(ref item) = self
-                .instances
-                .read()
-                .unwrap()
-                .iter()
-                .find(|&x| x == instance)
+            if let Some(ref item) = self.instances().iter().find(|&x| x == instance)
             {
                 *current = Some(Arc::clone(item));
             } else {

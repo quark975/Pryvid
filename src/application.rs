@@ -35,9 +35,9 @@ mod imp {
             self.parent_constructed();
 
             let obj = self.obj();
+            obj.setup_model();
             obj.setup_gactions();
             obj.set_accels_for_action("app.quit", &["<primary>q"]);
-            obj.setup_model();
         }
     }
 
@@ -52,7 +52,7 @@ mod imp {
             let window = if let Some(window) = application.active_window() {
                 window
             } else {
-                let settings = Settings::new(APP_ID);
+                let settings = application.model().settings();
                 if settings.boolean("first-run") {
                     let window = OnboardingWindow::new(&*application, self.obj().model());
                     window.upcast()
@@ -96,9 +96,12 @@ impl PryvidApplication {
     fn setup_model(&self) {
         // Setup Invidious
         // TODO: Handle errors a little better
-        let instances = self.load_instances().unwrap();
-        let invidious = Arc::new(InvidiousClient::new(instances));
-        let model = Arc::new(AppModel::new(invidious));
+        let settings = Settings::new(APP_ID);
+        let instances = self.load_instances(&settings).unwrap();
+        let model = Arc::new(AppModel::new(
+            InvidiousClient::new(instances),
+            settings
+        ));
         match self.imp().model.set(model) {
             Err(_) => panic!("`model` should not be set before calling `setup_model`"),
             _ => (),
@@ -106,9 +109,9 @@ impl PryvidApplication {
     }
 
     fn save_instances(&self) -> Result<(), BoolError> {
-        let settings = Settings::new(APP_ID);
         let invidious = self.model().invidious();
-        let instances = invidious.instances.read().unwrap();
+        let settings = self.model().settings();
+        let instances = invidious.instances();
         Ok(settings.set(
             "instances",
             serde_json::to_string(&instances.to_vec())
@@ -117,10 +120,12 @@ impl PryvidApplication {
         )?)
     }
 
-    fn load_instances(&self) -> Result<Instances, serde_json::Error> {
-        let settings = Settings::new(APP_ID);
-        // Only used in testing
+    fn load_instances(&self, settings: &Settings) -> Result<Instances, serde_json::Error> {
+
+        // --- Only used in testing
         settings.set_boolean("first-run", true).unwrap();
+        // ---
+
         Ok(serde_json::from_str(&settings.string("instances"))?)
     }
 
@@ -133,7 +138,7 @@ impl PryvidApplication {
             .build();
         let preferences_action = gio::ActionEntry::builder("preferences")
             .activate(move |app: &Self, _, _| {
-                let pref_window = PryvidPreferencesWindow::new();
+                let pref_window = PryvidPreferencesWindow::new(app.model());
                 if let Some(main_window) = app.active_window() {
                     pref_window.set_transient_for(Some(&main_window));
                 }

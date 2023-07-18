@@ -1,15 +1,24 @@
 use adw::subclass::prelude::*;
+use adw::traits::ActionRowExt;
 use gio::Settings;
 use gtk::prelude::*;
 use gtk::{gio, glib};
+use std::{cell::OnceCell, sync::Arc};
+
+use crate::appmodel::AppModel;
 
 mod imp {
+
 
     use super::*;
 
     #[derive(Debug, Default, gtk::CompositeTemplate)]
     #[template(resource = "/dev/quark97/Pryvid/preferences.ui")]
-    pub struct PryvidPreferencesWindow {}
+    pub struct PryvidPreferencesWindow {
+        #[template_child]
+        pub instances_listbox: TemplateChild<gtk::ListBox>,
+        pub model: OnceCell<Arc<AppModel>>
+    }
 
     #[glib::object_subclass]
     impl ObjectSubclass for PryvidPreferencesWindow {
@@ -40,7 +49,26 @@ glib::wrapper! {
 }
 
 impl PryvidPreferencesWindow {
-    pub fn new() -> Self {
-        glib::Object::builder().build()
+    pub fn new(model: Arc<AppModel>) -> Self {
+        let window: Self = glib::Object::builder().build();
+        window.imp().model.set(model).unwrap();
+        window.setup();
+        window
+    }
+
+    fn model(&self) -> Arc<AppModel> {
+        self.imp().model.get().unwrap().clone()
+    }
+
+    fn setup(&self) {
+        let invidious = self.model().invidious();
+        let instances = invidious.instances();
+        println!("{:?}", instances);
+        for instance in instances {
+            let row = adw::ActionRow::builder()
+                .title(&instance.uri)
+                .build();
+            self.imp().instances_listbox.append(&row)
+        }
     }
 }

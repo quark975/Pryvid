@@ -8,8 +8,14 @@ template $PryvidPreferencesWindow : Adw.PreferencesWindow {
     description: "Add, remove, and update your Invidious instances";
     icon-name: "server-pick-symbolic";
 
-    ListBox instances {
+    Adw.PreferencesGroup {
+      ListBox instances_listbox {
+        selection-mode: none;
+        show-separators: false;
+        activate-on-single-click: true;
 
+        styles ["boxed-list"]
+      }
     }
   }
 }
