@@ -98,10 +98,7 @@ impl PryvidApplication {
         // TODO: Handle errors a little better
         let settings = Settings::new(APP_ID);
         let instances = self.load_instances(&settings).unwrap();
-        let model = Arc::new(AppModel::new(
-            InvidiousClient::new(instances),
-            settings
-        ));
+        let model = Arc::new(AppModel::new(InvidiousClient::new(instances), settings));
         match self.imp().model.set(model) {
             Err(_) => panic!("`model` should not be set before calling `setup_model`"),
             _ => (),
@@ -121,7 +118,6 @@ impl PryvidApplication {
     }
 
     fn load_instances(&self, settings: &Settings) -> Result<Instances, serde_json::Error> {
-
         // --- Only used in testing
         settings.set_boolean("first-run", true).unwrap();
         // ---
