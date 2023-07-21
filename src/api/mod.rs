@@ -2,6 +2,7 @@ use rand::{self, seq::SliceRandom};
 
 use serde::Serialize;
 use serde::{self, Deserialize};
+use serde_json::Value;
 use std::io;
 use std::sync::RwLock;
 use std::sync::{Arc, PoisonError};
@@ -21,7 +22,9 @@ pub enum Error {
     #[error("thread with lock panicked")]
     PoisonError,
     #[error("tried to get instance at non-existent index")]
-    OutOfBounds
+    OutOfBounds,
+    #[error("failed to deserialize")]
+    DeserializeError,
 }
 
 impl<T> From<PoisonError<T>> for Error {
@@ -59,7 +62,7 @@ pub struct Instance {
     pub uri: String,
     pub has_trending: bool,
     pub has_popular: bool,
-    pub region: String,
+    pub region: Option<String>,
     pub open_registrations: bool,
 }
 
@@ -90,7 +93,7 @@ pub fn fetch_instances() -> Result<Instances, Error> {
             if instance.protocol == "https" {
                 Some(Arc::new(Instance {
                     uri: instance.uri,
-                    region: instance.region,
+                    region: Some(instance.region),
                     open_registrations,
                     has_trending: false,
                     has_popular: false,
@@ -102,6 +105,40 @@ pub fn fetch_instances() -> Result<Instances, Error> {
         .collect())
 }
 
+impl Instance {
+    pub fn from_uri(uri: &str) -> Result<Instance, Error> {
+        let response = ureq::get(&format!("{}/api/v1/stats", uri)).call()?;
+        match response.into_json::<StatsResponse>() {
+            Ok(stats) => {
+                let mut instance = Instance {
+                    uri: uri.into(),
+                    region: None,
+                    has_trending: false,
+                    has_popular: false,
+                    open_registrations: stats.open_registrations,
+                };
+                instance.update_info();
+                Ok(instance)
+            }
+            Err(_) => Err(Error::DeserializeError),
+        }
+    }
+
+    pub fn update_info(&mut self) {
+        let response = ureq::get(&format!("{}/api/v1/popular", self.uri)).call();
+        match response {
+            Ok(response) => self.has_popular = response.into_json::<Vec<Value>>().is_ok(),
+            Err(_) => (),
+        }
+
+        let response = ureq::get(&format!("{}/api/v1/trending", self.uri)).call();
+        match response {
+            Ok(response) => self.has_trending = response.into_json::<Vec<Value>>().is_ok(),
+            Err(_) => (),
+        }
+    }
+}
+
 impl InvidiousClient {
     pub fn new(instances: Instances) -> Self {
         let agent = AgentBuilder::new().https_only(true).build();
@@ -109,7 +146,7 @@ impl InvidiousClient {
         let instances = if instances.len() == 0 {
             vec![Arc::new(Instance {
                 uri: "https://vid.puffyan.us".into(),
-                region: "US".into(),
+                region: Some("US".into()),
                 has_trending: true,
                 has_popular: true,
                 open_registrations: true,
@@ -141,7 +178,7 @@ impl InvidiousClient {
             .clone())
     }
 
-    pub fn push_instance(&self, instance: Instance) -> Result<(), Error> {
+    pub fn push_instance(&self, instance: Instance) -> Result<Arc<Instance>, Error> {
         if self
             .instances()
             .iter()
@@ -150,8 +187,9 @@ impl InvidiousClient {
         {
             Err(Error::InstanceExists)
         } else {
-            self.instances.write().unwrap().push(Arc::new(instance));
-            Ok(())
+            let instance = Arc::new(instance);
+            self.instances.write().unwrap().push(instance.clone());
+            Ok(instance)
         }
     }
 
@@ -189,7 +227,6 @@ impl InvidiousClient {
         } else {
             self.select_instance(Some(&instances[index]))
         }
-
     }
 
     // API Requests

@@ -1,12 +1,14 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use gtk::prelude::*;
 use adw::ResponseAppearance;
 use gio::Settings;
-use gtk::glib::{closure_local, clone, closure};
+use gtk::glib::{clone, closure, closure_local, MainContext, Priority};
 use gtk::{gio, glib};
+use gtk::{prelude::*, Align};
+use std::thread;
 use std::{cell::OnceCell, sync::Arc};
 
+use crate::api::{Error, Instance};
 use crate::appmodel::AppModel;
 use crate::widgets::instancerow::InstanceRow;
 
@@ -18,6 +20,8 @@ mod imp {
     pub struct PryvidPreferencesWindow {
         #[template_child]
         pub instances_listbox: TemplateChild<gtk::ListBox>,
+        #[template_child]
+        pub new_instance_entry: TemplateChild<adw::EntryRow>,
         pub model: OnceCell<Arc<AppModel>>,
     }
 
@@ -61,14 +65,36 @@ impl PryvidPreferencesWindow {
         self.imp().model.get().unwrap().clone()
     }
 
+    fn add_instance_row(&self, instance: Arc<Instance>) {
+        let row = InstanceRow::new(instance);
+        row.connect_closure("delete", false, closure_local!(@watch self as window => move |row: InstanceRow| {
+            let dialog = adw::MessageDialog::builder()
+                .heading("Remove instance?")
+                .body(format!("Are you sure you want to delete '{}'?", row.title()))
+                .transient_for(window)
+                .build();
+            dialog.add_responses(&[("cancel", "Cancel"), ("delete", "Delete")]);
+            dialog.set_response_appearance("delete", ResponseAppearance::Destructive);
+            dialog.connect_response(Some("delete"), clone!(@weak window, @weak row => move |_, _| {
+                let instance = row.imp().instance.get().unwrap();
+                window.model().invidious().remove_instance(instance.clone()).unwrap();
+                window.imp().instances_listbox.remove(&row);
+                println!("{:?}", window.model().invidious());
+            }));
+            dialog.present();
+        }));
+        self.imp().instances_listbox.insert(&row, 1);
+    }
+
     fn rebuild(&self) {
         let listbox = &self.imp().instances_listbox;
+        // TODO: If we end up using rebuild, remove_all() is a new unstable function
         loop {
             let child = listbox.row_at_index(0);
             if let Some(child) = child {
                 listbox.remove(&child)
             } else {
-                break
+                break;
             }
         }
         self.build()
@@ -77,26 +103,50 @@ impl PryvidPreferencesWindow {
     fn build(&self) {
         let invidious = self.model().invidious();
         let instances = invidious.instances();
-        invidious.select_instance(instances.get(0));
+
+        // Setup new instance button
+        let button = gtk::Button::builder()
+            .icon_name("list-add-symbolic")
+            .css_classes(["suggested-action", "circular"])
+            .valign(Align::Center)
+            .build();
+        button.connect_clicked(clone!(@weak self as window => move |_| {
+            let text = window.imp().new_instance_entry.text();
+            if text.len() > 0 {
+                window.imp().new_instance_entry.set_sensitive(false);
+
+                let (sender, receiver) = MainContext::channel(Priority::default());
+                thread::spawn(move || {
+                    sender
+                        .send(Instance::from_uri(&text))
+                        .expect("Failed to send message.");
+                        
+                });
+                receiver.attach(None, clone!(@weak window => @default-return Continue(false),
+                    move |result: Result<Instance, Error>| {
+                        match result {
+                            Ok(instance) => {
+                                let instance = window.model().invidious().push_instance(instance).unwrap();
+                                window.add_instance_row(instance);
+                            },
+                            Err(err) => {
+                                println!("{:?}", err);
+                            }
+                        }
+                        println!("{:?}", window.model().invidious().instances());
+                        window.imp().new_instance_entry.set_sensitive(true);
+                        window.imp().new_instance_entry.set_text("");
+
+                        Continue(false)
+                    }
+                ));
+            }
+        }));
+        self.imp().new_instance_entry.add_suffix(&button);
+
+        // Populate with instances
         for instance in instances {
-            let row = InstanceRow::new(instance);
-            row.connect_closure("delete", false, closure_local!(@watch self as window => move |row: InstanceRow| {
-                let dialog = adw::MessageDialog::builder()
-                    .heading("Remove instance?")
-                    .body(format!("Are you sure you want to delete '{}'?", row.title()))
-                    .transient_for(window)
-                    .build();
-                dialog.add_responses(&[("cancel", "Cancel"), ("delete", "Delete")]);
-                dialog.set_response_appearance("delete", ResponseAppearance::Destructive);
-                dialog.connect_response(Some("delete"), clone!(@weak window, @weak row => move |_, _| {
-                    let instance = row.imp().instance.get().unwrap();
-                    window.model().invidious().remove_instance(instance.clone()).unwrap();
-                    window.imp().instances_listbox.remove(&row);
-                    println!("{:?}", window.model().invidious());
-                }));
-                dialog.present();
-            }));
-            self.imp().instances_listbox.append(&row)
+            self.add_instance_row(instance);
         }
     }
 }

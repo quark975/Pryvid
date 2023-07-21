@@ -11,11 +11,14 @@ template $PryvidPreferencesWindow : Adw.PreferencesWindow {
     Adw.PreferencesGroup {
       ListBox instances_listbox {
         selection-mode: none;
-        show-separators: false;
-        activate-on-single-click: true;
+
+        Adw.EntryRow new_instance_entry {
+          title: "Instance URL";
+        }
 
         styles ["boxed-list"]
       }
+
     }
   }
 }

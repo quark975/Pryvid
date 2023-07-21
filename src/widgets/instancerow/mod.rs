@@ -1,9 +1,9 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use adw::ResponseAppearance;
-use gtk::glib::{once_cell::sync::Lazy, subclass::Signal};
 use glib::{clone, Object};
 use gtk::glib;
+use gtk::glib::{once_cell::sync::Lazy, subclass::Signal};
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
 use gtk::Align;
@@ -30,12 +30,8 @@ mod imp {
 
     impl ObjectImpl for InstanceRow {
         fn signals() -> &'static [glib::subclass::Signal] {
-            static SIGNALS: Lazy<Vec<Signal>> = Lazy::new(|| {
-                vec![
-                    Signal::builder("delete")
-                        .build()
-                ]
-            });
+            static SIGNALS: Lazy<Vec<Signal>> =
+                Lazy::new(|| vec![Signal::builder("delete").build()]);
             SIGNALS.as_ref()
         }
         fn constructed(&self) {
@@ -72,9 +68,7 @@ impl InstanceRow {
     pub fn new(instance: Arc<Instance>) -> Self {
         let obj: Self = Object::builder().build();
         obj.set_title(&instance.uri);
-
         obj.imp().instance.set(instance).unwrap();
-
         obj
     }
 }

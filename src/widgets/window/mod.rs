@@ -1,7 +1,7 @@
 use crate::appmodel::AppModel;
 use adw::subclass::prelude::*;
 use glib::clone;
-use gtk::glib::{MainContext, Priority};
+use gtk::glib::{GString, MainContext, Priority};
 use gtk::prelude::*;
 use gtk::{gio, glib};
 use std::sync::Arc;
@@ -19,6 +19,8 @@ mod imp {
         pub header_bar: TemplateChild<gtk::HeaderBar>,
         #[template_child]
         pub label: TemplateChild<gtk::EditableLabel>,
+        #[template_child]
+        pub toast_overlay: TemplateChild<adw::ToastOverlay>,
 
         pub model: OnceCell<Arc<AppModel>>,
     }
@@ -38,7 +40,12 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for PryvidWindow {}
+    impl ObjectImpl for PryvidWindow {
+        fn constructed(&self) {
+            self.parent_constructed();
+            self.obj().setup_gactions();
+        }
+    }
     impl WidgetImpl for PryvidWindow {}
     impl WindowImpl for PryvidWindow {}
     impl ApplicationWindowImpl for PryvidWindow {}
@@ -62,6 +69,23 @@ impl PryvidWindow {
         window.fetch_startup();
 
         window
+    }
+
+    fn setup_gactions(&self) {
+        let notify_action = gio::ActionEntry::builder("notify")
+            .parameter_type(Some(&String::static_variant_type()))
+            .activate(move |win: &Self, _, param| {
+                if let Some(param) = param {
+                    if let Some(message) = param.get::<String>() {
+                        win.imp()
+                            .toast_overlay
+                            .add_toast(adw::Toast::builder().title(message).build());
+                    }
+                }
+            })
+            .build();
+
+        self.add_action_entries([notify_action]);
     }
 
     fn model(&self) -> Arc<AppModel> {

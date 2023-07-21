@@ -13,9 +13,6 @@ use crate::widgets::preferences::PryvidPreferencesWindow;
 use crate::widgets::window::PryvidWindow;
 
 mod imp {
-
-    use crate::config::APP_ID;
-
     use super::*;
 
     #[derive(Debug, Default)]
@@ -64,6 +61,11 @@ mod imp {
 
             // Ask the window manager/compositor to present the window
             window.present();
+        }
+
+        fn shutdown(&self) {
+            self.parent_shutdown();
+            self.obj().save_instances().unwrap();
         }
     }
 
