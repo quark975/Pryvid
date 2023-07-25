@@ -786,6 +786,7 @@ dependencies = [
  "gettext-rs",
  "gtk4",
  "libadwaita",
+ "once_cell",
  "rand",
  "serde",
  "serde_json",

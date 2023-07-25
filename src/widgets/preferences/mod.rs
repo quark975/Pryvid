@@ -3,7 +3,7 @@ use adw::subclass::prelude::*;
 use adw::ResponseAppearance;
 use gio::Settings;
 use gtk::glib::{clone, closure, closure_local, MainContext, Priority};
-use gtk::{gio, glib};
+use gtk::{gio, glib, CompositeTemplate};
 use gtk::{prelude::*, Align};
 use std::thread;
 use std::{cell::OnceCell, sync::Arc};
@@ -12,16 +12,16 @@ use crate::api::{Error, Instance};
 use crate::appmodel::AppModel;
 use crate::widgets::instancerow::InstanceRow;
 
+use super::new_instance_window::NewInstanceWindow;
+
 mod imp {
     use super::*;
 
-    #[derive(Debug, Default, gtk::CompositeTemplate)]
+    #[derive(Debug, Default, CompositeTemplate)]
     #[template(resource = "/dev/quark97/Pryvid/preferences.ui")]
     pub struct PryvidPreferencesWindow {
         #[template_child]
         pub instances_listbox: TemplateChild<gtk::ListBox>,
-        #[template_child]
-        pub new_instance_entry: TemplateChild<adw::EntryRow>,
         pub model: OnceCell<Arc<AppModel>>,
     }
 
@@ -33,6 +33,7 @@ mod imp {
 
         fn class_init(klass: &mut Self::Class) {
             klass.bind_template();
+            klass.bind_template_callbacks();
         }
 
         fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
@@ -45,6 +46,14 @@ mod imp {
     impl WindowImpl for PryvidPreferencesWindow {}
     impl AdwWindowImpl for PryvidPreferencesWindow {}
     impl PreferencesWindowImpl for PryvidPreferencesWindow {}
+
+    #[gtk::template_callbacks]
+    impl PryvidPreferencesWindow {
+        #[template_callback]
+        fn on_new_instance_button_clicked(&self, button: gtk::Button) {
+            self.obj().show_new_instance_dialog();
+        }
+    }
 }
 
 glib::wrapper! {
@@ -83,7 +92,7 @@ impl PryvidPreferencesWindow {
             }));
             dialog.present();
         }));
-        self.imp().instances_listbox.insert(&row, 1);
+        self.imp().instances_listbox.append(&row);
     }
 
     fn rebuild(&self) {
@@ -104,48 +113,23 @@ impl PryvidPreferencesWindow {
         let invidious = self.model().invidious();
         let instances = invidious.instances();
 
-        // Setup new instance button
-        let button = gtk::Button::builder()
-            .icon_name("list-add-symbolic")
-            .css_classes(["suggested-action", "circular"])
-            .valign(Align::Center)
-            .build();
-        button.connect_clicked(clone!(@weak self as window => move |_| {
-            let text = window.imp().new_instance_entry.text();
-            if text.len() > 0 {
-                window.imp().new_instance_entry.set_sensitive(false);
-
-                let (sender, receiver) = MainContext::channel(Priority::default());
-                thread::spawn(move || {
-                    sender
-                        .send(Instance::from_uri(&text))
-                        .expect("Failed to send message.");
-                });
-                receiver.attach(None, clone!(@weak window => @default-return Continue(false),
-                    move |result: Result<Instance, Error>| {
-                        match result {
-                            Ok(instance) => {
-                                let instance = window.model().invidious().push_instance(instance).unwrap();
-                                window.add_instance_row(instance);
-                            },
-                            Err(err) => {
-                                println!("{:?}", err);
-                            }
-                        }
-                        println!("{:?}", window.model().invidious().instances());
-                        window.imp().new_instance_entry.set_sensitive(true);
-                        window.imp().new_instance_entry.set_text("");
-
-                        Continue(false)
-                    }
-                ));
-            }
-        }));
-        self.imp().new_instance_entry.add_suffix(&button);
-
         // Populate with instances
         for instance in instances {
             self.add_instance_row(instance);
         }
+    }
+
+    fn show_new_instance_dialog(&self) {
+        let dialog = NewInstanceWindow::new(self.model());
+        dialog.set_transient_for(Some(self));
+        dialog.connect_closure(
+            "added-instance",
+            false,
+            closure_local!(@watch self as window => move |popup: NewInstanceWindow| {
+                popup.close();
+                window.rebuild();
+            }),
+        );
+        dialog.present();
     }
 }

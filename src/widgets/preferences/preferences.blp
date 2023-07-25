@@ -5,20 +5,22 @@ template $PryvidPreferencesWindow : Adw.PreferencesWindow {
   Adw.PreferencesPage {
     title: "Instances";
     name: "instances";
-    description: "Add, remove, and update your Invidious instances";
     icon-name: "server-pick-symbolic";
 
     Adw.PreferencesGroup {
+      header-suffix: Button {
+        icon-name: "list-add-symbolic";
+        clicked => $on_new_instance_button_clicked() swapped;
+
+        styles ["flat"]
+      };
+      description: "Add, remove, and update your Invidious instances";
+
       ListBox instances_listbox {
         selection-mode: none;
 
-        Adw.EntryRow new_instance_entry {
-          title: "Instance URL";
-        }
-
         styles ["boxed-list"]
       }
-
     }
   }
 }
