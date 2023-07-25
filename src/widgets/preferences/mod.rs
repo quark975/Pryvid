@@ -120,7 +120,6 @@ impl PryvidPreferencesWindow {
                     sender
                         .send(Instance::from_uri(&text))
                         .expect("Failed to send message.");
-                        
                 });
                 receiver.attach(None, clone!(@weak window => @default-return Continue(false),
                     move |result: Result<Instance, Error>| {

@@ -25,7 +25,7 @@ mod imp {
     impl ObjectSubclass for InstanceRow {
         const NAME: &'static str = "InstanceRow";
         type Type = super::InstanceRow;
-        type ParentType = adw::ActionRow;
+        type ParentType = adw::ExpanderRow;
     }
 
     impl ObjectImpl for InstanceRow {
@@ -34,41 +34,60 @@ mod imp {
                 Lazy::new(|| vec![Signal::builder("delete").build()]);
             SIGNALS.as_ref()
         }
-        fn constructed(&self) {
-            self.parent_constructed();
-            let obj = self.obj();
-
-            // Create delete button
-            let delete_button = gtk::Button::builder()
-                .icon_name("user-trash-symbolic")
-                .css_classes(["destructive-action"])
-                .vexpand(false)
-                .valign(Align::Center)
-                .build();
-            delete_button.connect_clicked(clone!(@weak obj => move |_| {
-                obj.emit_by_name::<()>("delete", &[]);
-            }));
-
-            obj.add_suffix(&delete_button);
-        }
     }
     impl WidgetImpl for InstanceRow {}
     impl ListBoxRowImpl for InstanceRow {}
     impl PreferencesRowImpl for InstanceRow {}
-    impl ActionRowImpl for InstanceRow {}
+    impl ExpanderRowImpl for InstanceRow {}
 }
 
 glib::wrapper! {
     pub struct InstanceRow(ObjectSubclass<imp::InstanceRow>)
-        @extends adw::ActionRow, adw::PreferencesRow, gtk::ListBoxRow, gtk::Widget,
+        @extends adw::ExpanderRow, adw::PreferencesRow, gtk::ListBoxRow, gtk::Widget,
         @implements gtk::Accessible, gtk::Actionable, gtk::Buildable, gtk::ConstraintTarget;
 }
 
 impl InstanceRow {
     pub fn new(instance: Arc<Instance>) -> Self {
         let obj: Self = Object::builder().build();
-        obj.set_title(&instance.uri);
         obj.imp().instance.set(instance).unwrap();
+        obj.setup();
         obj
+    }
+
+    fn setup(&self) {
+        let instance = self.instance();
+        self.set_title(&instance.uri);
+
+        // Add info row
+        let row = adw::ActionRow::builder()
+            .title("Registrations")
+            .subtitle(if instance.open_registrations {
+                "Open"
+            } else {
+                "Closed"
+            })
+            .build();
+        self.add_row(&row);
+
+        // Create delete button
+        let delete_button = gtk::Button::builder()
+            .label("Delete")
+            .css_classes(["destructive-action"])
+            .vexpand(false)
+            .valign(Align::Center)
+            .build();
+        delete_button.connect_clicked(clone!(@weak self as obj => move |_| {
+            obj.emit_by_name::<()>("delete", &[]);
+        }));
+
+        // Add buttons row
+        let row = adw::ActionRow::new();
+        row.add_prefix(&delete_button);
+        self.add_row(&row);
+    }
+
+    fn instance(&self) -> Arc<Instance> {
+        self.imp().instance.get().unwrap().clone()
     }
 }
