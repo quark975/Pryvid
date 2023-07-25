@@ -83,7 +83,7 @@ impl InstanceRow {
 
         // Add buttons row
         let row = adw::ActionRow::new();
-        row.add_prefix(&delete_button);
+        row.add_suffix(&delete_button);
         self.add_row(&row);
     }
 
