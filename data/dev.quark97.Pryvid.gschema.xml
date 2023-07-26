@@ -8,5 +8,8 @@
     <key name="instances" type="s">
       <default>"[]"</default>
     </key>
+    <key name="selected" type="s">
+      <default>""</default>
+    </key>
 	</schema>
 </schemalist>

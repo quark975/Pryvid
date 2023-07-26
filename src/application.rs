@@ -100,7 +100,9 @@ impl PryvidApplication {
         // TODO: Handle errors a little better
         let settings = Settings::new(APP_ID);
         let instances = self.load_instances(&settings).unwrap();
-        let model = Arc::new(AppModel::new(InvidiousClient::new(instances), settings));
+        let invidious = InvidiousClient::new(instances);
+        invidious.select_instance_by_name(settings.string("selected").as_str()).unwrap();
+        let model = Arc::new(AppModel::new(invidious, settings));
         match self.imp().model.set(model) {
             Err(_) => panic!("`model` should not be set before calling `setup_model`"),
             _ => (),
@@ -111,12 +113,21 @@ impl PryvidApplication {
         let invidious = self.model().invidious();
         let settings = self.model().settings();
         let instances = invidious.instances();
-        Ok(settings.set(
+        settings.set(
             "instances",
             serde_json::to_string(&instances.to_vec())
                 .unwrap()
                 .to_string(),
-        )?)
+        )?;
+        settings.set(
+            "selected",
+            if let Some(instance) = invidious.selected_instance() {
+                instance.uri.clone()
+            } else {
+                "".into()
+            },
+        )?;
+        Ok(())
     }
 
     fn load_instances(&self, settings: &Settings) -> Result<Instances, serde_json::Error> {

@@ -167,6 +167,18 @@ impl InvidiousClient {
     pub fn instances(&self) -> Vec<Arc<Instance>> {
         self.instances.read().unwrap().clone()
     }
+    pub fn selected_instance(&self) -> Option<Arc<Instance>> {
+        self.selected.read().unwrap().clone()
+    }
+    pub fn is_selected(&self, instance: &Arc<Instance>) -> bool {
+        let selected = self.selected.read().unwrap();
+        if let Some(ref selected_instance) = *selected {
+            if selected_instance == instance {
+                return true;
+            }
+        }
+        return false;
+    }
     pub fn get_instance(&self) -> Result<Arc<Instance>, Error> {
         if let Some(ref instance) = *self.selected.read().unwrap() {
             return Ok(instance.clone());
@@ -199,7 +211,7 @@ impl InvidiousClient {
         let mut selected = self.selected.write()?;
         let position = instances.iter().position(|x| *x == instance).unwrap();
         if let Some(ref selected_instance) = *selected {
-            if (*selected_instance == instance) {
+            if *selected_instance == instance {
                 *selected = None;
             }
         }
@@ -219,6 +231,10 @@ impl InvidiousClient {
             *current = None;
         }
         Ok(())
+    }
+
+    pub fn select_instance_by_name(&self, instance: &str) -> Result<(), Error> {
+        self.select_instance(self.instances().iter().find(|x| x.uri == instance))
     }
 
     pub fn select_instance_by_index(&self, index: usize) -> Result<(), Error> {

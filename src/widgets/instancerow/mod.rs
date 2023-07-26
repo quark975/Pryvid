@@ -1,13 +1,14 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use adw::ResponseAppearance;
-use glib::{clone, Object};
+use glib::prelude::*;
+use glib::{clone, subclass::Signal, Object, Properties};
 use gtk::glib;
-use gtk::glib::{once_cell::sync::Lazy, subclass::Signal};
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
 use gtk::Align;
-use std::cell::OnceCell;
+use once_cell::sync::Lazy;
+use std::cell::{Cell, OnceCell};
 use std::sync::Arc;
 
 use crate::api::Instance;
@@ -16,9 +17,12 @@ mod imp {
 
     use super::*;
 
-    #[derive(Default, Debug)]
+    #[derive(Default, Debug, Properties)]
+    #[properties(wrapper_type = super::InstanceRow)]
     pub struct InstanceRow {
         pub instance: OnceCell<Arc<Instance>>,
+        #[property(get, set)]
+        selected: Cell<bool>,
     }
 
     #[glib::object_subclass]
@@ -29,9 +33,40 @@ mod imp {
     }
 
     impl ObjectImpl for InstanceRow {
+        fn constructed(&self) {
+            self.parent_constructed();
+
+            let switch = gtk::Switch::builder()
+                .vexpand(false)
+                .valign(Align::Center)
+                .build();
+            let obj = self.obj();
+            obj.add_suffix(&switch);
+            obj.bind_property("selected", &switch, "active")
+                .bidirectional()
+                .sync_create()
+                .build();
+        }
+
+        // TODO: All of the property-related function will eventually
+        // be added via a #[glib::derived_properties] but it isn't released yet
+        fn properties() -> &'static [glib::ParamSpec] {
+            Self::derived_properties()
+        }
+        fn set_property(&self, id: usize, value: &glib::Value, pspec: &glib::ParamSpec) {
+            self.derived_set_property(id, value, pspec)
+        }
+        fn property(&self, id: usize, pspec: &glib::ParamSpec) -> glib::Value {
+            self.derived_property(id, pspec)
+        }
+
         fn signals() -> &'static [glib::subclass::Signal] {
-            static SIGNALS: Lazy<Vec<Signal>> =
-                Lazy::new(|| vec![Signal::builder("delete").build()]);
+            static SIGNALS: Lazy<Vec<Signal>> = Lazy::new(|| {
+                vec![
+                    Signal::builder("delete").build(),
+                    Signal::builder("select").build(),
+                ]
+            });
             SIGNALS.as_ref()
         }
     }
@@ -48,8 +83,8 @@ glib::wrapper! {
 }
 
 impl InstanceRow {
-    pub fn new(instance: Arc<Instance>) -> Self {
-        let obj: Self = Object::builder().build();
+    pub fn new(instance: Arc<Instance>, selected: bool) -> Self {
+        let obj: Self = Object::builder().property("selected", selected).build();
         obj.imp().instance.set(instance).unwrap();
         obj.setup();
         obj
@@ -87,7 +122,7 @@ impl InstanceRow {
         self.add_row(&row);
     }
 
-    fn instance(&self) -> Arc<Instance> {
+    pub fn instance(&self) -> Arc<Instance> {
         self.imp().instance.get().unwrap().clone()
     }
 }

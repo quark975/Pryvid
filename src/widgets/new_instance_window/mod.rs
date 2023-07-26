@@ -1,15 +1,15 @@
 use adw::subclass::prelude::*;
-use gtk::prelude::*;
 use glib::Object;
-use gtk::glib;
-use gtk::CompositeTemplate;
 use glib::{clone, MainContext, Priority};
+use gtk::glib;
+use gtk::prelude::*;
+use gtk::CompositeTemplate;
 use std::cell::OnceCell;
 use std::sync::Arc;
 use std::thread;
 
+use crate::api::{Error, Instance};
 use crate::appmodel::AppModel;
-use crate::api::{Instance, Error};
 
 mod imp {
 
@@ -28,7 +28,7 @@ mod imp {
         #[template_child]
         pub create_button: gtk::TemplateChild<gtk::Button>,
         #[template_child]
-        pub error_label: gtk::TemplateChild<gtk::Label>
+        pub error_label: gtk::TemplateChild<gtk::Label>,
     }
 
     #[glib::object_subclass]
@@ -49,12 +49,8 @@ mod imp {
 
     impl ObjectImpl for NewInstanceWindow {
         fn signals() -> &'static [glib::subclass::Signal] {
-            static SIGNALS: Lazy<Vec<Signal>> = Lazy::new(|| {
-                vec![
-                    Signal::builder("added-instance")
-                        .build()
-                ]
-            });
+            static SIGNALS: Lazy<Vec<Signal>> =
+                Lazy::new(|| vec![Signal::builder("added-instance").build()]);
             SIGNALS.as_ref()
         }
     }
@@ -106,7 +102,6 @@ mod imp {
         }
     }
 }
-
 
 glib::wrapper! {
     pub struct NewInstanceWindow(ObjectSubclass<imp::NewInstanceWindow>)

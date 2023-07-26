@@ -74,8 +74,22 @@ impl PryvidPreferencesWindow {
         self.imp().model.get().unwrap().clone()
     }
 
-    fn add_instance_row(&self, instance: Arc<Instance>) {
-        let row = InstanceRow::new(instance);
+    fn add_instance_row(&self, instance: &Arc<Instance>) {
+        let row = InstanceRow::new(
+            instance.clone(),
+            self.model().invidious().is_selected(instance),
+        );
+        row.connect_selected_notify(clone!(@weak self as window => move |row: &InstanceRow| {
+            let invidious = window.model().invidious();
+            invidious.select_instance(
+                if row.selected() {
+                    Some(row.imp().instance.get().unwrap())
+                } else {
+                    None
+                }
+            ).unwrap();
+            window.rebuild();
+        }));
         row.connect_closure("delete", false, closure_local!(@watch self as window => move |row: InstanceRow| {
             let dialog = adw::MessageDialog::builder()
                 .heading("Remove instance?")
@@ -115,7 +129,7 @@ impl PryvidPreferencesWindow {
 
         // Populate with instances
         for instance in instances {
-            self.add_instance_row(instance);
+            self.add_instance_row(&instance);
         }
     }
 
