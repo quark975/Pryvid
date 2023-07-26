@@ -11,19 +11,19 @@ use ureq::{self, Agent, AgentBuilder};
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("instance already exists")]
+    #[error("Instance already exists")]
     InstanceExists,
-    #[error("request failed")]
+    #[error("Request failed")]
     UreqError(#[from] ureq::Error),
-    #[error("io error")]
+    #[error("IO error")]
     IoError(#[from] io::Error),
-    #[error("no known instances")]
+    #[error("No known instances")]
     NoInstances,
-    #[error("thread with lock panicked")]
+    #[error("Thread with lock panicked")]
     PoisonError,
-    #[error("tried to get instance at non-existent index")]
+    #[error("Tried to get instance at non-existent index")]
     OutOfBounds,
-    #[error("failed to deserialize")]
+    #[error("Failed to deserialize")]
     DeserializeError,
 }
 
@@ -110,6 +110,7 @@ impl Instance {
         let response = ureq::get(&format!("{}/api/v1/stats", uri)).call()?;
         match response.into_json::<StatsResponse>() {
             Ok(stats) => {
+                println!("{:?}", stats);
                 let mut instance = Instance {
                     uri: uri.into(),
                     region: None,

@@ -26,7 +26,9 @@ mod imp {
         #[template_child]
         pub instance_entry: gtk::TemplateChild<adw::EntryRow>,
         #[template_child]
-        pub create_button: gtk::TemplateChild<gtk::Button>
+        pub create_button: gtk::TemplateChild<gtk::Button>,
+        #[template_child]
+        pub error_label: gtk::TemplateChild<gtk::Label>
     }
 
     #[glib::object_subclass]
@@ -79,13 +81,20 @@ mod imp {
                     move |result: Result<Instance, Error>| {
                         match result {
                             Ok(instance) => {
-                                window.obj().model().invidious().push_instance(instance).unwrap();
-                                window.obj().emit_by_name::<()>("added-instance", &[]);
+                                if let Err(error) = window.obj().model().invidious().push_instance(instance) {
+                                    window.obj().display_error("Instance is already added!");
+                                } else {
+                                    window.obj().emit_by_name::<()>("added-instance", &[]);
+                                }
                             },
                             Err(err) => {
-                                // TODO: Actually handle errors
-                                println!("{:?}", err);
-                            }
+                                let response = match err {
+                                    Error::UreqError(err) => err.to_string(),
+                                    Error::DeserializeError => "DeserializeError: Likely not an Invidious server.".into(),
+                                    _ => err.to_string()
+                                };
+                                window.obj().display_error(&response);
+                            },
                         }
                         window.instance_entry.set_sensitive(true);
                         window.create_button.set_sensitive(true);
@@ -114,5 +123,11 @@ impl NewInstanceWindow {
 
     fn model(&self) -> Arc<AppModel> {
         self.imp().model.get().unwrap().clone()
+    }
+
+    fn display_error(&self, message: &str) {
+        let imp = self.imp();
+        imp.instance_entry.set_css_classes(&["error"]);
+        imp.error_label.set_text(message);
     }
 }

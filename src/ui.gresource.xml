@@ -3,7 +3,7 @@
   <gresource prefix="/dev/quark97/Pryvid">
     <file preprocess="xml-stripblanks" alias="window.ui">widgets/window/window.ui</file>
     <file preprocess="xml-stripblanks" alias="onboarding.ui">widgets/onboarding/onboarding.ui</file>
-    <file preprocess="xml-stripblanks" alias="help-overlay.ui">widgets/help-overlay/help-overlay.ui</file>
+    <file preprocess="xml-stripblanks" alias="help_overlay.ui">widgets/help_overlay/help_overlay.ui</file>
     <file preprocess="xml-stripblanks" alias="preferences.ui">widgets/preferences/preferences.ui</file>
     <file preprocess="xml-stripblanks" alias="new_instance_window.ui">widgets/new_instance_window/new_instance_window.ui</file>
   </gresource>

@@ -35,19 +35,27 @@ template $NewInstanceWindow: Adw.Window {
       icon-name: 'network-server-symbolic';
       title: "Add Instance";
       description: "Add a new instance via a URL";
-      child: ListBox {
-        vexpand: true;
-        valign: center;
-        margin-start: 10;
-        margin-end: 10;
-        margin-top: 10;
-        margin-bottom: 10;
+      child: Box {
+        orientation: vertical;
+        ListBox {
+          vexpand: true;
+          valign: center;
+          margin-start: 10;
+          margin-end: 10;
+          margin-top: 10;
+          margin-bottom: 10;
 
-        Adw.EntryRow instance_entry {
-          title: "Instance URI";
+          Adw.EntryRow instance_entry {
+            title: "Instance URI";
+          }
+
+          styles ["boxed-list"]
         }
-
-        styles ["boxed-list"]
+        Label error_label {
+          wrap: true;
+          wrap-mode: word;
+          styles ["error"]
+        }
       };
     }
   }
