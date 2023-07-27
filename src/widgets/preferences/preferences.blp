@@ -8,9 +8,62 @@ template $PryvidPreferencesWindow : Adw.PreferencesWindow {
     icon-name: "server-pick-symbolic";
 
     Adw.PreferencesGroup {
-      header-suffix: Button {
-        icon-name: "list-add-symbolic";
-        clicked => $on_new_instance_button_clicked() swapped;
+      header-suffix: MenuButton {
+        icon-name: "view-more-symbolic";
+        popover: Popover popover {
+          child: Box {
+            orientation: vertical;
+            
+            Button {
+              clicked => $on_add_button_clicked() swapped;
+              child: Box {
+                orientation: horizontal;
+                spacing: 7;
+
+                Image {
+                  icon-name: "list-add-symbolic";
+                }
+                Label {
+                  label: "Add";
+                }
+              };
+
+              styles ["flat", "body"]
+            }
+            Button {
+              clicked => $on_manage_button_clicked() swapped;
+              child: Box {
+                orientation: horizontal;
+                spacing: 7;
+
+                Image {
+                  icon-name: "file-manager-symbolic";
+                }
+                Label {
+                  label: "Manage";
+                }
+              };
+
+              styles ["flat", "body"]
+            }
+            Button {
+              clicked => $on_find_button_clicked() swapped;
+              child: Box {
+                orientation: horizontal;
+                spacing: 7;
+
+                Image {
+                  icon-name: "system-search-symbolic";
+                }
+                Label {
+                  label: "Find";
+                }
+              };
+
+              styles ["flat", "body"]
+            }
+          };
+        };
 
         styles ["flat"]
       };
@@ -24,3 +77,4 @@ template $PryvidPreferencesWindow : Adw.PreferencesWindow {
     }
   }
 }
+

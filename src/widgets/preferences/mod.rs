@@ -22,6 +22,8 @@ mod imp {
     pub struct PryvidPreferencesWindow {
         #[template_child]
         pub instances_listbox: TemplateChild<gtk::ListBox>,
+        #[template_child]
+        pub popover: TemplateChild<gtk::Popover>,
         pub model: OnceCell<Arc<AppModel>>,
     }
 
@@ -50,8 +52,17 @@ mod imp {
     #[gtk::template_callbacks]
     impl PryvidPreferencesWindow {
         #[template_callback]
-        fn on_new_instance_button_clicked(&self, button: gtk::Button) {
+        fn on_add_button_clicked(&self, _: gtk::Button) {
+            self.popover.hide();
             self.obj().show_new_instance_dialog();
+        }
+        #[template_callback]
+        fn on_manage_button_clicked(&self, _: gtk::Button) {
+            self.popover.hide();
+        }
+        #[template_callback]
+        fn on_find_button_clicked(&self, _: gtk::Button) {
+            self.popover.hide();
         }
     }
 }

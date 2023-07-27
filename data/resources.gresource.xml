@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<gresources>
-  <gresource prefix="/dev/quark97/Pryvid">
-    <file preprocess="xml-stripblanks">icons/hicolor/scalable/status/server-pick-symbolic.svg</file>
-  </gresource>
-</gresources>
