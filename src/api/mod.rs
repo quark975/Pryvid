@@ -8,6 +8,8 @@ use std::sync::RwLock;
 use std::sync::{Arc, PoisonError};
 use thiserror::Error;
 use ureq::{self, Agent, AgentBuilder};
+use regex::Regex;
+use lazy_static::lazy_static;
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -54,6 +56,7 @@ pub struct InstanceResponse {
 }
 
 // Utility
+
 
 pub type Instances = Vec<Arc<Instance>>;
 
@@ -105,14 +108,25 @@ pub fn fetch_instances() -> Result<Instances, Error> {
         .collect())
 }
 
+fn format_uri(uri: &str) -> String {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"^([a-z0-9]+):\/\/").unwrap();
+    }
+    if RE.is_match_at(uri, 0) {
+        uri.into()
+    } else {
+        format!("https://{uri}")
+    }
+}
+
 impl Instance {
     pub fn from_uri(uri: &str) -> Result<Instance, Error> {
-        let response = ureq::get(&format!("{}/api/v1/stats", uri)).call()?;
+        let uri = format_uri(uri);
+        let response = ureq::get(&format!("{}/api/v1/stats", &uri)).call()?;
         match response.into_json::<StatsResponse>() {
             Ok(stats) => {
-                println!("{:?}", stats);
                 let mut instance = Instance {
-                    uri: uri.into(),
+                    uri,
                     region: None,
                     has_trending: false,
                     has_popular: false,

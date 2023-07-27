@@ -785,9 +785,11 @@ version = "0.1.0"
 dependencies = [
  "gettext-rs",
  "gtk4",
+ "lazy_static",
  "libadwaita",
  "once_cell",
  "rand",
+ "regex",
  "serde",
  "serde_json",
  "thiserror",
