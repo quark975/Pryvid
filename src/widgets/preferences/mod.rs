@@ -11,8 +11,8 @@ use std::{cell::OnceCell, sync::Arc};
 use crate::api::{Error, Instance};
 use crate::appmodel::AppModel;
 use crate::widgets::instancerow::InstanceRow;
-
-use super::new_instance_window::NewInstanceWindow;
+use crate::widgets::curation_window::CurationWindow;
+use crate::widgets::new_instance_window::NewInstanceWindow;
 
 mod imp {
     use super::*;
@@ -59,6 +59,7 @@ mod imp {
         #[template_callback]
         fn on_manage_button_clicked(&self, _: gtk::Button) {
             self.popover.hide();
+            self.obj().show_manage_dialog();
         }
         #[template_callback]
         fn on_find_button_clicked(&self, _: gtk::Button) {
@@ -146,6 +147,7 @@ impl PryvidPreferencesWindow {
 
     fn show_new_instance_dialog(&self) {
         let dialog = NewInstanceWindow::new(self.model());
+        dialog.set_modal(true);
         dialog.set_transient_for(Some(self));
         dialog.connect_closure(
             "added-instance",
@@ -155,6 +157,13 @@ impl PryvidPreferencesWindow {
                 window.rebuild();
             }),
         );
+        dialog.present();
+    }
+
+    fn show_manage_dialog(&self) {
+        let dialog = CurationWindow::new(self.model());
+        dialog.set_modal(true);
+        dialog.set_transient_for(Some(self));
         dialog.present();
     }
 }

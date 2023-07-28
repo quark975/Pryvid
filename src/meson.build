@@ -2,11 +2,12 @@ gnome = import('gnome')
 
 blueprints = custom_target('blueprints',
   input: files(
-    'widgets/help_overlay/help_overlay.blp',
-    'widgets/window/window.blp',
-    'widgets/onboarding/onboarding.blp',
-    'widgets/preferences/preferences.blp',
-    'widgets/new_instance_window/new_instance_window.blp',
+    'widgets/help_overlay/mod.blp',
+    'widgets/window/mod.blp',
+    'widgets/onboarding/mod.blp',
+    'widgets/preferences/mod.blp',
+    'widgets/new_instance_window/mod.blp',
+    'widgets/curation_window/mod.blp',
   ),
   output: '.',
   command: [find_program('blueprint-compiler'), 'batch-compile', '@OUTPUT@', '@CURRENT_SOURCE_DIR@', '@INPUT@'],

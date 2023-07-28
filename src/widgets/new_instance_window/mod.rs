@@ -7,14 +7,13 @@ use gtk::CompositeTemplate;
 use std::cell::OnceCell;
 use std::sync::Arc;
 use std::thread;
+use glib::subclass::Signal;
+use once_cell::sync::Lazy;
 
 use crate::api::{Error, Instance};
 use crate::appmodel::AppModel;
 
 mod imp {
-
-    use gtk::glib::subclass::Signal;
-    use once_cell::sync::Lazy;
 
     use super::*;
 
