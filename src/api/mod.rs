@@ -9,14 +9,15 @@ use std::io;
 use std::sync::RwLock;
 use std::sync::{Arc, PoisonError};
 use thiserror::Error;
-use ureq::{self, Agent, AgentBuilder};
+use isahc::HttpClient;
+use isahc::prelude::*;
 
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("Instance already exists")]
     InstanceExists,
     #[error("Request failed")]
-    UreqError(#[from] ureq::Error),
+    RequestError(#[from] isahc::Error),
     #[error("IO error")]
     IoError(#[from] io::Error),
     #[error("No known instances")]
@@ -26,7 +27,7 @@ pub enum Error {
     #[error("Tried to get instance at non-existent index")]
     OutOfBounds,
     #[error("Failed to deserialize")]
-    DeserializeError,
+    DeserializeError(#[from] serde_json::Error),
 }
 
 impl<T> From<PoisonError<T>> for Error {
@@ -64,7 +65,6 @@ pub struct Instance {
     pub uri: String,
     pub has_trending: bool,
     pub has_popular: bool,
-    pub region: Option<String>,
     pub open_registrations: bool,
 }
 
@@ -72,15 +72,14 @@ pub struct Instance {
 pub struct InvidiousClient {
     instances: RwLock<Instances>,
     selected: RwLock<Option<Arc<Instance>>>,
-    agent: Agent,
+    client: HttpClient,
 }
 
 // Functions
 pub fn fetch_instances() -> Result<Instances, Error> {
     let response: InstancesResponse =
-        ureq::get("https://api.invidious.io/instances.json?pretty=1&sort_by=type,users")
-            .call()?
-            .into_json()?;
+        isahc::get("https://api.invidious.io/instances.json?pretty=1&sort_by=type,users")?
+        .json()?;
 
     Ok(response
         .into_iter()
@@ -95,7 +94,6 @@ pub fn fetch_instances() -> Result<Instances, Error> {
             if instance.protocol == "https" {
                 Some(Arc::new(Instance {
                     uri: instance.uri,
-                    region: Some(instance.region),
                     open_registrations,
                     has_trending: false,
                     has_popular: false,
@@ -121,46 +119,38 @@ fn format_uri(uri: &str) -> String {
 impl Instance {
     pub fn from_uri(uri: &str) -> Result<Instance, Error> {
         let uri = format_uri(uri);
-        let response = ureq::get(&format!("{}/api/v1/stats", &uri)).call()?;
-        match response.into_json::<StatsResponse>() {
-            Ok(stats) => {
-                let mut instance = Instance {
-                    uri,
-                    region: None,
-                    has_trending: false,
-                    has_popular: false,
-                    open_registrations: stats.open_registrations,
-                };
-                instance.update_info();
-                Ok(instance)
-            }
-            Err(_) => Err(Error::DeserializeError),
-        }
+        let response: StatsResponse = isahc::get(format!("{}/api/v1/stats", &uri))?
+            .json()?;
+        let mut instance = Instance {
+            uri,
+            has_trending: false,
+            has_popular: false,
+            open_registrations: response.open_registrations
+        };
+        instance.update_info();
+        Ok(instance)
     }
 
     pub fn update_info(&mut self) {
-        let response = ureq::get(&format!("{}/api/v1/popular", self.uri)).call();
-        match response {
-            Ok(response) => self.has_popular = response.into_json::<Vec<Value>>().is_ok(),
-            Err(_) => (),
+        let response = isahc::get(format!("{}/api/v1/popular", self.uri));
+        if let Ok(mut response) = response {
+            self.has_popular = response.json::<Vec<Value>>().is_ok();
         }
 
-        let response = ureq::get(&format!("{}/api/v1/trending", self.uri)).call();
-        match response {
-            Ok(response) => self.has_trending = response.into_json::<Vec<Value>>().is_ok(),
-            Err(_) => (),
+        let response = isahc::get(format!("{}/api/v1/trending", self.uri));
+        if let Ok(mut response) = response {
+            self.has_trending = response.json::<Vec<Value>>().is_ok();
         }
     }
 }
 
 impl InvidiousClient {
     pub fn new(instances: Instances) -> Self {
-        let agent = AgentBuilder::new().https_only(true).build();
+        let client = HttpClient::new().unwrap();
         // TODO: Handle a 'no instances available' a little better
         let instances = if instances.len() == 0 {
             vec![Arc::new(Instance {
                 uri: "https://vid.puffyan.us".into(),
-                region: Some("US".into()),
                 has_trending: true,
                 has_popular: true,
                 open_registrations: true,
@@ -172,7 +162,7 @@ impl InvidiousClient {
         InvidiousClient {
             selected: RwLock::new(None),
             instances: RwLock::new(instances),
-            agent,
+            client,
         }
     }
 
@@ -263,10 +253,9 @@ impl InvidiousClient {
     pub fn stats(&self) -> Result<StatsResponse, Error> {
         let instance = self.get_instance()?;
         let data: StatsResponse = self
-            .agent
-            .get(format!("{}/api/v1/stats", instance.uri).as_str())
-            .call()?
-            .into_json()?;
+            .client
+            .get(format!("{}/api/v1/stats", instance.uri).as_str())?
+            .json()?;
         Ok(data)
     }
 }

@@ -11,6 +11,7 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 use std::time::Instant;
+use isahc::prelude::*;
 
 use crate::api::Instances;
 use crate::appmodel::AppModel;
@@ -91,10 +92,11 @@ impl CurationWindow {
         thread::spawn(move || {
             for (index, uri) in uris.iter().enumerate() {
                 sender.send((index, PingState::Pinging)).unwrap();
-                let request = ureq::get(&uri)
-                    .timeout(Duration::from_secs(5));
+                let request = isahc::Request::get(uri)
+                    .timeout(Duration::from_secs(5))
+                    .body(()).unwrap();
                 let elapsed = Instant::now();
-                let response = request.call();
+                let response = request.send();
                 let elapsed = elapsed.elapsed();
                 sender.send((index, match response {
                     Ok(_) => PingState::Success(elapsed.as_millis()),

@@ -84,8 +84,7 @@ mod imp {
                             },
                             Err(err) => {
                                 let response = match err {
-                                    Error::UreqError(err) => err.to_string(),
-                                    Error::DeserializeError => "DeserializeError: Likely not an Invidious server.".into(),
+                                    Error::DeserializeError(_) => "DeserializeError: Likely not an Invidious server.".into(),
                                     _ => err.to_string()
                                 };
                                 window.obj().display_error(&response);
