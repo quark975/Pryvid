@@ -109,6 +109,7 @@ fn format_uri(uri: &str) -> String {
     lazy_static! {
         static ref RE: Regex = Regex::new(r"^([a-z0-9]+):\/\/").unwrap();
     }
+    let uri = uri.trim().trim_end_matches('/');
     if RE.is_match_at(uri, 0) {
         uri.into()
     } else {
