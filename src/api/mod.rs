@@ -1,5 +1,7 @@
 use rand::{self, seq::SliceRandom};
 
+use lazy_static::lazy_static;
+use regex::Regex;
 use serde::Serialize;
 use serde::{self, Deserialize};
 use serde_json::Value;
@@ -8,8 +10,6 @@ use std::sync::RwLock;
 use std::sync::{Arc, PoisonError};
 use thiserror::Error;
 use ureq::{self, Agent, AgentBuilder};
-use regex::Regex;
-use lazy_static::lazy_static;
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -56,7 +56,6 @@ pub struct InstanceResponse {
 }
 
 // Utility
-
 
 pub type Instances = Vec<Arc<Instance>>;
 
@@ -178,7 +177,7 @@ impl InvidiousClient {
     }
 
     // Instances
-    pub fn instances(&self) -> Vec<Arc<Instance>> {
+    pub fn instances(&self) -> Instances {
         self.instances.read().unwrap().clone()
     }
     pub fn selected_instance(&self) -> Option<Arc<Instance>> {

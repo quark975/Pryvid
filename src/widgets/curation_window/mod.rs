@@ -1,10 +1,22 @@
 use adw::subclass::prelude::*;
+use adw::prelude::*;
 use glib::Object;
 use gtk::glib;
 use gtk::CompositeTemplate;
-use std::sync::Arc;
+use gtk::glib::MainContext;
+use gtk::glib::Priority;
+use glib::clone;
 use std::cell::OnceCell;
+use std::sync::Arc;
+use std::thread;
+use std::time::Duration;
+use std::time::Instant;
+
+use crate::api::Instances;
 use crate::appmodel::AppModel;
+use crate::widgets::curation_instance_row::CurationInstanceRow;
+
+use super::curation_instance_row::PingState;
 
 mod imp {
 
@@ -14,6 +26,9 @@ mod imp {
     #[template(resource = "/dev/quark97/Pryvid/curation_window.ui")]
     pub struct CurationWindow {
         pub model: OnceCell<Arc<AppModel>>,
+        pub instances: OnceCell<Instances>,
+        #[template_child]
+        pub instances_listbox: TemplateChild<gtk::ListBox>,
     }
 
     #[glib::object_subclass]
@@ -37,7 +52,6 @@ mod imp {
     impl AdwWindowImpl for CurationWindow {}
 }
 
-
 glib::wrapper! {
     pub struct CurationWindow(ObjectSubclass<imp::CurationWindow>)
         @extends adw::Window, gtk::Window, gtk::Widget,
@@ -45,9 +59,67 @@ glib::wrapper! {
 }
 
 impl CurationWindow {
-    pub fn new(model: Arc<AppModel>) -> Self {
+    pub fn new(model: Arc<AppModel>, instances: Instances) -> Self {
         let obj: Self = Object::builder().build();
         obj.imp().model.set(model).unwrap();
+        obj.imp().instances.set(instances).unwrap();
+        obj.build();
+        obj.ping();
         obj
+    }
+
+    fn instances(&self) -> Instances {
+        self.imp().instances.get().unwrap().clone()
+    }
+
+    fn model(&self) -> Arc<AppModel> {
+        self.imp().model.get().unwrap().clone()
+    }
+
+    fn ping(&self) {
+        let (sender, receiver) = MainContext::channel(Priority::default());
+        let instances_listbox = self.imp().instances_listbox.clone();
+        let mut uris = Vec::new();
+        loop {
+            if let Some(child) = instances_listbox.row_at_index(uris.len() as i32) {
+                uris.push(child.downcast::<CurationInstanceRow>().unwrap().instance().uri.clone());
+            } else {
+                break;
+            }
+        }
+
+        thread::spawn(move || {
+            for (index, uri) in uris.iter().enumerate() {
+                sender.send((index, PingState::Pinging)).unwrap();
+                let request = ureq::get(&uri)
+                    .timeout(Duration::from_secs(5));
+                let elapsed = Instant::now();
+                let response = request.call();
+                let elapsed = elapsed.elapsed();
+                sender.send((index, match response {
+                    Ok(_) => PingState::Success(elapsed.as_millis()),
+                    Err(_) => PingState::Error,
+                })).unwrap();
+            }
+        });
+        receiver.attach(None, clone!(@weak instances_listbox => @default-return Continue(false),
+            move |result: (usize, PingState)| {
+                instances_listbox
+                    .row_at_index(result.0 as i32)
+                    .and_downcast::<CurationInstanceRow>()
+                    .unwrap()
+                    .set_state(result.1);
+                Continue(true)
+            })
+        );
+    }
+
+    fn build(&self) {
+        let instances = self.instances();
+        let instances_listbox = &self.imp().instances_listbox;
+        for instance in instances {
+            let row = CurationInstanceRow::new(instance.clone());
+            instances_listbox.append(&row);
+        }
     }
 }

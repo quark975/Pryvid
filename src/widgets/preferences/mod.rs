@@ -10,8 +10,8 @@ use std::{cell::OnceCell, sync::Arc};
 
 use crate::api::{Error, Instance};
 use crate::appmodel::AppModel;
-use crate::widgets::instancerow::InstanceRow;
 use crate::widgets::curation_window::CurationWindow;
+use crate::widgets::instancerow::InstanceRow;
 use crate::widgets::new_instance_window::NewInstanceWindow;
 
 mod imp {
@@ -161,7 +161,7 @@ impl PryvidPreferencesWindow {
     }
 
     fn show_manage_dialog(&self) {
-        let dialog = CurationWindow::new(self.model());
+        let dialog = CurationWindow::new(self.model(), self.model().invidious().instances());
         dialog.set_modal(true);
         dialog.set_transient_for(Some(self));
         dialog.present();

@@ -101,7 +101,9 @@ impl PryvidApplication {
         let settings = Settings::new(APP_ID);
         let instances = self.load_instances(&settings).unwrap();
         let invidious = InvidiousClient::new(instances);
-        invidious.select_instance_by_name(settings.string("selected").as_str()).unwrap();
+        invidious
+            .select_instance_by_name(settings.string("selected").as_str())
+            .unwrap();
         let model = Arc::new(AppModel::new(invidious, settings));
         match self.imp().model.set(model) {
             Err(_) => panic!("`model` should not be set before calling `setup_model`"),

@@ -1,14 +1,14 @@
 use adw::subclass::prelude::*;
+use glib::subclass::Signal;
 use glib::Object;
 use glib::{clone, MainContext, Priority};
 use gtk::glib;
 use gtk::prelude::*;
 use gtk::CompositeTemplate;
+use once_cell::sync::Lazy;
 use std::cell::OnceCell;
 use std::sync::Arc;
 use std::thread;
-use glib::subclass::Signal;
-use once_cell::sync::Lazy;
 
 use crate::api::{Error, Instance};
 use crate::appmodel::AppModel;

@@ -2,7 +2,31 @@ using Gtk 4.0;
 using Adw 1;
 
 template $CurationWindow : Adw.Window {
-  Label {
-    label: "Fuck you";
+  title: "Instance Manager";
+  default-height: 600;
+  default-width: 500;
+  Box {
+    orientation: vertical;
+
+    Adw.HeaderBar {
+      styles ["flat"]
+    }
+    ScrolledWindow {
+      valign: fill;
+      halign: fill;
+      vexpand: true;
+      hexpand: true;
+
+      ListBox instances_listbox { 
+        selection-mode: none;
+        margin-start: 10;
+        margin-end: 10;
+        margin-top: 10;
+        margin-bottom: 10;
+        valign: start;
+
+        styles ["boxed-list"]
+      }
+    }
   }
 }
