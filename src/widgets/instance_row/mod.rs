@@ -82,11 +82,15 @@ impl InstanceRow {
     pub fn new(instance: Arc<Instance>, selected: bool) -> Self {
         let obj: Self = Object::builder().property("selected", selected).build();
         obj.imp().instance.set(instance).unwrap();
-        obj.setup();
+        obj.build();
         obj
     }
 
-    fn setup(&self) {
+    pub fn instance(&self) -> Arc<Instance> {
+        self.imp().instance.get().unwrap().clone()
+    }
+
+    fn build(&self) {
         let instance = self.instance();
         self.set_title(&instance.uri);
 
@@ -118,7 +122,4 @@ impl InstanceRow {
         self.add_row(&row);
     }
 
-    pub fn instance(&self) -> Arc<Instance> {
-        self.imp().instance.get().unwrap().clone()
-    }
 }

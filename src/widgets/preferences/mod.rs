@@ -8,7 +8,7 @@ use std::{cell::OnceCell, sync::Arc};
 use crate::api::Instance;
 use crate::appmodel::AppModel;
 use crate::widgets::curation_window::CurationWindow;
-use crate::widgets::instancerow::InstanceRow;
+use crate::widgets::instance_row::InstanceRow;
 use crate::widgets::new_instance_window::NewInstanceWindow;
 
 mod imp {
