@@ -2,9 +2,8 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use glib::Object;
 use gtk::glib;
-use gtk::CompositeTemplate;
-use std::cell::{Cell, OnceCell};
-use std::sync::{Arc, OnceLock};
+use std::cell::OnceCell;
+use std::sync::Arc;
 
 use crate::api::Instance;
 
@@ -14,8 +13,8 @@ mod imp {
 
     #[derive(Default, Debug)]
     pub struct CurationInstanceRow {
-        pub instance: OnceLock<Arc<Instance>>,
-        pub ping_label: OnceLock<gtk::Label>,
+        pub instance: OnceCell<Arc<Instance>>,
+        pub ping_label: OnceCell<gtk::Label>,
     }
 
     #[glib::object_subclass]
@@ -48,7 +47,7 @@ pub enum PingState {
 impl CurationInstanceRow {
     pub fn new(instance: Arc<Instance>) -> Self {
         let obj: Self = Object::builder().build();
-        obj.imp().instance.set(instance);
+        obj.imp().instance.set(instance).unwrap();
         obj.build();
         obj
     }

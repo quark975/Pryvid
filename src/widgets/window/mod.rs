@@ -1,7 +1,7 @@
 use crate::appmodel::AppModel;
 use adw::subclass::prelude::*;
 use glib::clone;
-use gtk::glib::{GString, MainContext, Priority};
+use gtk::glib::{MainContext, Priority};
 use gtk::prelude::*;
 use gtk::{gio, glib};
 use std::sync::Arc;

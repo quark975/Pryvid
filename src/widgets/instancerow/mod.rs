@@ -1,11 +1,7 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use adw::ResponseAppearance;
-use glib::prelude::*;
 use glib::{clone, subclass::Signal, Object, Properties};
 use gtk::glib;
-use gtk::prelude::*;
-use gtk::subclass::prelude::*;
 use gtk::Align;
 use once_cell::sync::Lazy;
 use std::cell::{Cell, OnceCell};

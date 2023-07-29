@@ -1,14 +1,11 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use adw::ResponseAppearance;
-use gio::Settings;
-use gtk::glib::{clone, closure, closure_local, MainContext, Priority};
-use gtk::{gio, glib, CompositeTemplate};
-use gtk::{prelude::*, Align};
-use std::thread;
+use gtk::glib::{clone, closure_local};
+use gtk::{glib, CompositeTemplate};
 use std::{cell::OnceCell, sync::Arc};
 
-use crate::api::{Error, Instance};
+use crate::api::Instance;
 use crate::appmodel::AppModel;
 use crate::widgets::curation_window::CurationWindow;
 use crate::widgets::instancerow::InstanceRow;
@@ -53,17 +50,17 @@ mod imp {
     impl PryvidPreferencesWindow {
         #[template_callback]
         fn on_add_button_clicked(&self, _: gtk::Button) {
-            self.popover.hide();
+            self.popover.set_visible(false);
             self.obj().show_new_instance_dialog();
         }
         #[template_callback]
         fn on_manage_button_clicked(&self, _: gtk::Button) {
-            self.popover.hide();
+            self.popover.set_visible(false);
             self.obj().show_manage_dialog();
         }
         #[template_callback]
         fn on_find_button_clicked(&self, _: gtk::Button) {
-            self.popover.hide();
+            self.popover.set_visible(false);
         }
     }
 }

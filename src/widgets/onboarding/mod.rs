@@ -1,5 +1,4 @@
 use adw::subclass::prelude::*;
-use gtk::prelude::*;
 use gtk::{gio, glib};
 use std::{cell::OnceCell, sync::Arc};
 

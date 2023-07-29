@@ -76,10 +76,9 @@ mod imp {
                     move |result: Result<Instance, Error>| {
                         match result {
                             Ok(instance) => {
-                                if let Err(error) = window.obj().model().invidious().push_instance(instance) {
-                                    window.obj().display_error("Instance is already added!");
-                                } else {
-                                    window.obj().emit_by_name::<()>("added-instance", &[]);
+                                match window.obj().model().invidious().push_instance(instance) {
+                                    Ok(_) => window.obj().emit_by_name::<()>("added-instance", &[]),
+                                    Err(_) => window.obj().display_error("Instance is already added!"),
                                 }
                             },
                             Err(err) => {
