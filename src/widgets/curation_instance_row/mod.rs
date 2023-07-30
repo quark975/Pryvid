@@ -2,7 +2,7 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use glib::Object;
 use gtk::glib;
-use std::cell::OnceCell;
+use std::cell::{OnceCell, Cell};
 use std::sync::Arc;
 
 use crate::api::Instance;
@@ -15,6 +15,7 @@ mod imp {
     pub struct CurationInstanceRow {
         pub instance: OnceCell<Arc<Instance>>,
         pub ping_label: OnceCell<gtk::Label>,
+        pub state: Cell<PingState>,
     }
 
     #[glib::object_subclass]
@@ -37,11 +38,18 @@ glib::wrapper! {
         @implements gtk::Accessible, gtk::Actionable, gtk::Buildable, gtk::ConstraintTarget;
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum PingState {
     NotPinged,
     Pinging,
     Success(u128),
     Error
+}
+
+impl Default for PingState {
+    fn default() -> Self {
+        PingState::NotPinged
+    }
 }
 
 impl CurationInstanceRow {
@@ -52,7 +60,12 @@ impl CurationInstanceRow {
         obj
     }
 
+    pub fn state(&self) -> PingState {
+        self.imp().state.get()
+    }
+
     pub fn set_state(&self, state: PingState) {
+        self.imp().state.set(state.clone());
         let label = self.ping_label();
         match state {
             PingState::NotPinged => label.set_text(""),

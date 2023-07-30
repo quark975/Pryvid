@@ -1,6 +1,7 @@
 use adw::subclass::prelude::*;
 use adw::prelude::*;
 use glib::Object;
+use gtk::Ordering;
 use gtk::glib;
 use gtk::CompositeTemplate;
 use gtk::glib::MainContext;
@@ -91,7 +92,7 @@ impl CurationWindow {
 
         thread::spawn(move || {
             for (index, uri) in uris.iter().enumerate() {
-                sender.send((index, PingState::Pinging)).unwrap();
+                sender.send(Some((index, PingState::Pinging))).unwrap();
                 let mut ping = 0;
                 for _ in 0..3 {
                     let request = isahc::Request::get(uri)
@@ -105,21 +106,43 @@ impl CurationWindow {
                         Err(_) => continue
                     }
                 }
-                sender.send((index, if ping == 0 {
+                sender.send(Some((index, if ping == 0 {
                     PingState::Error
                 } else {
                     PingState::Success(ping)
-                })).unwrap();
+                }))).unwrap();
             }
+            sender.send(None).unwrap();
         });
         receiver.attach(None, clone!(@weak instances_listbox => @default-return Continue(false),
-            move |result: (usize, PingState)| {
-                instances_listbox
-                    .row_at_index(result.0 as i32)
-                    .and_downcast::<CurationInstanceRow>()
-                    .unwrap()
-                    .set_state(result.1);
-                Continue(true)
+            move |result: Option<(usize, PingState)>| {
+                match result {
+                    Some((index, state)) => {
+                        instances_listbox
+                            .row_at_index(index as i32)
+                            .and_downcast::<CurationInstanceRow>()
+                            .unwrap()
+                            .set_state(state);
+                        Continue(true)
+                    },
+                    None => {
+                        instances_listbox.set_sort_func(move |row1, row2| {
+                            let row1 = row1.clone().downcast::<CurationInstanceRow>().unwrap();
+                            let row2 = row2.clone().downcast::<CurationInstanceRow>().unwrap();
+                            if let PingState::Success(ping1) = row1.state() {
+                                if let PingState::Success(ping2) = row2.state() {
+                                    if ping1 < ping2 {
+                                        return Ordering::Smaller
+                                    } else {
+                                        return Ordering::Larger
+                                    }
+                                }
+                            }
+                            Ordering::Larger
+                        });
+                        Continue(false)
+                    }
+                }
             })
         );
     }
