@@ -92,15 +92,23 @@ impl CurationWindow {
         thread::spawn(move || {
             for (index, uri) in uris.iter().enumerate() {
                 sender.send((index, PingState::Pinging)).unwrap();
-                let request = isahc::Request::get(uri)
-                    .timeout(Duration::from_secs(5))
-                    .body(()).unwrap();
-                let elapsed = Instant::now();
-                let response = request.send();
-                let elapsed = elapsed.elapsed();
-                sender.send((index, match response {
-                    Ok(_) => PingState::Success(elapsed.as_millis()),
-                    Err(_) => PingState::Error,
+                let mut ping = 0;
+                for _ in 0..3 {
+                    let request = isahc::Request::get(uri)
+                        .timeout(Duration::from_secs(5))
+                        .body(()).unwrap();
+                    let elapsed = Instant::now();
+                    let response = request.send();
+                    let elapsed = elapsed.elapsed();
+                    match response {
+                        Ok(_) => ping += elapsed.as_millis() / 3,
+                        Err(_) => continue
+                    }
+                }
+                sender.send((index, if ping == 0 {
+                    PingState::Error
+                } else {
+                    PingState::Success(ping)
                 })).unwrap();
             }
         });

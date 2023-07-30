@@ -111,7 +111,6 @@ impl PryvidPreferencesWindow {
                 let instance = row.imp().instance.get().unwrap();
                 window.model().invidious().remove_instance(instance.clone()).unwrap();
                 window.imp().instances_listbox.remove(&row);
-                println!("{:?}", window.model().invidious());
             }));
             dialog.present();
         }));
