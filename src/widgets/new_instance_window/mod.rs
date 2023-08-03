@@ -76,7 +76,7 @@ mod imp {
                     move |result: Result<Instance, Error>| {
                         match result {
                             Ok(instance) => {
-                                match window.obj().model().invidious().push_instance(instance) {
+                                match window.obj().model().invidious().push_instance(Arc::new(instance)) {
                                     Ok(_) => window.obj().emit_by_name::<()>("added-instance", &[]),
                                     Err(_) => window.obj().display_error("Instance is already added!"),
                                 }

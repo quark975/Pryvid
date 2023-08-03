@@ -1,9 +1,12 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use glib::Object;
-use gtk::glib;
+use gtk::{glib, Align};
+use glib::clone;
+use glib::subclass::Signal;
 use std::cell::{OnceCell, Cell};
 use std::sync::Arc;
+use once_cell::sync::Lazy;
 
 use crate::api::Instance;
 
@@ -15,7 +18,9 @@ mod imp {
     pub struct CurationInstanceRow {
         pub instance: OnceCell<Arc<Instance>>,
         pub ping_label: OnceCell<gtk::Label>,
-        pub state: Cell<PingState>,
+        pub add_button: OnceCell<gtk::Button>,
+        pub ping_state: Cell<PingState>,
+        pub added: Cell<bool>,
     }
 
     #[glib::object_subclass]
@@ -25,7 +30,17 @@ mod imp {
         type ParentType = adw::ExpanderRow;
     }
 
-    impl ObjectImpl for CurationInstanceRow {}
+    impl ObjectImpl for CurationInstanceRow {
+        fn signals() -> &'static [glib::subclass::Signal] {
+            static SIGNALS: Lazy<Vec<Signal>> = Lazy::new(|| {
+                vec![
+                    Signal::builder("toggle")
+                        .build()
+                ]
+            });
+            SIGNALS.as_ref()
+        }
+    }
     impl WidgetImpl for CurationInstanceRow {}
     impl ListBoxRowImpl for CurationInstanceRow {}
     impl PreferencesRowImpl for CurationInstanceRow {}
@@ -53,19 +68,24 @@ impl Default for PingState {
 }
 
 impl CurationInstanceRow {
-    pub fn new(instance: Arc<Instance>) -> Self {
+    pub fn new(instance: Arc<Instance>, is_added: bool) -> Self {
         let obj: Self = Object::builder().build();
         obj.imp().instance.set(instance).unwrap();
+        obj.set_added(is_added);
         obj.build();
         obj
     }
 
-    pub fn state(&self) -> PingState {
-        self.imp().state.get()
+    pub fn ping_state(&self) -> PingState {
+        self.imp().ping_state.get()
+    }
+
+    pub fn instance(&self) -> Arc<Instance> {
+        self.imp().instance.get().unwrap().clone()
     }
 
     pub fn set_state(&self, state: PingState) {
-        self.imp().state.set(state.clone());
+        self.imp().ping_state.set(state.clone());
         let label = self.ping_label();
         match state {
             PingState::NotPinged => label.set_text(""),
@@ -90,13 +110,27 @@ impl CurationInstanceRow {
         }
     }
 
-    pub fn instance(&self) -> Arc<Instance> {
-        self.imp().instance.get().unwrap().clone()
+    pub fn set_add_button_visible(&self, is_visible: bool) {
+        self.add_button().set_visible(is_visible)
+    }
+
+    pub fn added(&self) -> bool {
+        self.imp().added.get()
     }
 
     fn ping_label(&self) -> gtk::Label {
         self.imp().ping_label.get().unwrap().clone()
     }
+
+    fn add_button(&self) -> gtk::Button {
+        self.imp().add_button.get().unwrap().clone()
+    }
+    
+
+    fn set_added(&self, added: bool) {
+        self.imp().added.set(added)
+    }
+
 
     fn add_data(&self, title: &str, subtitle: &str) {
         let row = adw::ActionRow::builder()
@@ -110,6 +144,30 @@ impl CurationInstanceRow {
         let instance = self.instance();
 
         // Build widget
+        let button = gtk::Button::builder()
+            .icon_name(if self.added() {
+                "list-remove-symbolic"
+            } else {
+                "list-add-symbolic"
+            })
+            .vexpand(false)
+            .valign(Align::Center)
+            .visible(false)
+            .css_classes(["flat"])
+            .build();
+        button.connect_clicked(clone!(@weak self as window => move |button| {
+            if window.added() {
+                button.set_icon_name("list-add-symbolic");
+                window.set_added(false);
+            } else {
+                button.set_icon_name("list-remove-symbolic");
+                window.set_added(true);
+            }
+            window.emit_by_name::<()>("toggle", &[]);
+        }));
+        self.add_prefix(&button);
+        self.imp().add_button.set(button).unwrap();
+
         let label = gtk::Label::new(None);
         self.add_suffix(&label);
         self.imp().ping_label.set(label).unwrap();

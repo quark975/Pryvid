@@ -5,10 +5,21 @@ template $CurationWindow : Adw.Window {
   title: "Instance Manager";
   default-height: 600;
   default-width: 500;
+
   Box {
     orientation: vertical;
 
     Adw.HeaderBar {
+      decoration-layout: "";
+
+      [end]
+      Button {
+        label: "Done";
+        action-name: "window.close";
+
+        styles ["suggested-action"]
+      }
+
       styles ["flat"]
     }
     ScrolledWindow {

@@ -6,7 +6,7 @@ use gtk::glib;
 use gtk::CompositeTemplate;
 use gtk::glib::MainContext;
 use gtk::glib::Priority;
-use glib::clone;
+use glib::{clone, closure_local};
 use std::cell::OnceCell;
 use std::sync::Arc;
 use std::thread;
@@ -126,11 +126,12 @@ impl CurationWindow {
                         Continue(true)
                     },
                     None => {
+                        // Sort instances
                         instances_listbox.set_sort_func(move |row1, row2| {
                             let row1 = row1.clone().downcast::<CurationInstanceRow>().unwrap();
                             let row2 = row2.clone().downcast::<CurationInstanceRow>().unwrap();
-                            if let PingState::Success(ping1) = row1.state() {
-                                if let PingState::Success(ping2) = row2.state() {
+                            if let PingState::Success(ping1) = row1.ping_state() {
+                                if let PingState::Success(ping2) = row2.ping_state() {
                                     if ping1 < ping2 {
                                         return Ordering::Smaller
                                     } else {
@@ -140,9 +141,21 @@ impl CurationWindow {
                             }
                             Ordering::Larger
                         });
+
+                        // Add "add buttons"
+                        let mut index = 0;
+                        loop {
+                            if let Some(child) = instances_listbox.row_at_index(index) {
+                                child.downcast::<CurationInstanceRow>().unwrap().set_add_button_visible(true)
+                            } else {
+                                break;
+                            }
+                            index += 1
+                        }
                         Continue(false)
                     }
                 }
+
             })
         );
     }
@@ -151,7 +164,16 @@ impl CurationWindow {
         let instances = self.instances();
         let instances_listbox = &self.imp().instances_listbox;
         for instance in instances {
-            let row = CurationInstanceRow::new(instance.clone());
+            let is_instance_added = self.model().invidious().is_added(&instance);
+            let row = CurationInstanceRow::new(instance.clone(), is_instance_added);
+            row.connect_closure("toggle", false, closure_local!(@watch self as window => move |row: CurationInstanceRow| {
+                let instance = row.instance();
+                if row.added() {
+                    window.model().invidious().push_instance(instance).unwrap();
+                } else {
+                    window.model().invidious().remove_instance(instance).unwrap();
+                }
+            }));
             instances_listbox.append(&row);
         }
     }

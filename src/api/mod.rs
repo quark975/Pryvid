@@ -177,11 +177,13 @@ impl InvidiousClient {
     pub fn is_selected(&self, instance: &Arc<Instance>) -> bool {
         let selected = self.selected.read().unwrap();
         if let Some(ref selected_instance) = *selected {
-            if selected_instance == instance {
-                return true;
-            }
+            return Arc::ptr_eq(selected_instance, instance)
         }
         return false;
+    }
+    pub fn is_added(&self, instance: &Arc<Instance>) -> bool {
+        let instances = self.instances();
+        instances.iter().position(|x| Arc::ptr_eq(x, instance)).is_some()
     }
     pub fn get_instance(&self) -> Result<Arc<Instance>, Error> {
         if let Some(ref instance) = *self.selected.read().unwrap() {
@@ -195,7 +197,7 @@ impl InvidiousClient {
             .clone())
     }
 
-    pub fn push_instance(&self, instance: Instance) -> Result<Arc<Instance>, Error> {
+    pub fn push_instance(&self, instance: Arc<Instance>) -> Result<(), Error> {
         if self
             .instances()
             .iter()
@@ -204,9 +206,8 @@ impl InvidiousClient {
         {
             Err(Error::InstanceExists)
         } else {
-            let instance = Arc::new(instance);
             self.instances.write().unwrap().push(instance.clone());
-            Ok(instance)
+            Ok(())
         }
     }
 

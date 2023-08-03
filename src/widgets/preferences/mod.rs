@@ -158,6 +158,9 @@ impl PryvidPreferencesWindow {
 
     fn show_manage_dialog(&self) {
         let dialog = CurationWindow::new(self.model(), self.model().invidious().instances());
+        dialog.connect_destroy(clone!(@weak self as window => move |_| {
+            window.rebuild()
+        }));
         dialog.set_modal(true);
         dialog.set_transient_for(Some(self));
         dialog.present();
