@@ -112,7 +112,7 @@ impl PryvidPreferencesWindow {
             dialog.set_response_appearance("delete", ResponseAppearance::Destructive);
             dialog.connect_response(Some("delete"), clone!(@weak window, @weak row => move |_, _| {
                 let instance = row.imp().instance.get().unwrap();
-                window.model().invidious().remove_instance(instance.clone()).unwrap();
+                window.model().invidious().remove_instance(&instance.uri).unwrap();
                 window.imp().instances_listbox.remove(&row);
             }));
             dialog.present();

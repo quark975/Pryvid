@@ -135,7 +135,10 @@ impl PryvidApplication {
     fn load_instances(&self, settings: &Settings) -> Result<Instances, serde_json::Error> {
         // --- Only used in testing
         settings.set_boolean("first-run", true).unwrap();
+        // settings.reset("instances");
         // ---
+
+        println!("{}", settings.string("instances"));
 
         Ok(serde_json::from_str(&settings.string("instances"))?)
     }

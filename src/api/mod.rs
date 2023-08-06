@@ -60,9 +60,14 @@ pub struct InstanceResponse {
 
 pub type Instances = Vec<Arc<Instance>>;
 
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Instance {
     pub uri: String,
+    pub info: Arc<RwLock<InstanceInfo>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InstanceInfo {
     pub has_trending: bool,
     pub has_popular: bool,
     pub open_registrations: bool,
@@ -94,9 +99,11 @@ pub fn fetch_instances() -> Result<Instances, Error> {
             if instance.protocol == "https" {
                 Some(Arc::new(Instance {
                     uri: instance.uri,
-                    open_registrations,
-                    has_trending: false,
-                    has_popular: false,
+                    info: Arc::new(RwLock::new(InstanceInfo {
+                        open_registrations,
+                        has_trending: false,
+                        has_popular: false,
+                    }))
                 }))
             } else {
                 None
@@ -122,25 +129,28 @@ impl Instance {
         let uri = format_uri(uri);
         let response: StatsResponse = isahc::get(format!("{}/api/v1/stats", &uri))?
             .json()?;
-        let mut instance = Instance {
+        let instance = Instance {
             uri,
-            has_trending: false,
-            has_popular: false,
-            open_registrations: response.open_registrations
+            info: Arc::new(RwLock::new(InstanceInfo {
+                has_trending: false,
+                has_popular: false,
+                open_registrations: response.open_registrations
+            }))
         };
         instance.update_info();
         Ok(instance)
     }
 
-    pub fn update_info(&mut self) {
+    pub fn update_info(&self) {
         let response = isahc::get(format!("{}/api/v1/popular", self.uri));
+        let mut info = self.info.write().unwrap();
         if let Ok(mut response) = response {
-            self.has_popular = response.json::<Vec<Value>>().is_ok();
+            info.has_popular = response.json::<Vec<Value>>().is_ok();
         }
 
         let response = isahc::get(format!("{}/api/v1/trending", self.uri));
         if let Ok(mut response) = response {
-            self.has_trending = response.json::<Vec<Value>>().is_ok();
+            info.has_trending = response.json::<Vec<Value>>().is_ok();
         }
     }
 }
@@ -152,9 +162,11 @@ impl InvidiousClient {
         let instances = if instances.len() == 0 {
             vec![Arc::new(Instance {
                 uri: "https://vid.puffyan.us".into(),
-                has_trending: true,
-                has_popular: true,
-                open_registrations: true,
+                info: Arc::new(RwLock::new(InstanceInfo {
+                    has_trending: true,
+                    has_popular: true,
+                    open_registrations: true,
+                }))
             })]
         } else {
             instances
@@ -211,12 +223,12 @@ impl InvidiousClient {
         }
     }
 
-    pub fn remove_instance(&self, instance: Arc<Instance>) -> Result<(), Error> {
+    pub fn remove_instance(&self, instance_uri: &str) -> Result<(), Error> {
         let mut instances = self.instances.write()?;
         let mut selected = self.selected.write()?;
-        let position = instances.iter().position(|x| *x == instance).unwrap();
+        let position = instances.iter().position(|x| x.uri == instance_uri).unwrap();
         if let Some(ref selected_instance) = *selected {
-            if *selected_instance == instance {
+            if selected_instance.uri == instance_uri {
                 *selected = None;
             }
         }
@@ -226,12 +238,8 @@ impl InvidiousClient {
 
     pub fn select_instance(&self, instance: Option<&Arc<Instance>>) -> Result<(), Error> {
         let mut current = self.selected.write()?;
-        if let Some(instance) = instance {
-            if let Some(ref item) = self.instances().iter().find(|&x| x == instance) {
-                *current = Some(Arc::clone(item));
-            } else {
-                *current = None;
-            }
+        if let Some(ref instance) = instance {
+            *current = Some(Arc::clone(instance));
         } else {
             *current = None;
         }

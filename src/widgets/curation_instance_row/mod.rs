@@ -173,9 +173,11 @@ impl CurationInstanceRow {
         self.imp().ping_label.set(label).unwrap();
 
         self.set_title(&instance.uri);
+
+        let info = instance.info.read().unwrap();
         self.add_data(
             "Popular Tab",
-            if instance.has_popular {
+            if info.has_popular {
                 "Available"
             } else {
                 "Unavailable"
@@ -183,7 +185,7 @@ impl CurationInstanceRow {
         );
         self.add_data(
             "Trending Tab",
-            if instance.has_trending {
+            if info.has_trending {
                 "Available"
             } else {
                 "Unavailable"
@@ -191,7 +193,7 @@ impl CurationInstanceRow {
         );
         self.add_data(
             "Registrations",
-            if instance.open_registrations {
+            if info.open_registrations {
                 "Open"
             } else {
                 "Closed"

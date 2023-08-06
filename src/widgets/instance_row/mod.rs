@@ -97,7 +97,7 @@ impl InstanceRow {
         // Add info row
         let row = adw::ActionRow::builder()
             .title("Registrations")
-            .subtitle(if instance.open_registrations {
+            .subtitle(if instance.info.read().unwrap().open_registrations {
                 "Open"
             } else {
                 "Closed"

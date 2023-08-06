@@ -171,7 +171,7 @@ impl CurationWindow {
                 if row.added() {
                     window.model().invidious().push_instance(instance).unwrap();
                 } else {
-                    window.model().invidious().remove_instance(instance).unwrap();
+                    window.model().invidious().remove_instance(&instance.uri).unwrap();
                 }
             }));
             instances_listbox.append(&row);
