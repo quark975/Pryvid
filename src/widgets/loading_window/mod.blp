@@ -1,0 +1,23 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $LoadingWindow : Adw.Window {
+  Box {
+    orientation: vertical;
+
+    margin-end: 20;
+    margin-start: 20;
+    margin-bottom: 20;
+    margin-top: 20;
+
+    Spinner {
+      spinning: true;
+    }
+
+    Label {
+      label: "Loading...";
+      
+      styles ["title-1"]
+    }
+  }
+}

@@ -139,7 +139,7 @@ impl CurationWindow {
                                     }
                                 }
                             }
-                            Ordering::Larger
+                            Ordering::__Unknown(-1)
                         });
 
                         // Add "add buttons"

@@ -183,7 +183,7 @@ impl InvidiousClient {
     }
     pub fn is_added(&self, instance: &Arc<Instance>) -> bool {
         let instances = self.instances();
-        instances.iter().position(|x| Arc::ptr_eq(x, instance)).is_some()
+        instances.iter().position(|x| x.uri == instance.uri).is_some()
     }
     pub fn get_instance(&self) -> Result<Arc<Instance>, Error> {
         if let Some(ref instance) = *self.selected.read().unwrap() {

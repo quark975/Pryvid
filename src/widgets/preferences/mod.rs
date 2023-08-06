@@ -1,15 +1,17 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use adw::ResponseAppearance;
-use gtk::glib::{clone, closure_local};
+use gtk::glib::{clone, closure_local, MainContext, Priority};
 use gtk::{glib, CompositeTemplate};
-use std::{cell::OnceCell, sync::Arc};
+use std::{thread, cell::OnceCell, sync::Arc};
 
-use crate::api::Instance;
+use crate::api::{Instance, fetch_instances, Error, Instances};
 use crate::appmodel::AppModel;
 use crate::widgets::curation_window::CurationWindow;
 use crate::widgets::instance_row::InstanceRow;
 use crate::widgets::new_instance_window::NewInstanceWindow;
+
+use super::loading_window::LoadingWindow;
 
 mod imp {
     use super::*;
@@ -61,6 +63,7 @@ mod imp {
         #[template_callback]
         fn on_find_button_clicked(&self, _: gtk::Button) {
             self.popover.set_visible(false);
+            self.obj().show_discover_dialog();
         }
     }
 }
@@ -141,6 +144,16 @@ impl PryvidPreferencesWindow {
         }
     }
 
+    fn show_curation_dialog(&self, instances: Instances) {
+        let dialog = CurationWindow::new(self.model(), instances);
+        dialog.connect_destroy(clone!(@weak self as window => move |_| {
+            window.rebuild()
+        }));
+        dialog.set_modal(true);
+        dialog.set_transient_for(Some(self));
+        dialog.present();
+    }
+
     fn show_new_instance_dialog(&self) {
         let dialog = NewInstanceWindow::new(self.model());
         dialog.set_modal(true);
@@ -157,12 +170,32 @@ impl PryvidPreferencesWindow {
     }
 
     fn show_manage_dialog(&self) {
-        let dialog = CurationWindow::new(self.model(), self.model().invidious().instances());
-        dialog.connect_destroy(clone!(@weak self as window => move |_| {
-            window.rebuild()
-        }));
-        dialog.set_modal(true);
-        dialog.set_transient_for(Some(self));
-        dialog.present();
+        self.show_curation_dialog(self.model().invidious().instances());
+    }
+
+    fn show_discover_dialog(&self) {
+        let (sender, receiver) = MainContext::channel(Priority::default());
+
+        let loading_window = LoadingWindow::new();
+        loading_window.set_modal(true);
+        loading_window.set_transient_for(Some(self));
+        loading_window.present();
+
+        thread::spawn(move || {
+            sender.send(fetch_instances());
+        });
+
+        receiver.attach(None, clone!(@weak self as window, @weak loading_window => @default-return Continue(false),
+            move |instances_result| {
+                loading_window.close();
+                // TODO: Handle a possible network error properly
+                if let Ok(instances) = instances_result {
+                    window.show_curation_dialog(instances);
+                    Continue(true)
+                } else {
+                    Continue(false)
+                }
+            }
+        ));
     }
 }
