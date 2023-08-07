@@ -3,9 +3,9 @@ use adw::subclass::prelude::*;
 use adw::ResponseAppearance;
 use gtk::glib::{clone, closure_local, MainContext, Priority};
 use gtk::{glib, CompositeTemplate};
-use std::{thread, cell::OnceCell, sync::Arc};
+use std::{cell::OnceCell, sync::Arc, thread};
 
-use crate::api::{Instance, fetch_instances, Error, Instances};
+use crate::api::{fetch_instances, Error, Instance, Instances};
 use crate::appmodel::AppModel;
 use crate::widgets::curation_window::CurationWindow;
 use crate::widgets::instance_row::InstanceRow;
@@ -86,11 +86,12 @@ impl PryvidPreferencesWindow {
         self.imp().model.get().unwrap().clone()
     }
 
-    fn add_instance_row(&self, instance: &Arc<Instance>) {
+    fn add_instance_row(&self, instance: &Arc<Instance>, delete_disabled: bool) {
         let row = InstanceRow::new(
             instance.clone(),
             self.model().invidious().is_selected(instance),
         );
+        row.disable_delete_button(delete_disabled);
         row.connect_selected_notify(clone!(@weak self as window => move |row: &InstanceRow| {
             let invidious = window.model().invidious();
             invidious.select_instance(
@@ -111,9 +112,10 @@ impl PryvidPreferencesWindow {
             dialog.add_responses(&[("cancel", "Cancel"), ("delete", "Delete")]);
             dialog.set_response_appearance("delete", ResponseAppearance::Destructive);
             dialog.connect_response(Some("delete"), clone!(@weak window, @weak row => move |_, _| {
-                let instance = row.imp().instance.get().unwrap();
+                let instance = row.instance();
                 window.model().invidious().remove_instance(&instance.uri).unwrap();
-                window.imp().instances_listbox.remove(&row);
+                // window.imp().instances_listbox.remove(&row);
+                window.rebuild();
             }));
             dialog.present();
         }));
@@ -138,9 +140,11 @@ impl PryvidPreferencesWindow {
         let invidious = self.model().invidious();
         let instances = invidious.instances();
 
+        let delete_disabled = instances.len() == 1;
+
         // Populate with instances
         for instance in instances {
-            self.add_instance_row(&instance);
+            self.add_instance_row(&instance, delete_disabled);
         }
     }
 
@@ -185,17 +189,20 @@ impl PryvidPreferencesWindow {
             sender.send(fetch_instances());
         });
 
-        receiver.attach(None, clone!(@weak self as window, @weak loading_window => @default-return Continue(false),
-            move |instances_result| {
-                loading_window.close();
-                // TODO: Handle a possible network error properly
-                if let Ok(instances) = instances_result {
-                    window.show_curation_dialog(instances);
-                    Continue(true)
-                } else {
-                    Continue(false)
+        receiver.attach(
+            None,
+            clone!(@weak self as window, @weak loading_window => @default-return Continue(false),
+                move |instances_result| {
+                    loading_window.close();
+                    // TODO: Handle a possible network error properly
+                    if let Ok(instances) = instances_result {
+                        window.show_curation_dialog(instances);
+                        Continue(true)
+                    } else {
+                        Continue(false)
+                    }
                 }
-            }
-        ));
+            ),
+        );
     }
 }

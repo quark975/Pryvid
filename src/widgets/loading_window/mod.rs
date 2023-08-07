@@ -32,7 +32,6 @@ mod imp {
     impl AdwWindowImpl for LoadingWindow {}
 }
 
-
 glib::wrapper! {
     pub struct LoadingWindow(ObjectSubclass<imp::LoadingWindow>)
         @extends adw::Window, gtk::Window, gtk::Widget,

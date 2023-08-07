@@ -1,12 +1,12 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use glib::Object;
-use gtk::{glib, Align};
 use glib::clone;
 use glib::subclass::Signal;
-use std::cell::{OnceCell, Cell};
-use std::sync::Arc;
+use glib::Object;
+use gtk::{glib, Align};
 use once_cell::sync::Lazy;
+use std::cell::{Cell, OnceCell};
+use std::sync::Arc;
 
 use crate::api::Instance;
 
@@ -32,12 +32,8 @@ mod imp {
 
     impl ObjectImpl for CurationInstanceRow {
         fn signals() -> &'static [glib::subclass::Signal] {
-            static SIGNALS: Lazy<Vec<Signal>> = Lazy::new(|| {
-                vec![
-                    Signal::builder("toggle")
-                        .build()
-                ]
-            });
+            static SIGNALS: Lazy<Vec<Signal>> =
+                Lazy::new(|| vec![Signal::builder("toggle").build()]);
             SIGNALS.as_ref()
         }
     }
@@ -58,7 +54,7 @@ pub enum PingState {
     NotPinged,
     Pinging,
     Success(u128),
-    Error
+    Error,
 }
 
 impl Default for PingState {
@@ -71,9 +67,9 @@ impl CurationInstanceRow {
     pub fn new(instance: Arc<Instance>, is_added: bool) -> Self {
         let obj: Self = Object::builder().build();
         obj.imp().instance.set(instance).unwrap();
+        obj.build();
         obj.set_added(is_added);
         obj.set_enable_expansion(false);
-        obj.build();
         obj
     }
 
@@ -93,7 +89,7 @@ impl CurationInstanceRow {
             PingState::Pinging => {
                 label.set_text("Pinging...");
                 label.set_css_classes(&["accent"]);
-            },
+            }
             PingState::Success(ping) => {
                 label.set_text(&format!("{} ms", ping));
                 label.set_css_classes(if ping < 1000 {
@@ -104,7 +100,7 @@ impl CurationInstanceRow {
                     &["error"]
                 });
                 self.populate_info();
-            },
+            }
             PingState::Error => {
                 label.set_text("Failed");
                 label.set_css_classes(&["error"]);
@@ -114,6 +110,16 @@ impl CurationInstanceRow {
 
     pub fn set_add_button_visible(&self, is_visible: bool) {
         self.add_button().set_visible(is_visible)
+    }
+
+    pub fn set_added(&self, added: bool) {
+        let button = self.imp().add_button.get().unwrap();
+        if added {
+            button.set_icon_name("list-remove-symbolic");
+        } else {
+            button.set_icon_name("list-add-symbolic");
+        }
+        self.imp().added.set(added);
     }
 
     pub fn added(&self) -> bool {
@@ -127,12 +133,6 @@ impl CurationInstanceRow {
     fn add_button(&self) -> gtk::Button {
         self.imp().add_button.get().unwrap().clone()
     }
-    
-
-    fn set_added(&self, added: bool) {
-        self.imp().added.set(added)
-    }
-
 
     fn add_data(&self, title: &str, subtitle: &str) {
         let row = adw::ActionRow::builder()
@@ -189,13 +189,6 @@ impl CurationInstanceRow {
             .css_classes(["flat"])
             .build();
         button.connect_clicked(clone!(@weak self as window => move |button| {
-            if window.added() {
-                button.set_icon_name("list-add-symbolic");
-                window.set_added(false);
-            } else {
-                button.set_icon_name("list-remove-symbolic");
-                window.set_added(true);
-            }
             window.emit_by_name::<()>("toggle", &[]);
         }));
         self.add_prefix(&button);
@@ -206,6 +199,5 @@ impl CurationInstanceRow {
         self.imp().ping_label.set(label).unwrap();
 
         self.set_title(&instance.uri);
-
     }
 }

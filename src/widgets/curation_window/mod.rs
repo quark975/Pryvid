@@ -1,20 +1,20 @@
-use adw::subclass::prelude::*;
 use adw::prelude::*;
+use adw::subclass::prelude::*;
 use glib::Object;
-use gtk::Ordering;
+use glib::{clone, closure_local};
 use gtk::glib;
-use gtk::CompositeTemplate;
 use gtk::glib::MainContext;
 use gtk::glib::Priority;
-use glib::{clone, closure_local};
+use gtk::CompositeTemplate;
+use gtk::Ordering;
+use isahc::prelude::*;
 use std::cell::OnceCell;
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 use std::time::Instant;
-use isahc::prelude::*;
 
-use crate::api::Instances;
+use crate::api::{Error, Instances};
 use crate::appmodel::AppModel;
 use crate::widgets::curation_instance_row::CurationInstanceRow;
 
@@ -31,6 +31,8 @@ mod imp {
         pub instances: OnceCell<Instances>,
         #[template_child]
         pub instances_listbox: TemplateChild<gtk::ListBox>,
+        #[template_child]
+        pub toast_overlay: TemplateChild<adw::ToastOverlay>,
     }
 
     #[glib::object_subclass]
@@ -78,6 +80,12 @@ impl CurationWindow {
         self.imp().model.get().unwrap().clone()
     }
 
+    fn toast_message(&self, message: &str) {
+        self.imp()
+            .toast_overlay
+            .add_toast(adw::Toast::builder().title(message).build())
+    }
+
     fn ping(&self) {
         let (sender, receiver) = MainContext::channel(Priority::default());
         let instances_listbox = self.imp().instances_listbox.clone();
@@ -101,20 +109,26 @@ impl CurationWindow {
                 for _ in 0..3 {
                     let request = isahc::Request::get(&instance.uri)
                         .timeout(Duration::from_secs(5))
-                        .body(()).unwrap();
+                        .body(())
+                        .unwrap();
                     let elapsed = Instant::now();
                     let response = request.send();
                     let elapsed = elapsed.elapsed();
                     match response {
                         Ok(_) => ping += elapsed.as_millis() / 3,
-                        Err(_) => continue
+                        Err(_) => continue,
                     }
                 }
-                sender.send(Some((index, if ping == 0 {
-                    PingState::Error
-                } else {
-                    PingState::Success(ping)
-                }))).unwrap();
+                sender
+                    .send(Some((
+                        index,
+                        if ping == 0 {
+                            PingState::Error
+                        } else {
+                            PingState::Success(ping)
+                        },
+                    )))
+                    .unwrap();
             }
             sender.send(None).unwrap();
         });
@@ -173,9 +187,14 @@ impl CurationWindow {
             row.connect_closure("toggle", false, closure_local!(@watch self as window => move |row: CurationInstanceRow| {
                 let instance = row.instance();
                 if row.added() {
-                    window.model().invidious().push_instance(instance).unwrap();
+                    if let Err(error) = window.model().invidious().remove_instance(&instance.uri) {
+                        window.toast_message(&error.to_string());
+                    } else {
+                        row.set_added(false);
+                    }
                 } else {
-                    window.model().invidious().remove_instance(&instance.uri).unwrap();
+                    window.model().invidious().push_instance(instance).unwrap();
+                    row.set_added(true);
                 }
             }));
             instances_listbox.append(&row);

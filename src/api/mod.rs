@@ -1,5 +1,7 @@
 use rand::{self, seq::SliceRandom};
 
+use isahc::prelude::*;
+use isahc::HttpClient;
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::Serialize;
@@ -9,8 +11,6 @@ use std::io;
 use std::sync::RwLock;
 use std::sync::{Arc, PoisonError};
 use thiserror::Error;
-use isahc::HttpClient;
-use isahc::prelude::*;
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -28,6 +28,10 @@ pub enum Error {
     OutOfBounds,
     #[error("Failed to deserialize")]
     DeserializeError(#[from] serde_json::Error),
+    #[error("Must have at least one instance")]
+    AtLeastOneInstance,
+    #[error("Instance not found")]
+    InstanceNotFound,
 }
 
 impl<T> From<PoisonError<T>> for Error {
@@ -84,7 +88,7 @@ pub struct InvidiousClient {
 pub fn fetch_instances() -> Result<Instances, Error> {
     let response: InstancesResponse =
         isahc::get("https://api.invidious.io/instances.json?pretty=1&sort_by=type,users")?
-        .json()?;
+            .json()?;
 
     Ok(response
         .into_iter()
@@ -103,7 +107,7 @@ pub fn fetch_instances() -> Result<Instances, Error> {
                         open_registrations,
                         has_trending: false,
                         has_popular: false,
-                    }))
+                    })),
                 }))
             } else {
                 None
@@ -127,15 +131,14 @@ fn format_uri(uri: &str) -> String {
 impl Instance {
     pub fn from_uri(uri: &str) -> Result<Instance, Error> {
         let uri = format_uri(uri);
-        let response: StatsResponse = isahc::get(format!("{}/api/v1/stats", &uri))?
-            .json()?;
+        let response: StatsResponse = isahc::get(format!("{}/api/v1/stats", &uri))?.json()?;
         let instance = Instance {
             uri,
             info: Arc::new(RwLock::new(InstanceInfo {
                 has_trending: false,
                 has_popular: false,
-                open_registrations: response.open_registrations
-            }))
+                open_registrations: response.open_registrations,
+            })),
         };
         instance.update_info();
         Ok(instance)
@@ -167,7 +170,7 @@ impl InvidiousClient {
                     has_trending: true,
                     has_popular: true,
                     open_registrations: true,
-                }))
+                })),
             })]
         } else {
             instances
@@ -190,13 +193,16 @@ impl InvidiousClient {
     pub fn is_selected(&self, instance: &Arc<Instance>) -> bool {
         let selected = self.selected.read().unwrap();
         if let Some(ref selected_instance) = *selected {
-            return Arc::ptr_eq(selected_instance, instance)
+            return Arc::ptr_eq(selected_instance, instance);
         }
         return false;
     }
     pub fn is_added(&self, instance: &Arc<Instance>) -> bool {
         let instances = self.instances();
-        instances.iter().position(|x| x.uri == instance.uri).is_some()
+        instances
+            .iter()
+            .position(|x| x.uri == instance.uri)
+            .is_some()
     }
     pub fn get_instance(&self) -> Result<Arc<Instance>, Error> {
         if let Some(ref instance) = *self.selected.read().unwrap() {
@@ -227,7 +233,13 @@ impl InvidiousClient {
     pub fn remove_instance(&self, instance_uri: &str) -> Result<(), Error> {
         let mut instances = self.instances.write()?;
         let mut selected = self.selected.write()?;
-        let position = instances.iter().position(|x| x.uri == instance_uri).unwrap();
+        let position = instances
+            .iter()
+            .position(|x| x.uri == instance_uri)
+            .ok_or(Error::InstanceNotFound)?;
+        if instances.len() == 1 {
+            return Err(Error::AtLeastOneInstance);
+        }
         if let Some(ref selected_instance) = *selected {
             if selected_instance.uri == instance_uri {
                 *selected = None;

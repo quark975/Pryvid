@@ -17,6 +17,7 @@ mod imp {
     #[properties(wrapper_type = super::InstanceRow)]
     pub struct InstanceRow {
         pub instance: OnceCell<Arc<Instance>>,
+        pub delete_button: OnceCell<gtk::Button>,
         #[property(get, set)]
         selected: Cell<bool>,
     }
@@ -90,6 +91,17 @@ impl InstanceRow {
         self.imp().instance.get().unwrap().clone()
     }
 
+    pub fn disable_delete_button(&self, disabled: bool) {
+        let button = self.imp().delete_button.get().unwrap();
+        if disabled {
+            button.set_sensitive(false);
+            button.set_tooltip_text(Some("You must have at least one instance"));
+        } else {
+            button.set_sensitive(true);
+            button.set_tooltip_text(None);
+        }
+    }
+
     fn build(&self) {
         let instance = self.instance();
         self.set_title(&instance.uri);
@@ -120,6 +132,8 @@ impl InstanceRow {
         let row = adw::ActionRow::new();
         row.add_suffix(&delete_button);
         self.add_row(&row);
-    }
 
+        // Save delete_button for later use
+        self.imp().delete_button.set(delete_button).unwrap();
+    }
 }

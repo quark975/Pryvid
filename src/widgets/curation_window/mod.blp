@@ -6,37 +6,39 @@ template $CurationWindow : Adw.Window {
   default-height: 600;
   default-width: 500;
 
-  Box {
-    orientation: vertical;
+  Adw.ToastOverlay toast_overlay {
+    Box {
+      orientation: vertical;
 
-    Adw.HeaderBar {
-      decoration-layout: "";
+      Adw.HeaderBar {
+        decoration-layout: "";
 
-      [end]
-      Button {
-        label: "Done";
-        action-name: "window.close";
+        [end]
+        Button {
+          label: "Done";
+          action-name: "window.close";
 
-        styles ["suggested-action"]
+          styles ["suggested-action"]
+        }
+
+        styles ["flat"]
       }
+      ScrolledWindow {
+        valign: fill;
+        halign: fill;
+        vexpand: true;
+        hexpand: true;
 
-      styles ["flat"]
-    }
-    ScrolledWindow {
-      valign: fill;
-      halign: fill;
-      vexpand: true;
-      hexpand: true;
+        ListBox instances_listbox { 
+          selection-mode: none;
+          margin-start: 20;
+          margin-end: 20;
+          margin-top: 10;
+          margin-bottom: 20;
+          valign: start;
 
-      ListBox instances_listbox { 
-        selection-mode: none;
-        margin-start: 20;
-        margin-end: 20;
-        margin-top: 10;
-        margin-bottom: 20;
-        valign: start;
-
-        styles ["boxed-list"]
+          styles ["boxed-list"]
+        }
       }
     }
   }
