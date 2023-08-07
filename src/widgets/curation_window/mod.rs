@@ -101,31 +101,31 @@ impl CurationWindow {
         thread::spawn(move || {
             for (index, instance) in uris.iter().enumerate() {
                 sender.send(Some((index, PingState::Pinging))).unwrap();
-                // if let Err(_) = instance.update_info() {
-                //     sender.send(Some((index, PingState::Error)));
-                //     continue
-                // }
                 let mut ping = 0;
-                for _ in 0..3 {
-                    let request = isahc::Request::get(&instance.uri)
-                        .timeout(Duration::from_secs(5))
-                        .body(())
-                        .unwrap();
-                    let elapsed = Instant::now();
-                    let response = request.send();
-                    let elapsed = elapsed.elapsed();
-                    match response {
-                        Ok(_) => ping += elapsed.as_millis() / 3,
-                        Err(_) => continue,
-                    }
+
+                // `Instance::update_info` returns the sum of two pings
+                if let Ok(ping_result) = instance.update_info() {
+                    ping += ping_result;
+                } else {
+                    sender.send(Some((index, PingState::Error)));
+                    continue
                 }
+
+                // `Instance::ping` returns just one ping
+                if let Ok(ping_result) = instance.ping(Some("/api/v1/videos/dQw4w9WgXcQ")) {
+                    ping += ping_result;
+                } else {
+                    sender.send(Some((index, PingState::Error)));
+                    continue
+                }
+
                 sender
                     .send(Some((
                         index,
                         if ping == 0 {
                             PingState::Error
                         } else {
-                            PingState::Success(ping)
+                            PingState::Success(ping / 3)
                         },
                     )))
                     .unwrap();

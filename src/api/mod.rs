@@ -10,6 +10,7 @@ use serde_json::Value;
 use std::io;
 use std::sync::RwLock;
 use std::sync::{Arc, PoisonError};
+use std::time::Instant;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -144,18 +145,31 @@ impl Instance {
         Ok(instance)
     }
 
-    pub fn update_info(&self) -> Result<(), Error> {
+    pub fn update_info(&self) -> Result<u128, Error> {
+        let popular_elapsed = Instant::now();
         let response = isahc::get(format!("{}/api/v1/popular", self.uri));
+        let popular_elapsed = popular_elapsed.elapsed();
+
         let has_popular = response?.json::<Vec<Value>>().is_ok();
 
+        let trending_elapsed = Instant::now();
         let response = isahc::get(format!("{}/api/v1/trending", self.uri));
+        let trending_elapsed = trending_elapsed.elapsed();
+
         let has_trending = response?.json::<Vec<Value>>().is_ok();
 
         let mut info = self.info.write()?;
         info.has_popular = has_popular;
         info.has_trending = has_trending;
 
-        Ok(())
+        Ok((popular_elapsed + trending_elapsed).as_millis())
+    }
+
+    pub fn ping(&self, endpoint: Option<&str>) -> Result<u128, Error> {
+        let elapsed = Instant::now();
+        let response = isahc::get(format!("{}{}", self.uri, endpoint.unwrap_or("/")))?;
+        let elapsed = elapsed.elapsed();
+        Ok(elapsed.as_millis())
     }
 }
 
