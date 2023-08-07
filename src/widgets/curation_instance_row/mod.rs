@@ -72,6 +72,7 @@ impl CurationInstanceRow {
         let obj: Self = Object::builder().build();
         obj.imp().instance.set(instance).unwrap();
         obj.set_added(is_added);
+        obj.set_enable_expansion(false);
         obj.build();
         obj
     }
@@ -101,7 +102,8 @@ impl CurationInstanceRow {
                     &["warning"]
                 } else {
                     &["error"]
-                })
+                });
+                self.populate_info();
             },
             PingState::Error => {
                 label.set_text("Failed");
@@ -140,39 +142,8 @@ impl CurationInstanceRow {
         self.add_row(&row);
     }
 
-    fn build(&self) {
+    fn populate_info(&self) {
         let instance = self.instance();
-
-        // Build widget
-        let button = gtk::Button::builder()
-            .icon_name(if self.added() {
-                "list-remove-symbolic"
-            } else {
-                "list-add-symbolic"
-            })
-            .vexpand(false)
-            .valign(Align::Center)
-            .visible(false)
-            .css_classes(["flat"])
-            .build();
-        button.connect_clicked(clone!(@weak self as window => move |button| {
-            if window.added() {
-                button.set_icon_name("list-add-symbolic");
-                window.set_added(false);
-            } else {
-                button.set_icon_name("list-remove-symbolic");
-                window.set_added(true);
-            }
-            window.emit_by_name::<()>("toggle", &[]);
-        }));
-        self.add_prefix(&button);
-        self.imp().add_button.set(button).unwrap();
-
-        let label = gtk::Label::new(None);
-        self.add_suffix(&label);
-        self.imp().ping_label.set(label).unwrap();
-
-        self.set_title(&instance.uri);
 
         let info = instance.info.read().unwrap();
         self.add_data(
@@ -199,5 +170,42 @@ impl CurationInstanceRow {
                 "Closed"
             },
         );
+
+        self.set_enable_expansion(true);
+        self.set_expanded(false);
+    }
+
+    fn build(&self) {
+        let instance = self.instance();
+
+        let button = gtk::Button::builder()
+            .icon_name(if self.added() {
+                "list-remove-symbolic"
+            } else {
+                "list-add-symbolic"
+            })
+            .vexpand(false)
+            .valign(Align::Center)
+            .css_classes(["flat"])
+            .build();
+        button.connect_clicked(clone!(@weak self as window => move |button| {
+            if window.added() {
+                button.set_icon_name("list-add-symbolic");
+                window.set_added(false);
+            } else {
+                button.set_icon_name("list-remove-symbolic");
+                window.set_added(true);
+            }
+            window.emit_by_name::<()>("toggle", &[]);
+        }));
+        self.add_prefix(&button);
+        self.imp().add_button.set(button).unwrap();
+
+        let label = gtk::Label::new(None);
+        self.add_suffix(&label);
+        self.imp().ping_label.set(label).unwrap();
+
+        self.set_title(&instance.uri);
+
     }
 }

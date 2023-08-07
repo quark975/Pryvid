@@ -141,17 +141,18 @@ impl Instance {
         Ok(instance)
     }
 
-    pub fn update_info(&self) {
+    pub fn update_info(&self) -> Result<(), Error> {
         let response = isahc::get(format!("{}/api/v1/popular", self.uri));
-        let mut info = self.info.write().unwrap();
-        if let Ok(mut response) = response {
-            info.has_popular = response.json::<Vec<Value>>().is_ok();
-        }
+        let has_popular = response?.json::<Vec<Value>>().is_ok();
 
         let response = isahc::get(format!("{}/api/v1/trending", self.uri));
-        if let Ok(mut response) = response {
-            info.has_trending = response.json::<Vec<Value>>().is_ok();
-        }
+        let has_trending = response?.json::<Vec<Value>>().is_ok();
+
+        let mut info = self.info.write()?;
+        info.has_popular = has_popular;
+        info.has_trending = has_trending;
+
+        Ok(())
     }
 }
 

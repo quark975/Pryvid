@@ -84,18 +84,22 @@ impl CurationWindow {
         let mut uris = Vec::new();
         loop {
             if let Some(child) = instances_listbox.row_at_index(uris.len() as i32) {
-                uris.push(child.downcast::<CurationInstanceRow>().unwrap().instance().uri.clone());
+                uris.push(child.downcast::<CurationInstanceRow>().unwrap().instance());
             } else {
                 break;
             }
         }
 
         thread::spawn(move || {
-            for (index, uri) in uris.iter().enumerate() {
+            for (index, instance) in uris.iter().enumerate() {
                 sender.send(Some((index, PingState::Pinging))).unwrap();
+                // if let Err(_) = instance.update_info() {
+                //     sender.send(Some((index, PingState::Error)));
+                //     continue
+                // }
                 let mut ping = 0;
                 for _ in 0..3 {
-                    let request = isahc::Request::get(uri)
+                    let request = isahc::Request::get(&instance.uri)
                         .timeout(Duration::from_secs(5))
                         .body(()).unwrap();
                     let elapsed = Instant::now();
