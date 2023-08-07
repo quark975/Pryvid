@@ -1,7 +1,7 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use glib::Object;
-use glib::{clone, closure_local};
+use glib::{clone, closure_local, ControlFlow};
 use gtk::glib;
 use gtk::glib::MainContext;
 use gtk::glib::Priority;
@@ -132,7 +132,7 @@ impl CurationWindow {
             }
             sender.send(None).unwrap();
         });
-        receiver.attach(None, clone!(@weak instances_listbox => @default-return Continue(false),
+        receiver.attach(None, clone!(@weak instances_listbox => @default-return ControlFlow::Break,
             move |result: Option<(usize, PingState)>| {
                 match result {
                     Some((index, state)) => {
@@ -141,7 +141,7 @@ impl CurationWindow {
                             .and_downcast::<CurationInstanceRow>()
                             .unwrap()
                             .set_state(state);
-                        Continue(true)
+                        ControlFlow::Continue
                     },
                     None => {
                         // Sort instances
@@ -170,7 +170,7 @@ impl CurationWindow {
                             }
                             index += 1
                         }
-                        Continue(false)
+                        ControlFlow::Break
                     }
                 }
 

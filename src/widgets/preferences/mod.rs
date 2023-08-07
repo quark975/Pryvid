@@ -1,7 +1,7 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use adw::ResponseAppearance;
-use gtk::glib::{clone, closure_local, MainContext, Priority};
+use gtk::glib::{clone, closure_local, MainContext, Priority, ControlFlow};
 use gtk::{glib, CompositeTemplate};
 use std::{cell::OnceCell, sync::Arc, thread};
 
@@ -191,15 +191,15 @@ impl PryvidPreferencesWindow {
 
         receiver.attach(
             None,
-            clone!(@weak self as window, @weak loading_window => @default-return Continue(false),
+            clone!(@weak self as window, @weak loading_window => @default-return ControlFlow::Break,
                 move |instances_result| {
                     loading_window.close();
                     // TODO: Handle a possible network error properly
                     if let Ok(instances) = instances_result {
                         window.show_curation_dialog(instances);
-                        Continue(true)
+                        ControlFlow::Continue
                     } else {
-                        Continue(false)
+                        ControlFlow::Break
                     }
                 }
             ),

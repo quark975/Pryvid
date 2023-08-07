@@ -1,7 +1,7 @@
 use adw::subclass::prelude::*;
 use glib::subclass::Signal;
 use glib::Object;
-use glib::{clone, MainContext, Priority};
+use glib::{clone, MainContext, Priority, ControlFlow};
 use gtk::glib;
 use gtk::prelude::*;
 use gtk::CompositeTemplate;
@@ -72,7 +72,7 @@ mod imp {
                         .send(Instance::from_uri(&text))
                         .expect("Failed to send message.");
                 });
-                receiver.attach(None, clone!(@weak self as window => @default-return Continue(false),
+                receiver.attach(None, clone!(@weak self as window => @default-return ControlFlow::Break,
                     move |result: Result<Instance, Error>| {
                         match result {
                             Ok(instance) => {
@@ -92,7 +92,7 @@ mod imp {
                         window.instance_entry.set_sensitive(true);
                         window.create_button.set_sensitive(true);
 
-                        Continue(false)
+                        ControlFlow::Break
                     }
                 ));
             }

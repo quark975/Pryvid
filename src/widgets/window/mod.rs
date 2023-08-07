@@ -1,7 +1,7 @@
 use crate::appmodel::AppModel;
 use adw::subclass::prelude::*;
 use glib::clone;
-use gtk::glib::{MainContext, Priority};
+use gtk::glib::{MainContext, Priority, ControlFlow};
 use gtk::prelude::*;
 use gtk::{gio, glib};
 use std::sync::Arc;
@@ -104,10 +104,10 @@ impl PryvidWindow {
         });
         receiver.attach(
             None,
-            clone!(@weak imp => @default-return Continue(false),
+            clone!(@weak imp => @default-return ControlFlow::Break,
                 move |stats| {
                     imp.label.set_text(&format!("{:?}", stats));
-                    Continue(true)
+                    ControlFlow::Continue
                 }
             ),
         );
