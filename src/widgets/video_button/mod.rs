@@ -1,12 +1,12 @@
-use adw::subclass::prelude::*;
 use adw::prelude::*;
+use adw::subclass::prelude::*;
+use glib::{BindingFlags, Object, Properties};
 use gtk::glib;
 use gtk::CompositeTemplate;
-use glib::{Properties, Object, BindingFlags};
 use std::cell::RefCell;
 
-use crate::widgets::async_image::AsyncImage;
 use crate::api::Video;
+use crate::widgets::async_image::AsyncImage;
 
 mod imp {
 
@@ -76,7 +76,6 @@ mod imp {
     impl WidgetImpl for VideoButton {}
     impl ButtonImpl for VideoButton {}
 }
-
 
 glib::wrapper! {
     pub struct VideoButton(ObjectSubclass<imp::VideoButton>)

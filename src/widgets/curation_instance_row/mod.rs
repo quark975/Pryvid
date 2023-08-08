@@ -69,7 +69,6 @@ impl CurationInstanceRow {
         obj.imp().instance.set(instance).unwrap();
         obj.build();
         obj.set_added(is_added);
-        obj.set_enable_expansion(false);
         obj
     }
 
@@ -99,7 +98,6 @@ impl CurationInstanceRow {
                 } else {
                     &["error"]
                 });
-                self.populate_info();
             }
             PingState::Error => {
                 label.set_text("Failed");
@@ -134,7 +132,7 @@ impl CurationInstanceRow {
         self.imp().add_button.get().unwrap().clone()
     }
 
-    fn add_data(&self, title: &str, subtitle: &str) {
+    fn add_info_row(&self, title: &str, subtitle: &str) {
         let row = adw::ActionRow::builder()
             .title(title)
             .subtitle(subtitle)
@@ -146,7 +144,7 @@ impl CurationInstanceRow {
         let instance = self.instance();
 
         let info = instance.info.read().unwrap();
-        self.add_data(
+        self.add_info_row(
             "Popular Tab",
             if info.has_popular {
                 "Available"
@@ -154,7 +152,7 @@ impl CurationInstanceRow {
                 "Unavailable"
             },
         );
-        self.add_data(
+        self.add_info_row(
             "Trending Tab",
             if info.has_trending {
                 "Available"
@@ -162,7 +160,7 @@ impl CurationInstanceRow {
                 "Unavailable"
             },
         );
-        self.add_data(
+        self.add_info_row(
             "Registrations",
             if info.open_registrations {
                 "Open"
@@ -170,9 +168,6 @@ impl CurationInstanceRow {
                 "Closed"
             },
         );
-
-        self.set_enable_expansion(true);
-        self.set_expanded(false);
     }
 
     fn build(&self) {
@@ -199,5 +194,7 @@ impl CurationInstanceRow {
         self.imp().ping_label.set(label).unwrap();
 
         self.set_title(&instance.uri);
+
+        self.populate_info();
     }
 }

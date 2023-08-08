@@ -1,7 +1,7 @@
 use adw::subclass::prelude::*;
 use glib::subclass::Signal;
 use glib::Object;
-use glib::{clone, MainContext, Priority, ControlFlow};
+use glib::{clone, ControlFlow, MainContext, Priority};
 use gtk::glib;
 use gtk::prelude::*;
 use gtk::CompositeTemplate;

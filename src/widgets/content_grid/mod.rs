@@ -1,6 +1,6 @@
-use gtk::subclass::prelude::*;
 use glib::Object;
 use gtk::glib;
+use gtk::subclass::prelude::*;
 use gtk::CompositeTemplate;
 
 use crate::api::Content;
@@ -38,7 +38,6 @@ mod imp {
     impl BoxImpl for ContentGrid {}
 }
 
-
 glib::wrapper! {
     pub struct ContentGrid(ObjectSubclass<imp::ContentGrid>)
         @extends gtk::Box, gtk::Widget,
@@ -56,13 +55,9 @@ impl ContentGrid {
                 Content::Video(video) => {
                     let video_button = VideoButton::new(&video);
                     self.imp().flowbox.append(&video_button);
-                },
-                Content::Channel(channel) => {
-                    continue
-                },
-                Content::Playlist(playlist) => {
-                    continue
                 }
+                Content::Channel(channel) => continue,
+                Content::Playlist(playlist) => continue,
             }
         }
     }

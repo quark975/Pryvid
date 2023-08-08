@@ -1,7 +1,7 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use adw::ResponseAppearance;
-use gtk::glib::{clone, closure_local, MainContext, Priority, ControlFlow};
+use gtk::glib::{clone, closure_local, ControlFlow, MainContext, Priority};
 use gtk::{glib, CompositeTemplate};
 use std::{cell::OnceCell, sync::Arc, thread};
 
@@ -178,31 +178,19 @@ impl PryvidPreferencesWindow {
     }
 
     fn show_discover_dialog(&self) {
-        let (sender, receiver) = MainContext::channel(Priority::default());
+        MainContext::default().spawn_local(clone!(@weak self as window => async move {
+            let loading_window = LoadingWindow::new();
+            loading_window.set_modal(true);
+            loading_window.set_transient_for(Some(&window));
+            loading_window.present();
 
-        let loading_window = LoadingWindow::new();
-        loading_window.set_modal(true);
-        loading_window.set_transient_for(Some(self));
-        loading_window.present();
+            let instances = fetch_instances().await;
+            loading_window.close();
 
-        thread::spawn(move || {
-            sender.send(fetch_instances());
-        });
-
-        receiver.attach(
-            None,
-            clone!(@weak self as window, @weak loading_window => @default-return ControlFlow::Break,
-                move |instances_result| {
-                    loading_window.close();
-                    // TODO: Handle a possible network error properly
-                    if let Ok(instances) = instances_result {
-                        window.show_curation_dialog(instances);
-                        ControlFlow::Continue
-                    } else {
-                        ControlFlow::Break
-                    }
-                }
-            ),
-        );
+            // TODO: Do better error management
+            if let Ok(instances) = instances {
+                window.show_curation_dialog(instances);
+            }
+        }));
     }
 }

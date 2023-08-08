@@ -1,8 +1,8 @@
-use rand::{self, seq::SliceRandom};
-
+use futures::future::join_all;
 use isahc::prelude::*;
 use isahc::HttpClient;
 use lazy_static::lazy_static;
+use rand::{self, seq::SliceRandom};
 use regex::Regex;
 use serde::Serialize;
 use serde::{self, Deserialize};
@@ -10,6 +10,7 @@ use serde_json::Value;
 use std::io;
 use std::sync::RwLock;
 use std::sync::{Arc, PoisonError};
+use std::time::Duration;
 use std::time::Instant;
 use thiserror::Error;
 
@@ -84,9 +85,8 @@ pub enum Content {
     #[serde(rename = "playlist")]
     Playlist(Playlist),
     #[serde(rename = "channel")]
-    Channel(Channel)
+    Channel(Channel),
 }
-
 
 #[derive(Debug, Deserialize)]
 pub struct Video {
@@ -133,14 +133,14 @@ pub struct VideoThumbnail {
     pub quality: String,
     pub url: String,
     pub width: u32,
-    pub height: u32
+    pub height: u32,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct AuthorThumbnail {
     pub url: String,
     pub width: u32,
-    pub height: u32
+    pub height: u32,
 }
 
 #[derive(Debug)]
@@ -151,12 +151,14 @@ pub struct InvidiousClient {
 }
 
 // Functions
-pub fn fetch_instances() -> Result<Instances, Error> {
+pub async fn fetch_instances() -> Result<Instances, Error> {
     let response: Vec<(String, InstanceResponse)> =
-        isahc::get("https://api.invidious.io/instances.json?pretty=1&sort_by=type,users")?
-            .json()?;
+        isahc::get_async("https://api.invidious.io/instances.json?pretty=1&sort_by=type,users")
+            .await?
+            .json()
+            .await?;
 
-    Ok(response
+    let instances: Instances = response
         .into_iter()
         .filter_map(|(_, instance)| {
             let open_registrations = if let Some(stats) = instance.stats {
@@ -179,7 +181,16 @@ pub fn fetch_instances() -> Result<Instances, Error> {
                 None
             }
         })
-        .collect())
+        .collect();
+
+    // Ping in batches of 8 at a time
+    for instances in instances.chunks(4).into_iter() {
+        println!("{:?}", instances.iter().map(|x| x.uri.clone()).collect::<Vec<String>>());
+        join_all(instances.iter().map(|x| x.update_info())).await;
+    }
+    // join_all(instances.iter().map(|x| x.update_info())).await;
+
+    Ok(instances)
 }
 
 fn fix_thumbnail_urls(uri: &str, content: &mut Vec<Content>) {
@@ -187,10 +198,13 @@ fn fix_thumbnail_urls(uri: &str, content: &mut Vec<Content>) {
         match item {
             Content::Video(video) => {
                 for thumbnail in &mut video.thumbnails {
-                    thumbnail.url = format!("{}{}", uri, &thumbnail.url);
+                    // If domain isn't present
+                    if thumbnail.url.starts_with("/vi/") {
+                        thumbnail.url = format!("{}{}", uri, &thumbnail.url);
+                    }
                 }
-            },
-            _ => ()
+            }
+            _ => (),
         }
     }
 }
@@ -223,29 +237,39 @@ impl Instance {
         Ok(instance)
     }
 
-    pub fn update_info(&self) -> Result<u128, Error> {
-        let popular_elapsed = Instant::now();
-        let response = isahc::get(format!("{}/api/v1/popular", self.uri));
-        let popular_elapsed = popular_elapsed.elapsed();
+    pub async fn update_info(&self) -> Result<(), Error> {
+        let mut response = isahc::send_async(
+            isahc::Request::builder()
+                .uri(format!("{}/api/v1/popular", self.uri))
+                .redirect_policy(isahc::config::RedirectPolicy::Limit(2))
+                .timeout(Duration::from_secs(10))
+                .body(())
+                .unwrap(),
+        )
+        .await?;
+        let has_popular = response.json::<Vec<Value>>().await.is_ok();
 
-        let has_popular = response?.json::<Vec<Value>>().is_ok();
-
-        let trending_elapsed = Instant::now();
-        let response = isahc::get(format!("{}/api/v1/trending", self.uri));
-        let trending_elapsed = trending_elapsed.elapsed();
-
-        let has_trending = response?.json::<Vec<Value>>().is_ok();
+        let mut response = isahc::send_async(
+            isahc::Request::builder()
+                .uri(format!("{}/api/v1/trending", self.uri))
+                .redirect_policy(isahc::config::RedirectPolicy::Limit(2))
+                .timeout(Duration::from_secs(10))
+                .body(())
+                .unwrap(),
+        )
+        .await?;
+        let has_trending = response.json::<Vec<Value>>().await.is_ok();
 
         let mut info = self.info.write()?;
         info.has_popular = has_popular;
         info.has_trending = has_trending;
 
-        Ok((popular_elapsed + trending_elapsed).as_millis())
+        Ok(())
     }
 
-    pub fn ping(&self, endpoint: Option<&str>) -> Result<u128, Error> {
+    pub async fn ping(&self, endpoint: Option<&str>) -> Result<u128, Error> {
         let elapsed = Instant::now();
-        let response = isahc::get(format!("{}{}", self.uri, endpoint.unwrap_or("/")))?;
+        let response = isahc::get_async(format!("{}{}", self.uri, endpoint.unwrap_or("/"))).await?;
         let elapsed = elapsed.elapsed();
         Ok(elapsed.as_millis())
     }
@@ -375,6 +399,7 @@ impl InvidiousClient {
     }
     pub async fn popular(&self) -> Result<Vec<Content>, Error> {
         let instance = self.get_instance()?;
+        println!("{}", &instance.uri);
         let mut data: Vec<Content> = self
             .client
             .get_async(&format!("{}/api/v1/popular", instance.uri))
@@ -401,17 +426,7 @@ impl InvidiousClient {
             .map(|x| Content::Video(x))
             .collect();
 
-        // Fix thumbnail urls not having domain
-        for item in data.iter_mut() {
-            match item {
-                Content::Video(video) => {
-                    for thumbnail in &mut video.thumbnails {
-                        thumbnail.url = format!("{}{}", &instance.uri, &thumbnail.url);
-                    }
-                },
-                _ => ()
-            }
-        }
+        fix_thumbnail_urls(&instance.uri, &mut data);
 
         Ok(data)
     }

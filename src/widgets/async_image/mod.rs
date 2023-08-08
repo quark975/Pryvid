@@ -1,14 +1,13 @@
 use adw::subclass::prelude::*;
-use glib::Object;
-use gtk::{glib, gio};
 use gio::prelude::*;
+use glib::Object;
+use glib::{subclass::InitializingObject, MainContext, Priority, Properties};
 use gtk::gdk_pixbuf::Pixbuf;
 use gtk::CompositeTemplate;
-use glib::{subclass::InitializingObject, MainContext, Priority, Properties};
+use gtk::{gio, glib};
 use std::cell::RefCell;
 
 mod imp {
-
 
     use super::*;
 
@@ -71,32 +70,34 @@ mod imp {
             // When initializing the object it is set to nothing
             // Ignore this when it happens
             if value.len() == 0 {
-                return
+                return;
             }
 
             let main_context = MainContext::default();
 
-            main_context.spawn_local(glib::clone!(@strong value, @weak self as _self => async move {
-                let file = gio::File::for_uri(&value);
-                // TODO: Do some error handling so images don't look like their loading when they failed
-                match file.read_future(Priority::default()).await {
-                    Ok(stream) => {
-                        if let Ok(pixbuf) = Pixbuf::from_stream_future(&stream).await {
-                            _self.picture.set_pixbuf(Some(&pixbuf));
-                            _self.stack.set_visible_child_name("picture");
-                            _self.spinner.set_spinning(false);
-                            _self.spinner.stop();
+            main_context.spawn_local(
+                glib::clone!(@strong value, @weak self as _self => async move {
+                    let file = gio::File::for_uri(&value);
+                    println!("{}", value);
+                    // TODO: Do some error handling so images don't look like their loading when they failed
+                    match file.read_future(Priority::default()).await {
+                        Ok(stream) => {
+                            if let Ok(pixbuf) = Pixbuf::from_stream_future(&stream).await {
+                                _self.picture.set_pixbuf(Some(&pixbuf));
+                                _self.stack.set_visible_child_name("picture");
+                                _self.spinner.set_spinning(false);
+                                _self.spinner.stop();
+                            }
+                        },
+                        Err(error) => {
+                            println!("{:?}", error);
                         }
-                    },
-                    Err(error) => {
-                        println!("{:?}", error);
                     }
-                }
-            }));
+                }),
+            );
         }
     }
 }
-
 
 glib::wrapper! {
     pub struct AsyncImage(ObjectSubclass<imp::AsyncImage>)

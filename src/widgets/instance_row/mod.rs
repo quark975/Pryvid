@@ -102,21 +102,46 @@ impl InstanceRow {
         }
     }
 
+    fn add_info_row(&self, title: &str, content: &str) {
+        let row = adw::ActionRow::builder()
+            .title(title)
+            .subtitle(content)
+            .build();
+        self.add_row(&row);
+    }
+
     fn build(&self) {
         let instance = self.instance();
         self.set_title(&instance.uri);
 
         // Add info row
-        let row = adw::ActionRow::builder()
-            .title("Registrations")
-            .subtitle(if instance.info.read().unwrap().open_registrations {
-                "Open"
-            } else {
-                "Closed"
-            })
-            .build();
-        self.add_row(&row);
-
+        {
+            let info = instance.info.read().unwrap();
+            self.add_info_row(
+                "Popular Tab",
+                if info.has_popular {
+                    "Available"
+                } else {
+                    "Unavailable"
+                },
+            );
+            self.add_info_row(
+                "Trending Tab",
+                if info.has_trending {
+                    "Available"
+                } else {
+                    "Unavailable"
+                },
+            );
+            self.add_info_row(
+                "Registrations",
+                if info.open_registrations {
+                    "Open"
+                } else {
+                    "Closed"
+                },
+            );
+        }
         // Create delete button
         let delete_button = gtk::Button::builder()
             .label("Delete")

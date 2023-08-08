@@ -1,6 +1,6 @@
 use adw::subclass::prelude::*;
 use glib::clone;
-use gtk::glib::{MainContext, Priority, ControlFlow};
+use gtk::glib::{ControlFlow, MainContext, Priority};
 use gtk::prelude::*;
 use gtk::{gio, glib};
 use std::sync::Arc;
@@ -107,9 +107,13 @@ impl PryvidWindow {
             let (popular, trending) = futures::join!(popular, trending);
             if let Ok(content) = popular {
                 window.imp().popular_grid.set_content(content);
+            } else {
+                println!("Failed to get popular.")
             }
             if let Ok(content) = trending {
                 window.imp().trending_grid.set_content(content);
+            } else {
+                println!("Failed to get trending.")
             }
         }));
     }

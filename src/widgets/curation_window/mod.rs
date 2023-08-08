@@ -87,95 +87,44 @@ impl CurationWindow {
     }
 
     fn ping(&self) {
-        let (sender, receiver) = MainContext::channel(Priority::default());
-        let instances_listbox = self.imp().instances_listbox.clone();
-        let mut uris = Vec::new();
-        loop {
-            if let Some(child) = instances_listbox.row_at_index(uris.len() as i32) {
-                uris.push(child.downcast::<CurationInstanceRow>().unwrap().instance());
-            } else {
-                break;
-            }
-        }
+        MainContext::default().spawn_local(clone!(@weak self as window => async move {
+            let instances_listbox = window.imp().instances_listbox.clone();
+            let mut index = 0;
+            'outer: while let Some(child) = instances_listbox.row_at_index(index) {
+                index += 1;
+                let row = child.downcast::<CurationInstanceRow>().unwrap();
+                let instance = row.instance();
 
-        thread::spawn(move || {
-            for (index, instance) in uris.iter().enumerate() {
-                sender.send(Some((index, PingState::Pinging))).unwrap();
+                row.set_state(PingState::Pinging);
+
                 let mut ping = 0;
-
-                // `Instance::update_info` returns the sum of two pings
-                if let Ok(ping_result) = instance.update_info() {
-                    ping += ping_result;
-                } else {
-                    sender.send(Some((index, PingState::Error)));
-                    continue
-                }
-
-                // `Instance::ping` returns just one ping
-                if let Ok(ping_result) = instance.ping(Some("/api/v1/videos/dQw4w9WgXcQ")) {
-                    ping += ping_result;
-                } else {
-                    sender.send(Some((index, PingState::Error)));
-                    continue
-                }
-
-                sender
-                    .send(Some((
-                        index,
-                        if ping == 0 {
-                            PingState::Error
-                        } else {
-                            PingState::Success(ping / 3)
-                        },
-                    )))
-                    .unwrap();
-            }
-            sender.send(None).unwrap();
-        });
-        receiver.attach(None, clone!(@weak instances_listbox => @default-return ControlFlow::Break,
-            move |result: Option<(usize, PingState)>| {
-                match result {
-                    Some((index, state)) => {
-                        instances_listbox
-                            .row_at_index(index as i32)
-                            .and_downcast::<CurationInstanceRow>()
-                            .unwrap()
-                            .set_state(state);
-                        ControlFlow::Continue
-                    },
-                    None => {
-                        // Sort instances
-                        instances_listbox.set_sort_func(move |row1, row2| {
-                            let row1 = row1.clone().downcast::<CurationInstanceRow>().unwrap();
-                            let row2 = row2.clone().downcast::<CurationInstanceRow>().unwrap();
-                            if let PingState::Success(ping1) = row1.ping_state() {
-                                if let PingState::Success(ping2) = row2.ping_state() {
-                                    if ping1 < ping2 {
-                                        return Ordering::Smaller
-                                    } else {
-                                        return Ordering::Larger
-                                    }
-                                }
-                            }
-                            Ordering::__Unknown(-1)
-                        });
-
-                        // Add "add buttons"
-                        let mut index = 0;
-                        loop {
-                            if let Some(child) = instances_listbox.row_at_index(index) {
-                                child.downcast::<CurationInstanceRow>().unwrap().set_add_button_visible(true)
-                            } else {
-                                break;
-                            }
-                            index += 1
-                        }
-                        ControlFlow::Break
+                'inner: for _ in 0..3 {
+                    if let Ok(result_ping) = instance.ping(None).await {
+                        ping += result_ping / 3;
+                    } else {
+                        row.set_state(PingState::Error);
+                        continue 'outer
                     }
                 }
 
-            })
-        );
+                row.set_state(PingState::Success(ping));
+            }
+
+            instances_listbox.set_sort_func(move |row1, row2| {
+                let row1 = row1.clone().downcast::<CurationInstanceRow>().unwrap();
+                let row2 = row2.clone().downcast::<CurationInstanceRow>().unwrap();
+                if let PingState::Success(ping1) = row1.ping_state() {
+                    if let PingState::Success(ping2) = row2.ping_state() {
+                        if ping1 < ping2 {
+                            return Ordering::Smaller
+                        } else {
+                            return Ordering::Larger
+                        }
+                    }
+                }
+                Ordering::__Unknown(-1)
+            });
+        }));
     }
 
     fn build(&self) {
