@@ -49,8 +49,6 @@ pub struct StatsResponse {
     pub open_registrations: bool,
 }
 
-type InstancesResponse = Vec<(String, InstanceResponse)>;
-
 #[derive(Debug, Deserialize)]
 pub struct InstanceResponse {
     pub flag: String,
@@ -78,6 +76,73 @@ pub struct InstanceInfo {
     pub open_registrations: bool,
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(tag = "type")]
+pub enum Content {
+    #[serde(rename = "video")]
+    Video(Video),
+    #[serde(rename = "playlist")]
+    Playlist(Playlist),
+    #[serde(rename = "channel")]
+    Channel(Channel)
+}
+
+
+#[derive(Debug, Deserialize)]
+pub struct Video {
+    pub title: String,
+    #[serde(rename = "videoId")]
+    pub id: String,
+    #[serde(rename = "viewCount")]
+    pub views: u64,
+    #[serde(rename = "lengthSeconds")]
+    pub length: u32,
+    #[serde(rename = "videoThumbnails")]
+    pub thumbnails: Vec<VideoThumbnail>,
+    pub author: String,
+    #[serde(rename = "authorId")]
+    pub author_id: String,
+    #[serde(rename = "publishedText")]
+    pub published: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Playlist {
+    pub title: String,
+    #[serde(rename = "playlistId")]
+    pub id: String,
+    pub author: String,
+    #[serde(rename = "authorId")]
+    pub author_id: String,
+    #[serde(rename = "videoCount")]
+    pub video_count: u64,
+    pub thumbnail: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Channel {
+    pub title: String,
+    pub id: String,
+    pub verified: bool,
+    pub thumbnails: Vec<AuthorThumbnail>,
+    pub subscribers: u64,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct VideoThumbnail {
+    pub quality: String,
+    pub url: String,
+    pub width: u32,
+    pub height: u32
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AuthorThumbnail {
+    pub url: String,
+    pub width: u32,
+    pub height: u32
+}
+
 #[derive(Debug)]
 pub struct InvidiousClient {
     instances: RwLock<Instances>,
@@ -87,7 +152,7 @@ pub struct InvidiousClient {
 
 // Functions
 pub fn fetch_instances() -> Result<Instances, Error> {
-    let response: InstancesResponse =
+    let response: Vec<(String, InstanceResponse)> =
         isahc::get("https://api.invidious.io/instances.json?pretty=1&sort_by=type,users")?
             .json()?;
 
@@ -115,6 +180,19 @@ pub fn fetch_instances() -> Result<Instances, Error> {
             }
         })
         .collect())
+}
+
+fn fix_thumbnail_urls(uri: &str, content: &mut Vec<Content>) {
+    for item in content.iter_mut() {
+        match item {
+            Content::Video(video) => {
+                for thumbnail in &mut video.thumbnails {
+                    thumbnail.url = format!("{}{}", uri, &thumbnail.url);
+                }
+            },
+            _ => ()
+        }
+    }
 }
 
 fn format_uri(uri: &str) -> String {
@@ -291,8 +369,50 @@ impl InvidiousClient {
         let instance = self.get_instance()?;
         let data: StatsResponse = self
             .client
-            .get(format!("{}/api/v1/stats", instance.uri).as_str())?
+            .get(&format!("{}/api/v1/stats", instance.uri))?
             .json()?;
+        Ok(data)
+    }
+    pub async fn popular(&self) -> Result<Vec<Content>, Error> {
+        let instance = self.get_instance()?;
+        let mut data: Vec<Content> = self
+            .client
+            .get_async(&format!("{}/api/v1/popular", instance.uri))
+            .await?
+            .json::<Vec<Video>>()
+            .await?
+            .into_iter()
+            .map(|x| Content::Video(x))
+            .collect();
+
+        fix_thumbnail_urls(&instance.uri, &mut data);
+        Ok(data)
+    }
+
+    pub async fn trending(&self) -> Result<Vec<Content>, Error> {
+        let instance = self.get_instance()?;
+        let mut data: Vec<Content> = self
+            .client
+            .get_async(&format!("{}/api/v1/trending", instance.uri))
+            .await?
+            .json::<Vec<Video>>()
+            .await?
+            .into_iter()
+            .map(|x| Content::Video(x))
+            .collect();
+
+        // Fix thumbnail urls not having domain
+        for item in data.iter_mut() {
+            match item {
+                Content::Video(video) => {
+                    for thumbnail in &mut video.thumbnails {
+                        thumbnail.url = format!("{}{}", &instance.uri, &thumbnail.url);
+                    }
+                },
+                _ => ()
+            }
+        }
+
         Ok(data)
     }
 }

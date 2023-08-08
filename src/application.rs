@@ -138,8 +138,6 @@ impl PryvidApplication {
         // settings.reset("instances");
         // ---
 
-        println!("{}", settings.string("instances"));
-
         Ok(serde_json::from_str(&settings.string("instances"))?)
     }
 

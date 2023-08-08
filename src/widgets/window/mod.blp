@@ -9,7 +9,13 @@ template $PryvidWindow : Adw.ApplicationWindow {
     Box {
       orientation: vertical;
 
-      HeaderBar header_bar {
+      Adw.HeaderBar {
+
+        title-widget: Adw.ViewSwitcher {
+          stack: view_stack;
+          policy: wide;
+        };
+        
         [end]
         MenuButton {
           icon-name: "open-menu-symbolic";
@@ -17,10 +23,40 @@ template $PryvidWindow : Adw.ApplicationWindow {
         }
       }
 
-      EditableLabel label {}
+      Adw.ViewStack view_stack {
+        Adw.ViewStackPage {
+          icon-name: "people-symbolic";
+          title: "Popular";
+
+          child: $ContentGrid popular_grid {};
+        }
+        Adw.ViewStackPage {
+          icon-name: "profit-symbolic";
+          title: "Trending";
+          child: $ContentGrid trending_grid {};
+        }
+      }
     }
   }
 }
+
+
+//MenuButton {
+//  icon-name: "open-menu-symbolic";
+//  menu-model: primary_menu;
+//}
+
+
+//Adw.ViewStack view_stack {
+//  Adw.ViewStackPage popular_page {
+//    icon-name: "people-symbolic";
+//    title: "Popular";
+//  }
+//  Adw.ViewStackPage trending_page {
+//    icon-name: "profit-symbolic";
+//    title: "Trending";
+//  }
+//}
 
 menu primary_menu {
   section {

@@ -8,5 +8,9 @@
     <file preprocess="xml-stripblanks" alias="new_instance_window.ui">widgets/new_instance_window/mod.ui</file>
     <file preprocess="xml-stripblanks" alias="loading_window.ui">widgets/loading_window/mod.ui</file>
     <file preprocess="xml-stripblanks" alias="curation_window.ui">widgets/curation_window/mod.ui</file>
+    <file preprocess="xml-stripblanks" alias="content_grid.ui">widgets/content_grid/mod.ui</file>
+    <file preprocess="xml-stripblanks" alias="video_button.ui">widgets/video_button/mod.ui</file>
+    <file preprocess="xml-stripblanks" alias="async_image.ui">widgets/async_image/mod.ui</file>
+    <file compressed="true">style.css</file>
   </gresource>
 </gresources>

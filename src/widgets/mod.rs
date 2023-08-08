@@ -6,3 +6,6 @@ pub mod new_instance_window;
 pub mod onboarding;
 pub mod preferences;
 pub mod window;
+pub mod content_grid;
+pub mod video_button;
+pub mod async_image;

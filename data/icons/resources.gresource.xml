@@ -3,5 +3,7 @@
   <gresource prefix="/dev/quark97/Pryvid/icons/scalable/actions/">
     <file preprocess="xml-stripblanks">server-pick-symbolic.svg</file>
     <file preprocess="xml-stripblanks">file-manager-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">profit-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">people-symbolic.svg</file>
   </gresource>
 </gresources>

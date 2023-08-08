@@ -1,4 +1,3 @@
-use crate::appmodel::AppModel;
 use adw::subclass::prelude::*;
 use glib::clone;
 use gtk::glib::{MainContext, Priority, ControlFlow};
@@ -7,6 +6,10 @@ use gtk::{gio, glib};
 use std::sync::Arc;
 use std::{cell::OnceCell, thread};
 
+use crate::api::Content;
+use crate::appmodel::AppModel;
+use crate::widgets::content_grid::ContentGrid;
+
 mod imp {
 
     use super::*;
@@ -14,13 +17,14 @@ mod imp {
     #[derive(Debug, Default, gtk::CompositeTemplate)]
     #[template(resource = "/dev/quark97/Pryvid/window.ui")]
     pub struct PryvidWindow {
-        // Template widgets
-        #[template_child]
-        pub header_bar: TemplateChild<gtk::HeaderBar>,
-        #[template_child]
-        pub label: TemplateChild<gtk::EditableLabel>,
         #[template_child]
         pub toast_overlay: TemplateChild<adw::ToastOverlay>,
+        #[template_child]
+        pub view_stack: TemplateChild<adw::ViewStack>,
+        #[template_child]
+        pub popular_grid: TemplateChild<ContentGrid>,
+        #[template_child]
+        pub trending_grid: TemplateChild<ContentGrid>,
 
         pub model: OnceCell<Arc<AppModel>>,
     }
@@ -93,23 +97,20 @@ impl PryvidWindow {
     }
 
     fn fetch_startup(&self) {
-        let (sender, receiver) = MainContext::channel(Priority::default());
-        let invidious = self.model().invidious();
         let imp = self.imp();
 
-        thread::spawn(move || {
-            sender
-                .send(invidious.stats())
-                .expect("Failed to send message.");
-        });
-        receiver.attach(
-            None,
-            clone!(@weak imp => @default-return ControlFlow::Break,
-                move |stats| {
-                    imp.label.set_text(&format!("{:?}", stats));
-                    ControlFlow::Continue
-                }
-            ),
-        );
+        MainContext::default().spawn_local(clone!(@weak self as window => async move {
+            let invidious = window.model().invidious();
+            let popular = invidious.popular();
+            let trending = invidious.trending();
+
+            let (popular, trending) = futures::join!(popular, trending);
+            if let Ok(content) = popular {
+                window.imp().popular_grid.set_content(content);
+            }
+            if let Ok(content) = trending {
+                window.imp().trending_grid.set_content(content);
+            }
+        }));
     }
 }

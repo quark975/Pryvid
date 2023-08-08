@@ -1,0 +1,29 @@
+using Gtk 4.0;
+
+template $AsyncImage : Box {
+  valign: fill;
+  halign: fill;
+  vexpand: true;
+  hexpand: true;
+
+  Stack stack {
+    valign: fill;
+    halign: fill;
+    vexpand: true;
+    hexpand: true;
+
+    StackPage {
+      name: "spinner";
+      child: Spinner spinner {
+        valign: center;
+        halign: center;
+      };
+    }
+
+    StackPage {
+      name: "picture";
+      child: Picture picture {};
+    }
+  }
+}
+

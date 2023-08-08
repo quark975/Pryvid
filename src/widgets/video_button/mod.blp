@@ -1,0 +1,43 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $VideoButton : Button {
+  hexpand: false;
+  vexpand: false;
+  halign: center;
+  valign: center;
+  Adw.Clamp {
+    orientation: horizontal;
+    maximum-size: 320;
+    Box {
+      orientation: vertical;
+      valign: center;
+      halign: center;
+      spacing: 5;
+
+      $AsyncImage thumbnail_image {
+        width-request: 320;
+        height-request: 180;
+        halign: fill;
+        valign: fill;
+
+        styles ["thumbnail"]
+      }
+      Label title_label {
+        halign: start;
+
+        wrap: true;
+        wrap-mode: word;
+        styles ["body"]
+      }
+      Label author_label {
+        halign: start;
+
+        wrap: true;
+        wrap-mode: word;
+        styles ["heading"]
+      }
+    }
+  }
+  styles ["flat"]
+}
