@@ -56,8 +56,8 @@ impl ContentGrid {
                     let video_button = VideoButton::new(&video);
                     self.imp().flowbox.append(&video_button);
                 }
-                Content::Channel(channel) => continue,
-                Content::Playlist(playlist) => continue,
+                Content::Channel(channel) => continue, // TODO: Implement
+                Content::Playlist(playlist) => continue, // TODO: Implement
             }
         }
     }

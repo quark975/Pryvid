@@ -6,22 +6,37 @@ template $VideoButton : Button {
   vexpand: false;
   halign: center;
   valign: center;
+
+  styles ["flat"]
+
   Adw.Clamp {
     orientation: horizontal;
-    maximum-size: 320;
+    maximum-size: 280;
     Box {
       orientation: vertical;
       valign: center;
       halign: center;
       spacing: 5;
 
-      $AsyncImage thumbnail_image {
-        width-request: 320;
-        height-request: 180;
-        halign: fill;
-        valign: fill;
+      Overlay {
+        [overlay]
+        Label length_label {
+          valign: end;
+          halign: end;
+          margin-end: 5;
+          margin-bottom: 5;
 
-        styles ["thumbnail"]
+          styles ["video-time"]
+        }
+        
+        $AsyncImage thumbnail_image {
+          width-request: 320;
+          height-request: 180;
+          halign: fill;
+          valign: fill;
+
+          styles ["thumbnail"]
+        }
       }
       Label title_label {
         halign: start;
@@ -30,14 +45,27 @@ template $VideoButton : Button {
         wrap-mode: word;
         styles ["body"]
       }
-      Label author_label {
+      Button author_button {
         halign: start;
 
-        wrap: true;
-        wrap-mode: word;
-        styles ["heading"]
+        styles ["heading", "flat", "author"]
+      }
+      Box {
+        orientation: horizontal;
+        homogeneous: true;
+        halign: fill;
+        hexpand: true;
+
+        Label published_label {
+          halign: start;
+          styles ["caption-heading"]
+        }
+
+        Label views_label {
+          halign: end;
+          styles ["caption-heading"]
+        }
       }
     }
   }
-  styles ["flat"]
 }
