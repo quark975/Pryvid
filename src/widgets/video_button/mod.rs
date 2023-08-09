@@ -1,10 +1,11 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use glib::{BindingFlags, Object, Properties};
+use glib::{BindingFlags, Object, Properties, clone, subclass::Signal, ffi::GVariant};
 use gtk::glib;
 use gtk::CompositeTemplate;
 use std::cell::RefCell;
 use std::time::Duration;
+use once_cell::sync::Lazy;
 
 use crate::api::Video;
 use crate::widgets::async_image::AsyncImage;
@@ -42,16 +43,21 @@ mod imp {
         views: RefCell<u64>,
         #[property(get, set = Self::set_length)]
         length: RefCell<u32>,
+        #[property(get, set)]
+        author_id: RefCell<String>,
+        #[property(get, set)]
+        video_id: RefCell<String>,
     }
 
     #[glib::object_subclass]
     impl ObjectSubclass for VideoButton {
         const NAME: &'static str = "VideoButton";
         type Type = super::VideoButton;
-        type ParentType = gtk::Button;
+        type ParentType = gtk::Box;
 
         fn class_init(klass: &mut Self::Class) {
             klass.bind_template();
+            klass.bind_template_callbacks();
         }
         fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
             obj.init_template();
@@ -76,22 +82,23 @@ mod imp {
 
             let obj = self.obj();
             obj.bind_property::<AsyncImage>("thumbnail", self.thumbnail_image.as_ref(), "uri")
-                .flags(BindingFlags::SYNC_CREATE)
+                .sync_create()
                 .build();
             obj.bind_property::<gtk::Label>("title", self.title_label.as_ref(), "label")
-                .flags(BindingFlags::SYNC_CREATE)
+                .sync_create()
                 .build();
             obj.bind_property::<gtk::Button>("author", self.author_button.as_ref(), "label")
-                .flags(BindingFlags::SYNC_CREATE)
+                .sync_create()
                 .build();
             obj.bind_property::<gtk::Label>("published", self.published_label.as_ref(), "label")
-                .flags(BindingFlags::SYNC_CREATE)
+                .sync_create()
                 .build();
         }
     }
     impl WidgetImpl for VideoButton {}
-    impl ButtonImpl for VideoButton {}
+    impl BoxImpl for VideoButton {}
 
+    #[gtk::template_callbacks]
     impl VideoButton {
         fn set_length(&self, number: u32) {
             let string = if number == 0 {
@@ -124,13 +131,23 @@ mod imp {
             };
             self.views_label.set_text(&format!("{} views", string));
         }
+
+        #[template_callback]
+        fn on_video_clicked(&self, _: gtk::Button) {
+            self.obj().activate_action("win.open-video", Some(&self.video_id.borrow().to_variant())).unwrap();
+        }
+
+        #[template_callback]
+        fn on_author_clicked(&self, _: gtk::Button) {
+            self.obj().activate_action("win.open-channel", Some(&self.author_id.borrow().to_variant())).unwrap();
+        }
     }
 }
 
 glib::wrapper! {
     pub struct VideoButton(ObjectSubclass<imp::VideoButton>)
-        @extends gtk::Button, gtk::Widget,
-        @implements gtk::Accessible, gtk::Actionable, gtk::Buildable, gtk::ConstraintTarget;
+        @extends gtk::Box, gtk::Widget,
+        @implements gtk::Accessible, gtk::Orientable, gtk::Buildable, gtk::ConstraintTarget;
 }
 
 impl VideoButton {
@@ -152,6 +169,8 @@ impl VideoButton {
             .property("length", &video.length)
             .property("published", &video.published)
             .property("views", &video.views)
+            .property("author-id", &video.author_id)
+            .property("video-id", &video.id)
             .build()
     }
 }

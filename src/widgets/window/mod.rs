@@ -1,5 +1,6 @@
 use adw::subclass::prelude::*;
 use glib::clone;
+use gtk::glib::ffi::GVariant;
 use gtk::glib::{ControlFlow, MainContext, Priority};
 use gtk::prelude::*;
 use gtk::{gio, glib};
@@ -88,8 +89,27 @@ impl PryvidWindow {
                 }
             })
             .build();
+        let open_channel_action = gio::ActionEntry::builder("open-channel")
+            .parameter_type(Some(&String::static_variant_type()))
+            .activate(move |win: &Self, _, param| {
+                if let Some(param) = param {
+                    let channel_id = param.get::<String>().unwrap();
+                    println!("{channel_id}");
+                }
+            })
+            .build();
 
-        self.add_action_entries([notify_action]);
+        let open_video_action = gio::ActionEntry::builder("open-video")
+            .parameter_type(Some(&String::static_variant_type()))
+            .activate(move |win: &Self, _, param| {
+                if let Some(param) = param {
+                    let video_id = param.get::<String>().unwrap();
+                    println!("{video_id}");
+                }
+            })
+            .build();
+
+        self.add_action_entries([notify_action, open_channel_action, open_video_action]);
     }
 
     fn model(&self) -> Arc<AppModel> {

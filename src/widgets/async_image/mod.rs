@@ -17,10 +17,8 @@ mod imp {
     pub struct AsyncImage {
         #[template_child]
         stack: TemplateChild<gtk::Stack>,
-
         #[template_child]
         spinner: TemplateChild<gtk::Spinner>,
-
         #[template_child]
         picture: TemplateChild<gtk::Picture>,
 

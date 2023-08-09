@@ -1,13 +1,11 @@
 using Gtk 4.0;
 using Adw 1;
 
-template $VideoButton : Button {
+template $VideoButton : Box {
   hexpand: false;
   vexpand: false;
   halign: center;
   valign: center;
-
-  styles ["flat"]
 
   Adw.Clamp {
     orientation: horizontal;
@@ -16,37 +14,51 @@ template $VideoButton : Button {
       orientation: vertical;
       valign: center;
       halign: center;
-      spacing: 5;
+      spacing: 2;
 
-      Overlay {
-        [overlay]
-        Label length_label {
-          valign: end;
-          halign: end;
-          margin-end: 5;
-          margin-bottom: 5;
+      Button {
+        clicked => $on_video_clicked() swapped;
+        Box {
+          orientation: vertical;
+          halign: start;
+          spacing: 5;
 
-          styles ["video-time"]
+          Overlay {
+            [overlay]
+            Label length_label {
+              valign: end;
+              halign: end;
+              margin-end: 5;
+              margin-bottom: 5;
+
+              styles ["video-time"]
+            }
+            
+            $AsyncImage thumbnail_image {
+              width-request: 320;
+              height-request: 180;
+              halign: fill;
+              valign: fill;
+
+              styles ["thumbnail"]
+            }
+          }
+          Label title_label {
+            halign: start;
+
+            wrap: true;
+            wrap-mode: word;
+            styles ["body"]
+          }
         }
         
-        $AsyncImage thumbnail_image {
-          width-request: 320;
-          height-request: 180;
-          halign: fill;
-          valign: fill;
-
-          styles ["thumbnail"]
-        }
+        styles ["flat"]
       }
-      Label title_label {
-        halign: start;
 
-        wrap: true;
-        wrap-mode: word;
-        styles ["body"]
-      }
       Button author_button {
         halign: start;
+
+        clicked => $on_author_clicked() swapped;
 
         styles ["heading", "flat", "author"]
       }
@@ -55,6 +67,9 @@ template $VideoButton : Button {
         homogeneous: true;
         halign: fill;
         hexpand: true;
+        margin-start: 10;
+        margin-end: 10;
+        margin-top: 4;
 
         Label published_label {
           halign: start;
