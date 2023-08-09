@@ -145,9 +145,6 @@ impl VideoButton {
                     .expect("No thumbnails available")
                     .url
             };
-        if video.length == 0 {
-            println!("{:?}", &video);
-        }
         Object::builder()
             .property("thumbnail", thumbnail_url)
             .property("title", &video.title)

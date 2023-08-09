@@ -73,12 +73,9 @@ mod imp {
                 return;
             }
 
-            let main_context = MainContext::default();
-
-            main_context.spawn_local(
+            MainContext::default().spawn_local(
                 glib::clone!(@strong value, @weak self as _self => async move {
                     let file = gio::File::for_uri(&value);
-                    println!("{}", value);
                     // TODO: Do some error handling so images don't look like their loading when they failed
                     match file.read_future(Priority::default()).await {
                         Ok(stream) => {

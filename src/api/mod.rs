@@ -185,13 +185,6 @@ pub async fn fetch_instances() -> Result<Instances, Error> {
 
     // Ping in batches of 8 at a time
     for instances in instances.chunks(4).into_iter() {
-        println!(
-            "{:?}",
-            instances
-                .iter()
-                .map(|x| x.uri.clone())
-                .collect::<Vec<String>>()
-        );
         join_all(instances.iter().map(|x| x.update_info())).await;
     }
     // join_all(instances.iter().map(|x| x.update_info())).await;
@@ -408,7 +401,6 @@ impl InvidiousClient {
     }
     pub async fn popular(&self) -> Result<Vec<Content>, Error> {
         let instance = self.get_instance()?;
-        println!("{}", &instance.uri);
         let mut data: Vec<Content> = self
             .client
             .get_async(&format!("{}/api/v1/popular", instance.uri))
