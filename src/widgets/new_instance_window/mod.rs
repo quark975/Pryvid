@@ -66,35 +66,27 @@ mod imp {
                 self.instance_entry.set_sensitive(false);
                 self.create_button.set_sensitive(false);
 
-                let (sender, receiver) = MainContext::channel(Priority::default());
-                thread::spawn(move || {
-                    sender
-                        .send(Instance::from_uri(&text))
-                        .expect("Failed to send message.");
-                });
-                receiver.attach(None, clone!(@weak self as window => @default-return ControlFlow::Break,
-                    move |result: Result<Instance, Error>| {
-                        match result {
-                            Ok(instance) => {
-                                match window.obj().model().invidious().push_instance(Arc::new(instance)) {
-                                    Ok(_) => window.obj().emit_by_name::<()>("added-instance", &[]),
-                                    Err(_) => window.obj().display_error("Instance is already added!"),
-                                }
-                            },
-                            Err(err) => {
-                                let response = match err {
-                                    Error::DeserializeError(_) => "DeserializeError: Likely not an Invidious server.".into(),
-                                    _ => err.to_string()
-                                };
-                                window.obj().display_error(&response);
-                            },
-                        }
-                        window.instance_entry.set_sensitive(true);
-                        window.create_button.set_sensitive(true);
+                MainContext::default().spawn_local(clone!(@weak self as window, @strong text => async move {
+                    let instance_result = Instance::from_uri(&text).await;
 
-                        ControlFlow::Break
+                    match instance_result {
+                        Ok(instance) => {
+                            match window.obj().model().invidious().push_instance(Arc::new(instance)) {
+                                Ok(_) => window.obj().emit_by_name::<()>("added-instance", &[]),
+                                Err(_) => window.obj().display_error("Instance is already added!"),
+                            }
+                        },
+                        Err(err) => {
+                            let response = match err {
+                                Error::DeserializeError(_) => "DeserializeError: Likely not an Invidious server.".into(),
+                                _ => err.to_string()
+                            };
+                            window.obj().display_error(&response);
+                        },
                     }
-                ));
+                    window.instance_entry.set_sensitive(true);
+                    window.create_button.set_sensitive(true);
+                }));
             }
         }
     }

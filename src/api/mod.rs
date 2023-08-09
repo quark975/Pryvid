@@ -185,7 +185,13 @@ pub async fn fetch_instances() -> Result<Instances, Error> {
 
     // Ping in batches of 8 at a time
     for instances in instances.chunks(4).into_iter() {
-        println!("{:?}", instances.iter().map(|x| x.uri.clone()).collect::<Vec<String>>());
+        println!(
+            "{:?}",
+            instances
+                .iter()
+                .map(|x| x.uri.clone())
+                .collect::<Vec<String>>()
+        );
         join_all(instances.iter().map(|x| x.update_info())).await;
     }
     // join_all(instances.iter().map(|x| x.update_info())).await;
@@ -222,9 +228,12 @@ fn format_uri(uri: &str) -> String {
 }
 
 impl Instance {
-    pub fn from_uri(uri: &str) -> Result<Instance, Error> {
+    pub async fn from_uri(uri: &str) -> Result<Instance, Error> {
         let uri = format_uri(uri);
-        let response: StatsResponse = isahc::get(format!("{}/api/v1/stats", &uri))?.json()?;
+        let response: StatsResponse = isahc::get_async(format!("{}/api/v1/stats", &uri))
+            .await?
+            .json()
+            .await?;
         let instance = Instance {
             uri,
             info: Arc::new(RwLock::new(InstanceInfo {
@@ -233,7 +242,7 @@ impl Instance {
                 open_registrations: response.open_registrations,
             })),
         };
-        instance.update_info();
+        instance.update_info().await;
         Ok(instance)
     }
 
