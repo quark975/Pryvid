@@ -74,7 +74,6 @@ mod imp {
             MainContext::default().spawn_local(
                 glib::clone!(@strong value, @weak self as _self => async move {
                     let file = gio::File::for_uri(&value);
-                    // TODO: Do some error handling so images don't look like their loading when they failed
                     match file.read_future(Priority::default()).await {
                         Ok(stream) => {
                             if let Ok(pixbuf) = Pixbuf::from_stream_future(&stream).await {
@@ -85,6 +84,7 @@ mod imp {
                             }
                         },
                         Err(error) => {
+                            _self.stack.set_visible_child_name("error");
                             println!("{:?}", error);
                         }
                     }

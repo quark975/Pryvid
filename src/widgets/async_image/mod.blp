@@ -1,4 +1,5 @@
 using Gtk 4.0;
+using Adw 1;
 
 template $AsyncImage : Box {
   valign: fill;
@@ -23,6 +24,20 @@ template $AsyncImage : Box {
     StackPage {
       name: "picture";
       child: Picture picture {};
+    }
+
+    StackPage {
+      name: "error";
+      child: Image {
+        icon-name: "image-missing-symbolic";
+        icon-size: large;
+        vexpand: true;
+        hexpand: true;
+        valign: fill;
+        halign: fill;
+
+        styles ["icon"]
+      };
     }
   }
 }
