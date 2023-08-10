@@ -11,6 +11,8 @@ use crate::api::Content;
 use crate::appmodel::AppModel;
 use crate::widgets::content_grid::ContentGrid;
 
+use super::content_grid::ContentGridState;
+
 mod imp {
 
     use super::*;
@@ -124,17 +126,41 @@ impl PryvidWindow {
             let popular = invidious.popular();
             let trending = invidious.trending();
 
+            let imp = window.imp();
+            imp.popular_grid.set_state(ContentGridState::Loading);
+            imp.trending_grid.set_state(ContentGridState::Loading);
+
             let (popular, trending) = futures::join!(popular, trending);
-            if let Ok(content) = popular {
-                window.imp().popular_grid.set_content(content);
-            } else {
-                println!("Failed to get popular.")
-            }
-            if let Ok(content) = trending {
-                window.imp().trending_grid.set_content(content);
-            } else {
-                println!("Failed to get trending.")
-            }
+            window.imp().popular_grid.set_state(
+                match popular {
+                    Ok(content) => {
+                        if content.len() == 0 {
+                            // TODO: Add a way to know which instance made the request
+                            ContentGridState::NoContent(("No Popular Videos".into(), "Try closing and reopening the app.".into()))
+                        } else {
+                            ContentGridState::Success(content)
+                        }
+                    },
+                    Err(error) => {
+                        ContentGridState::Error(error.to_string())
+                    }
+                }
+            );
+            window.imp().trending_grid.set_state(
+                match trending {
+                    Ok(content) => {
+                        if content.len() == 0 {
+                            // TODO: Add a refresh button
+                            ContentGridState::NoContent(("No Trending Videos".into(), "Try closing and reopening the app.".into()))
+                        } else {
+                            ContentGridState::Success(content)
+                        }
+                    },
+                    Err(error) => {
+                        ContentGridState::Error(error.to_string())
+                    }
+                }
+            );
         }));
     }
 }
