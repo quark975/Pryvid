@@ -1,6 +1,7 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use adw::ResponseAppearance;
+use futures::stream::{AbortHandle, Abortable};
 use gtk::glib::{clone, closure_local, ControlFlow, MainContext, Priority};
 use gtk::{glib, CompositeTemplate};
 use std::{cell::OnceCell, sync::Arc, thread};
@@ -179,17 +180,27 @@ impl PryvidPreferencesWindow {
 
     fn show_discover_dialog(&self) {
         MainContext::default().spawn_local(clone!(@weak self as window => async move {
+            let (abort_handle, abort_registration) = AbortHandle::new_pair();
+            let future = Abortable::new(fetch_instances(), abort_registration);
+
             let loading_window = LoadingWindow::new();
             loading_window.set_modal(true);
             loading_window.set_transient_for(Some(&window));
+            loading_window.connect_closure("canceled", false, closure_local!(@strong abort_handle => move |window: LoadingWindow| {
+                abort_handle.abort();
+                window.close();
+            }));
             loading_window.present();
 
-            let instances = fetch_instances().await;
-            loading_window.close();
+            if let Ok(instances) = future.await {
+                loading_window.close();
 
-            // TODO: Do better error management
-            if let Ok(instances) = instances {
-                window.show_curation_dialog(instances);
+                // TODO: Do better error management
+                if let Ok(instances) = instances {
+                    window.show_curation_dialog(instances);
+                }
+            } else {
+                println!("aborted!");
             }
         }));
     }

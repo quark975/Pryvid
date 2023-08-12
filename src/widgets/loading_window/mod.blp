@@ -4,20 +4,35 @@ using Adw 1;
 template $LoadingWindow : Adw.Window {
   Box {
     orientation: vertical;
-
     margin-end: 20;
     margin-start: 20;
     margin-bottom: 20;
     margin-top: 20;
+    spacing: 10;
 
-    Spinner {
-      spinning: true;
+    Box {
+      orientation: horizontal;
+      spacing: 10;
+
+      Spinner {
+        spinning: true;
+      }
+
+      Label {
+        label: "Loading...";
+        
+        styles ["title-1"]
+      }
     }
 
-    Label {
-      label: "Loading...";
+    Button {
+      label: "Cancel";
+      hexpand: false;
+      halign: center;
+
+      clicked => $on_cancel_clicked() swapped;
       
-      styles ["title-1"]
+      styles ["pill"]
     }
   }
 }

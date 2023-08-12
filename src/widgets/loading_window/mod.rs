@@ -1,7 +1,10 @@
 use adw::subclass::prelude::*;
+use adw::prelude::*;
 use glib::Object;
 use gtk::glib;
-use gtk::CompositeTemplate;
+use gtk::{CompositeTemplate, template_callbacks};
+use gtk::glib::subclass::Signal;
+use once_cell::sync::Lazy;
 
 mod imp {
 
@@ -19,6 +22,7 @@ mod imp {
 
         fn class_init(klass: &mut Self::Class) {
             klass.bind_template();
+            klass.bind_template_callbacks();
         }
 
         fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
@@ -26,10 +30,27 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for LoadingWindow {}
+    impl ObjectImpl for LoadingWindow {
+        fn signals() -> &'static [glib::subclass::Signal] {
+            static SIGNALS: Lazy<Vec<Signal>> =
+                Lazy::new(|| vec![
+                    Signal::builder("canceled")
+                        .build()
+                ]);
+            SIGNALS.as_ref()
+        }
+    }
     impl WidgetImpl for LoadingWindow {}
     impl WindowImpl for LoadingWindow {}
     impl AdwWindowImpl for LoadingWindow {}
+
+    #[template_callbacks]
+    impl LoadingWindow {
+        #[template_callback]
+        fn on_cancel_clicked(&self) {
+            self.obj().emit_by_name::<()>("canceled", &[]);
+        }
+    }
 }
 
 glib::wrapper! {
