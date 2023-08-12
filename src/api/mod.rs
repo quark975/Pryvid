@@ -1,4 +1,5 @@
 use futures::future::join_all;
+use isahc::http::StatusCode;
 use isahc::prelude::*;
 use isahc::{config::RedirectPolicy, HttpClient};
 use lazy_static::lazy_static;
@@ -32,6 +33,8 @@ pub enum Error {
     AtLeastOneInstance,
     #[error("Instance not found")]
     InstanceNotFound,
+    #[error("Instance returned bad status code")]
+    BadStatusCode,
 }
 
 impl<T> From<PoisonError<T>> for Error {
@@ -266,49 +269,54 @@ impl Instance {
 
     pub async fn ping(&self, endpoint: Option<&str>) -> Result<u128, Error> {
         let elapsed = Instant::now();
-        HTTP_CLIENT
+        let response = HTTP_CLIENT
             .get_async(format!("{}{}", self.uri, endpoint.unwrap_or("/")))
             .await?;
-        let elapsed = elapsed.elapsed();
-        Ok(elapsed.as_millis())
+        if response.status() == StatusCode::OK {
+            let elapsed = elapsed.elapsed();
+            Ok(elapsed.as_millis())
+        } else {
+            Err(Error::BadStatusCode)
+        }
     }
 
     // Data Requests
     pub async fn stats(&self) -> Result<StatsResponse, Error> {
-        let data: StatsResponse = HTTP_CLIENT
+        let mut response = HTTP_CLIENT
             .get_async(&format!("{}/api/v1/stats", self.uri))
-            .await?
-            .json()
             .await?;
-        Ok(data)
+        if response.status() == StatusCode::OK {
+            Ok(response.json::<StatsResponse>().await?)
+        } else {
+            Err(Error::BadStatusCode)
+        }
     }
-    pub async fn popular(&self) -> Result<Vec<Content>, Error> {
-        let mut data: Vec<Content> = HTTP_CLIENT
-            .get_async(&format!("{}/api/v1/popular", self.uri))
-            .await?
-            .json::<Vec<Video>>()
-            .await?
-            .into_iter()
-            .map(|x| Content::Video(x))
-            .collect();
+    
+    async fn fetch_video_page(&self, endpoint: &str) -> Result<Vec<Content>, Error> {
+        let mut response = HTTP_CLIENT
+            .get_async(&format!("{}{}", self.uri, endpoint))
+            .await?;
 
-        fix_thumbnail_urls(&self.uri, &mut data);
-        Ok(data)
+        if response.status() == StatusCode::OK {
+            let mut data: Vec<Content> = response
+                .json::<Vec<Video>>()
+                .await?
+                .into_iter()
+                .map(|x| Content::Video(x))
+                .collect();
+            fix_thumbnail_urls(&self.uri, &mut data);
+            Ok(data)
+        } else {
+            Err(Error::BadStatusCode)
+        }
+    }
+
+    pub async fn popular(&self) -> Result<Vec<Content>, Error> {
+        self.fetch_video_page("/api/v1/popular").await
     }
 
     pub async fn trending(&self) -> Result<Vec<Content>, Error> {
-        let mut data: Vec<Content> = HTTP_CLIENT
-            .get_async(&format!("{}/api/v1/trending", self.uri))
-            .await?
-            .json::<Vec<Video>>()
-            .await?
-            .into_iter()
-            .map(|x| Content::Video(x))
-            .collect();
-
-        fix_thumbnail_urls(&self.uri, &mut data);
-
-        Ok(data)
+        self.fetch_video_page("/api/v1/trending").await
     }
 }
 
