@@ -1,9 +1,9 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use glib::Object;
+use gtk::glib;
 use gtk::glib::Properties;
 use gtk::CompositeTemplate;
-use gtk::glib;
 use std::cell::RefCell;
 
 mod imp {

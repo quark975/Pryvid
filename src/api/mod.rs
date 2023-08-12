@@ -154,7 +154,7 @@ pub struct InvidiousClient {
 lazy_static! {
     static ref HTTP_CLIENT: HttpClient = HttpClient::builder()
         .timeout(Duration::from_secs(10))
-        .redirect_policy(RedirectPolicy::Limit(2))
+        .redirect_policy(RedirectPolicy::Limit(10))
         .build()
         .unwrap();
 }
@@ -291,7 +291,7 @@ impl Instance {
             Err(Error::BadStatusCode)
         }
     }
-    
+
     async fn fetch_video_page(&self, endpoint: &str) -> Result<Vec<Content>, Error> {
         let mut response = HTTP_CLIENT
             .get_async(&format!("{}{}", self.uri, endpoint))

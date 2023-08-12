@@ -3,8 +3,8 @@ use glib::clone;
 use gtk::glib::MainContext;
 use gtk::prelude::*;
 use gtk::{gio, glib};
-use std::sync::Arc;
 use std::cell::OnceCell;
+use std::sync::Arc;
 
 use crate::appmodel::AppModel;
 use crate::widgets::content_grid::ContentGrid;
