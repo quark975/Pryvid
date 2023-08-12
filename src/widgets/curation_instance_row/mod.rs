@@ -1,8 +1,6 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use glib::clone;
-use glib::subclass::Signal;
-use glib::Object;
+use glib::{clone, subclass::Signal, Object, Properties};
 use gtk::{glib, Align};
 use once_cell::sync::Lazy;
 use std::cell::{Cell, OnceCell};
@@ -14,12 +12,14 @@ mod imp {
 
     use super::*;
 
-    #[derive(Default, Debug)]
+    #[derive(Default, Debug, Properties)]
+    #[properties(wrapper_type = super::CurationInstanceRow)]
     pub struct CurationInstanceRow {
         pub instance: OnceCell<Arc<Instance>>,
         pub ping_label: OnceCell<gtk::Label>,
         pub add_button: OnceCell<gtk::Button>,
         pub ping_state: Cell<PingState>,
+        #[property(get, set = Self::set_added)]
         pub added: Cell<bool>,
     }
 
@@ -36,11 +36,34 @@ mod imp {
                 Lazy::new(|| vec![Signal::builder("toggle").build()]);
             SIGNALS.as_ref()
         }
+
+        fn properties() -> &'static [glib::ParamSpec] {
+            Self::derived_properties()
+        }
+
+        fn set_property(&self, id: usize, value: &glib::Value, pspec: &glib::ParamSpec) {
+            self.derived_set_property(id, value, pspec)
+        }
+
+        fn property(&self, id: usize, pspec: &glib::ParamSpec) -> glib::Value {
+            self.derived_property(id, pspec)
+        }
     }
     impl WidgetImpl for CurationInstanceRow {}
     impl ListBoxRowImpl for CurationInstanceRow {}
     impl PreferencesRowImpl for CurationInstanceRow {}
     impl ExpanderRowImpl for CurationInstanceRow {}
+
+    impl CurationInstanceRow {
+        fn set_added(&self, added: bool) {
+            let button = self.add_button.get().unwrap();
+            if added {
+                button.set_icon_name("list-remove-symbolic");
+            } else {
+                button.set_icon_name("list-add-symbolic");
+            }
+        }
+    }
 }
 
 glib::wrapper! {
@@ -65,25 +88,24 @@ impl Default for PingState {
 
 impl CurationInstanceRow {
     pub fn new(instance: Arc<Instance>, is_added: bool) -> Self {
-        let obj: Self = Object::builder().build();
+        let obj: Self = Object::builder().property("added", is_added).build();
         obj.imp().instance.set(instance).unwrap();
         obj.build();
-        obj.set_added(is_added);
         obj
-    }
-
-    pub fn ping_state(&self) -> PingState {
-        self.imp().ping_state.get()
     }
 
     pub fn instance(&self) -> Arc<Instance> {
         self.imp().instance.get().unwrap().clone()
     }
 
-    pub fn set_state(&self, state: PingState) {
-        self.imp().ping_state.set(state.clone());
+    pub fn ping_state(&self) -> PingState {
+        self.imp().ping_state.get()
+    }
+
+    pub fn set_ping_state(&self, ping_state: PingState) {
+        self.imp().ping_state.set(ping_state);
         let label = self.ping_label();
-        match state {
+        match ping_state {
             PingState::NotPinged => label.set_text(""),
             PingState::Pinging => {
                 label.set_text("Pinging...");
@@ -102,26 +124,10 @@ impl CurationInstanceRow {
             PingState::Error => {
                 label.set_text("Failed");
                 label.set_css_classes(&["error"]);
+
+                let button = self.add_button();
             }
         }
-    }
-
-    pub fn set_add_button_visible(&self, is_visible: bool) {
-        self.add_button().set_visible(is_visible)
-    }
-
-    pub fn set_added(&self, added: bool) {
-        let button = self.imp().add_button.get().unwrap();
-        if added {
-            button.set_icon_name("list-remove-symbolic");
-        } else {
-            button.set_icon_name("list-add-symbolic");
-        }
-        self.imp().added.set(added);
-    }
-
-    pub fn added(&self) -> bool {
-        self.imp().added.get()
     }
 
     fn ping_label(&self) -> gtk::Label {
@@ -146,18 +152,26 @@ impl CurationInstanceRow {
         let info = instance.info.read().unwrap();
         self.add_info_row(
             "Popular Tab",
-            if info.has_popular {
-                "Available"
+            if let Some(has_popular) = info.has_popular {
+                if has_popular {
+                    "Available"
+                } else {
+                    "Unavailable"
+                }
             } else {
-                "Unavailable"
+                "Unknown"
             },
         );
         self.add_info_row(
             "Trending Tab",
-            if info.has_trending {
-                "Available"
+            if let Some(has_trending) = info.has_trending {
+                if has_trending {
+                    "Available"
+                } else {
+                    "Unavailable"
+                }
             } else {
-                "Unavailable"
+                "Unknown"
             },
         );
         self.add_info_row(

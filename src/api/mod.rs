@@ -73,8 +73,8 @@ pub struct Instance {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InstanceInfo {
-    pub has_trending: bool,
-    pub has_popular: bool,
+    pub has_trending: Option<bool>,
+    pub has_popular: Option<bool>,
     pub open_registrations: bool,
 }
 
@@ -182,8 +182,8 @@ pub async fn fetch_instances() -> Result<Instances, Error> {
                     uri: instance.uri,
                     info: Arc::new(RwLock::new(InstanceInfo {
                         open_registrations,
-                        has_trending: false,
-                        has_popular: false,
+                        has_trending: None,
+                        has_popular: None,
                     })),
                 }))
             } else {
@@ -240,8 +240,8 @@ impl Instance {
         let instance = Instance {
             uri,
             info: Arc::new(RwLock::new(InstanceInfo {
-                has_trending: false,
-                has_popular: false,
+                has_trending: None,
+                has_popular: None,
                 open_registrations: response.open_registrations,
             })),
         };
@@ -261,8 +261,8 @@ impl Instance {
         let has_trending = response.json::<Vec<Value>>().await.is_ok();
 
         let mut info = self.info.write()?;
-        info.has_popular = has_popular;
-        info.has_trending = has_trending;
+        info.has_popular = Some(has_popular);
+        info.has_trending = Some(has_trending);
 
         Ok(())
     }
@@ -327,8 +327,8 @@ impl InvidiousClient {
             vec![Arc::new(Instance {
                 uri: "https://vid.puffyan.us".into(),
                 info: Arc::new(RwLock::new(InstanceInfo {
-                    has_trending: true,
-                    has_popular: true,
+                    has_trending: Some(true),
+                    has_popular: Some(true),
                     open_registrations: true,
                 })),
             })]

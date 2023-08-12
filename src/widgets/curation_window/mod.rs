@@ -90,19 +90,19 @@ impl CurationWindow {
                 let row = child.downcast::<CurationInstanceRow>().unwrap();
                 let instance = row.instance();
 
-                row.set_state(PingState::Pinging);
+                row.set_ping_state(PingState::Pinging);
 
                 let mut ping = 0;
                 for _ in 0..3 {
                     if let Ok(result_ping) = instance.ping(None).await {
                         ping += result_ping / 3;
                     } else {
-                        row.set_state(PingState::Error);
+                        row.set_ping_state(PingState::Error);
                         continue 'outer
                     }
                 }
 
-                row.set_state(PingState::Success(ping));
+                row.set_ping_state(PingState::Success(ping));
             }
 
             instances_listbox.set_sort_func(move |row1, row2| {
@@ -111,13 +111,18 @@ impl CurationWindow {
                 if let PingState::Success(ping1) = row1.ping_state() {
                     if let PingState::Success(ping2) = row2.ping_state() {
                         if ping1 < ping2 {
-                            return Ordering::Smaller
+                            Ordering::Smaller
                         } else {
-                            return Ordering::Larger
+                            Ordering::Larger
                         }
+                    } else {
+                        Ordering::Smaller
                     }
+                } else if let PingState::Success(_) = row2.ping_state() {
+                    Ordering::Larger
+                } else {
+                    Ordering::Equal
                 }
-                Ordering::__Unknown(-1)
             });
         }));
     }
@@ -126,6 +131,12 @@ impl CurationWindow {
         let instances = self.instances();
         let instances_listbox = &self.imp().instances_listbox;
         for instance in instances {
+            {
+                let info = instance.info.read().unwrap();
+                if info.has_popular.is_none() || info.has_trending.is_none() {
+                    continue;
+                }
+            }
             let is_instance_added = self.model().invidious().is_added(&instance);
             let row = CurationInstanceRow::new(instance.clone(), is_instance_added);
             row.connect_closure("toggle", false, closure_local!(@watch self as window => move |row: CurationInstanceRow| {

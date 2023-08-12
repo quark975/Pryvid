@@ -119,18 +119,26 @@ impl InstanceRow {
             let info = instance.info.read().unwrap();
             self.add_info_row(
                 "Popular Tab",
-                if info.has_popular {
-                    "Available"
+                if let Some(has_popular) = info.has_popular {
+                    if has_popular {
+                        "Available"
+                    } else {
+                        "Unavailable"
+                    }
                 } else {
-                    "Unavailable"
+                    "Unknown"
                 },
             );
             self.add_info_row(
                 "Trending Tab",
-                if info.has_trending {
-                    "Available"
+                if let Some(has_trending) = info.has_trending {
+                    if has_trending {
+                        "Available"
+                    } else {
+                        "Unavailable"
+                    }
                 } else {
-                    "Unavailable"
+                    "Unknown"
                 },
             );
             self.add_info_row(
