@@ -9,3 +9,4 @@ pub mod onboarding;
 pub mod preferences;
 pub mod video_button;
 pub mod window;
+pub mod instance_indicator;

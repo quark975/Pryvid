@@ -10,10 +10,12 @@ use std::{cell::OnceCell, thread};
 use crate::api::Content;
 use crate::appmodel::AppModel;
 use crate::widgets::content_grid::ContentGrid;
+use crate::widgets::instance_indicator::InstanceIndicator;
 
 use super::content_grid::ContentGridState;
 
 mod imp {
+
 
     use super::*;
 
@@ -28,6 +30,10 @@ mod imp {
         pub popular_grid: TemplateChild<ContentGrid>,
         #[template_child]
         pub trending_grid: TemplateChild<ContentGrid>,
+        #[template_child]
+        pub popular_instance_indicator: TemplateChild<InstanceIndicator>,
+        #[template_child]
+        pub trending_instance_indicator: TemplateChild<InstanceIndicator>,
 
         pub model: OnceCell<Arc<AppModel>>,
     }
@@ -123,12 +129,16 @@ impl PryvidWindow {
 
         MainContext::default().spawn_local(clone!(@weak self as window => async move {
             let invidious = window.model().invidious();
-            let popular = invidious.popular();
-            let trending = invidious.trending();
+            let popular_instance = invidious.get_instance();
+            let trending_instance = invidious.get_instance();
+            let popular = popular_instance.popular();
+            let trending = trending_instance.trending();
 
             let imp = window.imp();
             imp.popular_grid.set_state(ContentGridState::Loading);
             imp.trending_grid.set_state(ContentGridState::Loading);
+            imp.popular_instance_indicator.set_uri(popular_instance.uri.clone());
+            imp.trending_instance_indicator.set_uri(trending_instance.uri.clone());
 
             let (popular, trending) = futures::join!(popular, trending);
             window.imp().popular_grid.set_state(

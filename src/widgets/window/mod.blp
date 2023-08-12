@@ -17,20 +17,36 @@ template $PryvidWindow : Adw.ApplicationWindow {
         };
         
         [end]
-        MenuButton {
-          icon-name: "open-menu-symbolic";
-          menu-model: primary_menu;
+        Box {
+          Stack {
+            visible-child-name: bind-property view_stack.visible-child-name;
+
+            StackPage {
+              name: "popular";
+              child: $InstanceIndicator popular_instance_indicator {};
+            }
+            StackPage {
+              name: "trending";
+              child: $InstanceIndicator trending_instance_indicator {};
+            }
+
+          }
+          MenuButton {
+            icon-name: "open-menu-symbolic";
+            menu-model: primary_menu;
+          }
         }
       }
 
       Adw.ViewStack view_stack {
         Adw.ViewStackPage {
+          name: "popular";
           icon-name: "people-symbolic";
           title: "Popular";
-
           child: $ContentGrid popular_grid {};
         }
         Adw.ViewStackPage {
+          name: "trending";
           icon-name: "profit-symbolic";
           title: "Trending";
           child: $ContentGrid trending_grid {};
@@ -39,24 +55,6 @@ template $PryvidWindow : Adw.ApplicationWindow {
     }
   }
 }
-
-
-//MenuButton {
-//  icon-name: "open-menu-symbolic";
-//  menu-model: primary_menu;
-//}
-
-
-//Adw.ViewStack view_stack {
-//  Adw.ViewStackPage popular_page {
-//    icon-name: "people-symbolic";
-//    title: "Popular";
-//  }
-//  Adw.ViewStackPage trending_page {
-//    icon-name: "profit-symbolic";
-//    title: "Trending";
-//  }
-//}
 
 menu primary_menu {
   section {

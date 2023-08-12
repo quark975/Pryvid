@@ -1,0 +1,40 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $InstanceIndicator : Box {
+  MenuButton menu_button {
+    icon-name: "info-symbolic";
+    popover: Popover {
+      ListBox {
+        selection-mode: none;
+        styles ["boxed-list"]
+
+        Adw.ActionRow instance_row {
+          title: "";
+        }
+      }
+      //Box {
+      //  styles ["card"]
+
+      //  Box {
+      //    orientation: horizontal;
+      //    spacing: 5;
+      //    margin-top: 10;
+      //    margin-bottom: 10;
+      //    margin-start: 10;
+      //    margin-end: 10;
+
+      //    Image {
+      //      icon-name: "network-server-symbolic";
+      //      icon-size: normal;
+      //    }
+
+      //    Label {
+      //      label: "https://inv.us.projectsegfau.lt";
+      //      styles ["heading"]
+      //    }
+      //  }
+      //}
+    };
+  }
+}
