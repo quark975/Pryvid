@@ -1,11 +1,9 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use glib::{BindingFlags, Object, Properties, clone, subclass::Signal, ffi::GVariant};
+use glib::{Object, Properties};
 use gtk::glib;
 use gtk::CompositeTemplate;
 use std::cell::RefCell;
-use std::time::Duration;
-use once_cell::sync::Lazy;
 
 use crate::api::Video;
 use crate::widgets::async_image::AsyncImage;
@@ -134,12 +132,19 @@ mod imp {
 
         #[template_callback]
         fn on_video_clicked(&self, _: gtk::Button) {
-            self.obj().activate_action("win.open-video", Some(&self.video_id.borrow().to_variant())).unwrap();
+            self.obj()
+                .activate_action("win.open-video", Some(&self.video_id.borrow().to_variant()))
+                .unwrap();
         }
 
         #[template_callback]
         fn on_author_clicked(&self, _: gtk::Button) {
-            self.obj().activate_action("win.open-channel", Some(&self.author_id.borrow().to_variant())).unwrap();
+            self.obj()
+                .activate_action(
+                    "win.open-channel",
+                    Some(&self.author_id.borrow().to_variant()),
+                )
+                .unwrap();
         }
     }
 }

@@ -1,14 +1,12 @@
-use adw::subclass::prelude::*;
 use adw::prelude::*;
+use adw::subclass::prelude::*;
 use glib::Object;
-use gtk::{glib, gio};
 use gtk::glib::Properties;
 use gtk::CompositeTemplate;
+use gtk::glib;
 use std::cell::RefCell;
 
 mod imp {
-
-    use gtk::Align;
 
     use super::*;
 
@@ -54,7 +52,8 @@ mod imp {
         fn constructed(&self) {
             self.parent_constructed();
 
-            self.obj().bind_property::<adw::ActionRow>("uri", self.instance_row.as_ref(), "title")
+            self.obj()
+                .bind_property::<adw::ActionRow>("uri", self.instance_row.as_ref(), "title")
                 .sync_create()
                 .build();
         }
@@ -62,7 +61,6 @@ mod imp {
     impl WidgetImpl for InstanceIndicator {}
     impl BoxImpl for InstanceIndicator {}
 }
-
 
 glib::wrapper! {
     pub struct InstanceIndicator(ObjectSubclass<imp::InstanceIndicator>)

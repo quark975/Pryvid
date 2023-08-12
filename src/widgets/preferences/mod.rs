@@ -2,11 +2,11 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use adw::ResponseAppearance;
 use futures::stream::{AbortHandle, Abortable};
-use gtk::glib::{clone, closure_local, ControlFlow, MainContext, Priority};
+use gtk::glib::{clone, closure_local, MainContext};
 use gtk::{glib, CompositeTemplate};
-use std::{cell::OnceCell, sync::Arc, thread};
+use std::{cell::OnceCell, sync::Arc};
 
-use crate::api::{fetch_instances, Error, Instance, Instances};
+use crate::api::{fetch_instances, Instance, Instances};
 use crate::appmodel::AppModel;
 use crate::widgets::curation_window::CurationWindow;
 use crate::widgets::instance_row::InstanceRow;
@@ -199,8 +199,6 @@ impl PryvidPreferencesWindow {
                 if let Ok(instances) = instances {
                     window.show_curation_dialog(instances);
                 }
-            } else {
-                println!("aborted!");
             }
         }));
     }

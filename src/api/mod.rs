@@ -1,6 +1,6 @@
 use futures::future::join_all;
 use isahc::prelude::*;
-use isahc::{HttpClient, config::RedirectPolicy};
+use isahc::{config::RedirectPolicy, HttpClient};
 use lazy_static::lazy_static;
 use rand::{self, seq::SliceRandom};
 use regex::Regex;
@@ -151,18 +151,18 @@ pub struct InvidiousClient {
 lazy_static! {
     static ref HTTP_CLIENT: HttpClient = HttpClient::builder()
         .timeout(Duration::from_secs(10))
-        .redirect_policy(isahc::config::RedirectPolicy::Limit(2))
+        .redirect_policy(RedirectPolicy::Limit(2))
         .build()
         .unwrap();
 }
 
 // Functions
 pub async fn fetch_instances() -> Result<Instances, Error> {
-    let response: Vec<(String, InstanceResponse)> =
-        HTTP_CLIENT.get_async("https://api.invidious.io/instances.json?pretty=1&sort_by=type,users")
-            .await?
-            .json()
-            .await?;
+    let response: Vec<(String, InstanceResponse)> = HTTP_CLIENT
+        .get_async("https://api.invidious.io/instances.json?pretty=1&sort_by=type,users")
+        .await?
+        .json()
+        .await?;
 
     let instances: Instances = response
         .into_iter()
@@ -203,7 +203,6 @@ fn fix_thumbnail_urls(uri: &str, content: &mut Vec<Content>) {
         match item {
             Content::Video(video) => {
                 for thumbnail in &mut video.thumbnails {
-
                     // If domain isn't present (i.e. /vi/lcIObyvI3uw/maxres.jpg)
                     if thumbnail.url.starts_with("/vi/") {
                         thumbnail.url = format!("{}{}", uri, &thumbnail.url);
@@ -230,7 +229,8 @@ fn format_uri(uri: &str) -> String {
 impl Instance {
     pub async fn from_uri(uri: &str) -> Result<Instance, Error> {
         let uri = format_uri(uri);
-        let response: StatsResponse = HTTP_CLIENT.get_async(format!("{}/api/v1/stats", &uri))
+        let response: StatsResponse = HTTP_CLIENT
+            .get_async(format!("{}/api/v1/stats", &uri))
             .await?
             .json()
             .await?;
@@ -242,15 +242,19 @@ impl Instance {
                 open_registrations: response.open_registrations,
             })),
         };
-        instance.update_info().await;
+        instance.update_info().await?;
         Ok(instance)
     }
 
     pub async fn update_info(&self) -> Result<(), Error> {
-        let mut response = HTTP_CLIENT.get_async(format!("{}/api/v1/popular", self.uri)).await?;
+        let mut response = HTTP_CLIENT
+            .get_async(format!("{}/api/v1/popular", self.uri))
+            .await?;
         let has_popular = response.json::<Vec<Value>>().await.is_ok();
 
-        let mut response = HTTP_CLIENT.get_async(format!("{}/api/v1/trending", self.uri)).await?;
+        let mut response = HTTP_CLIENT
+            .get_async(format!("{}/api/v1/trending", self.uri))
+            .await?;
         let has_trending = response.json::<Vec<Value>>().await.is_ok();
 
         let mut info = self.info.write()?;
@@ -262,11 +266,12 @@ impl Instance {
 
     pub async fn ping(&self, endpoint: Option<&str>) -> Result<u128, Error> {
         let elapsed = Instant::now();
-        let response = HTTP_CLIENT.get_async(format!("{}{}", self.uri, endpoint.unwrap_or("/"))).await?;
+        HTTP_CLIENT
+            .get_async(format!("{}{}", self.uri, endpoint.unwrap_or("/")))
+            .await?;
         let elapsed = elapsed.elapsed();
         Ok(elapsed.as_millis())
     }
-
 
     // Data Requests
     pub async fn stats(&self) -> Result<StatsResponse, Error> {
@@ -354,8 +359,7 @@ impl InvidiousClient {
         if let Some(ref instance) = *self.selected.read().unwrap() {
             instance.clone()
         } else {
-            self
-                .instances()
+            self.instances()
                 .choose(&mut rand::thread_rng())
                 .unwrap() // Guaranteeing that this never fails saves a lot on error handling
                 .clone()

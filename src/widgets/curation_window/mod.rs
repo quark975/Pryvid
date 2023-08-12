@@ -1,20 +1,15 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 use glib::Object;
-use glib::{clone, closure_local, ControlFlow};
+use glib::{clone, closure_local};
 use gtk::glib;
 use gtk::glib::MainContext;
-use gtk::glib::Priority;
 use gtk::CompositeTemplate;
 use gtk::Ordering;
-use isahc::prelude::*;
 use std::cell::OnceCell;
 use std::sync::Arc;
-use std::thread;
-use std::time::Duration;
-use std::time::Instant;
 
-use crate::api::{Error, Instances};
+use crate::api::Instances;
 use crate::appmodel::AppModel;
 use crate::widgets::curation_instance_row::CurationInstanceRow;
 
@@ -98,7 +93,7 @@ impl CurationWindow {
                 row.set_state(PingState::Pinging);
 
                 let mut ping = 0;
-                'inner: for _ in 0..3 {
+                for _ in 0..3 {
                     if let Ok(result_ping) = instance.ping(None).await {
                         ping += result_ping / 3;
                     } else {

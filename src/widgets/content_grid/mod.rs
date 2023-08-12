@@ -54,7 +54,7 @@ pub enum ContentGridState {
     Loading,
     Success(Vec<Content>),
     Error(String),
-    NoContent((String, String))
+    NoContent((String, String)),
 }
 
 impl ContentGrid {
@@ -63,29 +63,23 @@ impl ContentGrid {
     }
 
     pub fn set_state(&self, state: ContentGridState) {
-        self.imp()
-            .stack
-            .set_visible_child_name(
-                match state {
-                    ContentGridState::Loading => {
-                        "loading"
-                    },
-                    ContentGridState::Success(content) => {
-                        self.set_content(content);
-                        "videos"
-                    },
-                    ContentGridState::Error(message) => {
-                        self.imp().error_status.set_description(Some(&message));
-                        "error"
-                    },
-                    ContentGridState::NoContent((title, message)) => {
-                        let nocontent_status = &self.imp().nocontent_status;
-                        nocontent_status.set_title(&title);
-                        nocontent_status.set_description(Some(&message));
-                        "nocontent"
-                    },
-                }
-            );
+        self.imp().stack.set_visible_child_name(match state {
+            ContentGridState::Loading => "loading",
+            ContentGridState::Success(content) => {
+                self.set_content(content);
+                "videos"
+            }
+            ContentGridState::Error(message) => {
+                self.imp().error_status.set_description(Some(&message));
+                "error"
+            }
+            ContentGridState::NoContent((title, message)) => {
+                let nocontent_status = &self.imp().nocontent_status;
+                nocontent_status.set_title(&title);
+                nocontent_status.set_description(Some(&message));
+                "nocontent"
+            }
+        });
     }
 
     fn set_content(&self, content: Vec<Content>) {

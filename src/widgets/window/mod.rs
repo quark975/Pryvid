@@ -1,13 +1,11 @@
 use adw::subclass::prelude::*;
 use glib::clone;
-use gtk::glib::ffi::GVariant;
-use gtk::glib::{ControlFlow, MainContext, Priority};
+use gtk::glib::MainContext;
 use gtk::prelude::*;
 use gtk::{gio, glib};
 use std::sync::Arc;
-use std::{cell::OnceCell, thread};
+use std::cell::OnceCell;
 
-use crate::api::Content;
 use crate::appmodel::AppModel;
 use crate::widgets::content_grid::ContentGrid;
 use crate::widgets::instance_indicator::InstanceIndicator;
@@ -15,7 +13,6 @@ use crate::widgets::instance_indicator::InstanceIndicator;
 use super::content_grid::ContentGridState;
 
 mod imp {
-
 
     use super::*;
 
@@ -125,8 +122,6 @@ impl PryvidWindow {
     }
 
     fn fetch_startup(&self) {
-        let imp = self.imp();
-
         MainContext::default().spawn_local(clone!(@weak self as window => async move {
             let invidious = window.model().invidious();
             let popular_instance = invidious.get_instance();

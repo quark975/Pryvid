@@ -1,7 +1,7 @@
 use adw::subclass::prelude::*;
 use gio::prelude::*;
 use glib::Object;
-use glib::{subclass::InitializingObject, MainContext, Priority, Properties};
+use glib::{MainContext, Priority, Properties};
 use gtk::gdk_pixbuf::Pixbuf;
 use gtk::CompositeTemplate;
 use gtk::{gio, glib};

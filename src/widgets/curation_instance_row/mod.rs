@@ -183,7 +183,7 @@ impl CurationInstanceRow {
             .valign(Align::Center)
             .css_classes(["flat"])
             .build();
-        button.connect_clicked(clone!(@weak self as window => move |button| {
+        button.connect_clicked(clone!(@weak self as window => move |_| {
             window.emit_by_name::<()>("toggle", &[]);
         }));
         self.add_prefix(&button);

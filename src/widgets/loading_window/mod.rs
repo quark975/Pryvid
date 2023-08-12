@@ -1,9 +1,9 @@
-use adw::subclass::prelude::*;
 use adw::prelude::*;
+use adw::subclass::prelude::*;
 use glib::Object;
 use gtk::glib;
-use gtk::{CompositeTemplate, template_callbacks};
 use gtk::glib::subclass::Signal;
+use gtk::{template_callbacks, CompositeTemplate};
 use once_cell::sync::Lazy;
 
 mod imp {
@@ -33,10 +33,7 @@ mod imp {
     impl ObjectImpl for LoadingWindow {
         fn signals() -> &'static [glib::subclass::Signal] {
             static SIGNALS: Lazy<Vec<Signal>> =
-                Lazy::new(|| vec![
-                    Signal::builder("canceled")
-                        .build()
-                ]);
+                Lazy::new(|| vec![Signal::builder("canceled").build()]);
             SIGNALS.as_ref()
         }
     }
