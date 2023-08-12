@@ -56,6 +56,7 @@ mod imp {
 
     impl CurationInstanceRow {
         fn set_added(&self, added: bool) {
+            self.added.set(added);
             let button = self.add_button.get().unwrap();
             if added {
                 button.set_icon_name("list-remove-symbolic");
@@ -88,9 +89,10 @@ impl Default for PingState {
 
 impl CurationInstanceRow {
     pub fn new(instance: Arc<Instance>, is_added: bool) -> Self {
-        let obj: Self = Object::builder().property("added", is_added).build();
+        let obj: Self = Object::builder().build();
         obj.imp().instance.set(instance).unwrap();
         obj.build();
+        obj.set_added(is_added);
         obj
     }
 

@@ -276,6 +276,7 @@ impl Instance {
             let elapsed = elapsed.elapsed();
             Ok(elapsed.as_millis())
         } else {
+            println!("{}: {}", self.uri, response.status());
             Err(Error::BadStatusCode)
         }
     }
@@ -363,6 +364,7 @@ impl InvidiousClient {
             .position(|x| x.uri == instance.uri)
             .is_some()
     }
+
     pub fn get_instance(&self) -> Arc<Instance> {
         if let Some(ref instance) = *self.selected.read().unwrap() {
             instance.clone()
@@ -372,6 +374,28 @@ impl InvidiousClient {
                 .unwrap() // Guaranteeing that this never fails saves a lot on error handling
                 .clone()
         }
+    }
+
+    pub fn get_trending_instance(&self) -> Result<Arc<Instance>, Error> {
+        Ok(self
+            .instances()
+            .into_iter()
+            .filter(|x| x.info.read().unwrap().has_trending.unwrap_or(false))
+            .collect::<Vec<Arc<Instance>>>()
+            .choose(&mut rand::thread_rng())
+            .ok_or(Error::InstanceNotFound)?
+            .clone())
+    }
+
+    pub fn get_popular_instance(&self) -> Result<Arc<Instance>, Error> {
+        Ok(self
+            .instances()
+            .into_iter()
+            .filter(|x| x.info.read().unwrap().has_popular.unwrap_or(false))
+            .collect::<Vec<Arc<Instance>>>()
+            .choose(&mut rand::thread_rng())
+            .ok_or(Error::InstanceNotFound)?
+            .clone())
     }
 
     pub fn push_instance(&self, instance: Arc<Instance>) -> Result<(), Error> {

@@ -4,8 +4,11 @@ use gtk::glib::MainContext;
 use gtk::prelude::*;
 use gtk::{gio, glib};
 use std::cell::OnceCell;
+use std::future::Future;
+use std::pin::Pin;
 use std::sync::Arc;
 
+use crate::api::{Content, Error};
 use crate::appmodel::AppModel;
 use crate::widgets::content_grid::ContentGrid;
 use crate::widgets::instance_indicator::InstanceIndicator;
@@ -124,21 +127,37 @@ impl PryvidWindow {
     fn fetch_startup(&self) {
         MainContext::default().spawn_local(clone!(@weak self as window => async move {
             let invidious = window.model().invidious();
-            let popular_instance = invidious.get_instance();
-            let trending_instance = invidious.get_instance();
-            let popular = popular_instance.popular();
-            let trending = trending_instance.trending();
 
             let imp = window.imp();
             imp.popular_grid.set_state(ContentGridState::Loading);
             imp.trending_grid.set_state(ContentGridState::Loading);
-            imp.popular_instance_indicator.set_uri(popular_instance.uri.clone());
-            imp.trending_instance_indicator.set_uri(trending_instance.uri.clone());
+            let popular_instance = invidious.get_popular_instance();
+            let trending_instance = invidious.get_trending_instance();
 
-            let (popular, trending) = futures::join!(popular, trending);
+            // This mess is the best way I could come up with to handle joining the futures while
+            // accounting for the possibility the user hadn't configured an instance that supports
+            // the popular or trending page
+            let (popular, trending) = {
+                if let Ok(popular_instance) = popular_instance {
+                    if let Ok(trending_instance) = trending_instance {
+                        imp.popular_instance_indicator.set_uri(popular_instance.uri.clone());
+                        imp.trending_instance_indicator.set_uri(trending_instance.uri.clone());
+                        let result = futures::join!(popular_instance.popular(), trending_instance.trending());
+                        (Some(result.0), Some(result.1))
+                    } else {
+                        imp.popular_instance_indicator.set_uri(popular_instance.uri.clone());
+                        (Some(popular_instance.popular().await), None)
+                    }
+                } else if let Ok(trending_instance) = trending_instance {
+                        imp.trending_instance_indicator.set_uri(trending_instance.uri.clone());
+                    (None, Some(trending_instance.trending().await))
+                } else {
+                    (None, None)
+                }
+            };
             window.imp().popular_grid.set_state(
                 match popular {
-                    Ok(content) => {
+                    Some(Ok(content)) => {
                         if content.len() == 0 {
                             // TODO: Add a way to know which instance made the request
                             ContentGridState::NoContent(("No Popular Videos".into(), "Try closing and reopening the app.".into()))
@@ -146,14 +165,17 @@ impl PryvidWindow {
                             ContentGridState::Success(content)
                         }
                     },
-                    Err(error) => {
+                    Some(Err(error)) => {
                         ContentGridState::Error(error.to_string())
+                    },
+                    None => {
+                        ContentGridState::Error("None of your instances support popular videos.".into())
                     }
                 }
             );
             window.imp().trending_grid.set_state(
                 match trending {
-                    Ok(content) => {
+                    Some(Ok(content)) => {
                         if content.len() == 0 {
                             // TODO: Add a refresh button
                             ContentGridState::NoContent(("No Trending Videos".into(), "Try closing and reopening the app.".into()))
@@ -161,8 +183,11 @@ impl PryvidWindow {
                             ContentGridState::Success(content)
                         }
                     },
-                    Err(error) => {
+                    Some(Err(error)) => {
                         ContentGridState::Error(error.to_string())
+                    },
+                    None => {
+                        ContentGridState::Error("None of your instances support trending videos.".into())
                     }
                 }
             );
