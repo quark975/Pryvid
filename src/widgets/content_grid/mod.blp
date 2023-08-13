@@ -7,6 +7,12 @@ template $ContentGrid : Box {
       name: "loading";
       child: Spinner {
         spinning: true;
+        vexpand: false;
+        hexpand: false;
+        valign: center;
+        halign: center;
+
+        styles ["large"]
       };
     }
     StackPage {
@@ -26,7 +32,7 @@ template $ContentGrid : Box {
       name: "error";
       child: Adw.StatusPage error_status {
         icon-name: "network-error-symbolic";
-        title: "Uh Oh.. an Error";
+        title: "Uh Oh..";
         description: "Something happened :(";
       };
     }

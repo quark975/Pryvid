@@ -11,3 +11,7 @@ label.video-time {
 button.author {
   padding: 2px 10px;
 }
+
+spinner.large {
+  -gtk-icon-size: 35px;
+}
