@@ -1,0 +1,22 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $VideoView : Adw.NavigationPage {
+  Box {
+    orientation: vertical;
+
+    Adw.HeaderBar {
+
+      [end]
+      $InstanceIndicator instance_indicator {}
+
+      styles ["flat"]
+    }
+
+    $ResultPage result_page {
+      child: Label {
+        label: ":)";
+      };
+    }
+  }
+}

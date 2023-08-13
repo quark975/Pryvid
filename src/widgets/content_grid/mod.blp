@@ -2,47 +2,11 @@ using Gtk 4.0;
 using Adw 1;
 
 template $ContentGrid : Box {
-  Stack stack {
-    StackPage {
-      name: "loading";
-      child: Spinner {
-        spinning: true;
-        vexpand: false;
-        hexpand: false;
-        valign: center;
-        halign: center;
-
-        styles ["large"]
-      };
-    }
-    StackPage {
-      name: "videos";
-      child: ScrolledWindow {
-        vexpand: true;
-        hexpand: true;
-
-        FlowBox flowbox {
-          vexpand: false;
-          valign: start;
-          selection-mode: none;
-        }
-      };
-    }
-    StackPage {
-      name: "error";
-      child: Adw.StatusPage error_status {
-        icon-name: "network-error-symbolic";
-        title: "Uh Oh..";
-        description: "Something happened :(";
-      };
-    }
-    StackPage {
-      name: "nocontent";
-      child: Adw.StatusPage nocontent_status {
-        icon-name: "dotted-box-symbolic";
-        title: "No Content Found";
-        description: "Couldn't find the requested content.";
-      };
-    }
+  $ResultPage result_page {
+    child: FlowBox flowbox {
+      vexpand: false;
+      valign: start;
+      selection-mode: none;
+    };
   }
 }

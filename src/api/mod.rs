@@ -89,7 +89,8 @@ pub enum Content {
     Channel(Channel),
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Default)]
+#[serde(default)]
 pub struct Video {
     pub title: String,
     #[serde(rename = "videoId")]
@@ -142,6 +143,63 @@ pub struct AuthorThumbnail {
     pub url: String,
     pub width: u32,
     pub height: u32,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct DetailedVideo {
+    // Video Info
+    pub title: String,
+    #[serde(rename = "videoId")]
+    pub id: String,
+    #[serde(rename = "descriptionHtml")]
+    pub description: String,
+    #[serde(rename = "publishedText")]
+    pub published: String,
+    #[serde(rename = "lengthSeconds")]
+    pub length: u32,
+    pub author: String,
+    #[serde(rename = "authorId")]
+    pub author_id: String,
+
+    // Statistics
+    #[serde(rename = "viewCount")]
+    pub views: u64,
+    #[serde(rename = "likeCount")]
+    pub likes: u32,
+    #[serde(rename = "dislikeCount")]
+    pub dislikes: u32,
+    #[serde(rename = "subCountText")]
+    pub subscribers: String,
+
+    // Thumbnails
+    #[serde(rename = "videoThumbnails")]
+    pub thumbnails: Vec<VideoThumbnail>,
+    #[serde(rename = "authorThumbnails")]
+    pub author_thumbnails: Vec<AuthorThumbnail>,
+
+    // Media
+    #[serde(rename = "formatStreams")]
+    pub format_streams: Vec<FormatStream>,
+    pub captions: Vec<Caption>,
+
+    // Recommended
+    #[serde(rename = "recommendedVideos")]
+    pub recommended: Vec<Video>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct FormatStream {
+    pub url: String,
+    pub quality: String,
+    pub fps: u32,
+    pub resolution: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Caption {
+    pub label: String,
+    pub language_code: String,
+    pub url: String,
 }
 
 #[derive(Debug)]
@@ -318,6 +376,19 @@ impl Instance {
 
     pub async fn trending(&self) -> Result<Vec<Content>, Error> {
         self.fetch_video_page("/api/v1/trending").await
+    }
+
+    pub async fn video(&self, video_id: &str) -> Result<DetailedVideo, Error> {
+        let mut response = HTTP_CLIENT
+            .get_async(&format!("{}/api/v1/videos/{}", self.uri, video_id))
+            .await?;
+
+        if response.status() == StatusCode::OK {
+            let data: DetailedVideo = response.json().await?;
+            Ok(data)
+        } else {
+            Err(Error::BadStatusCode)
+        }
     }
 }
 

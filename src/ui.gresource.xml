@@ -12,6 +12,8 @@
     <file preprocess="xml-stripblanks" alias="video_button.ui">widgets/video_button/mod.ui</file>
     <file preprocess="xml-stripblanks" alias="async_image.ui">widgets/async_image/mod.ui</file>
     <file preprocess="xml-stripblanks" alias="instance_indicator.ui">widgets/instance_indicator/mod.ui</file>
+    <file preprocess="xml-stripblanks" alias="video_view.ui">widgets/video_view/mod.ui</file>
+    <file preprocess="xml-stripblanks" alias="result_page.ui">widgets/result_page/mod.ui</file>
     <file compressed="true">style.css</file>
   </gresource>
 </gresources>

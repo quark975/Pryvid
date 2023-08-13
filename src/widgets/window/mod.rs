@@ -12,8 +12,8 @@ use crate::api::{Content, Error};
 use crate::appmodel::AppModel;
 use crate::widgets::content_grid::ContentGrid;
 use crate::widgets::instance_indicator::InstanceIndicator;
-
-use super::content_grid::ContentGridState;
+use crate::widgets::result_page::ResultPageState;
+use crate::widgets::video_view::VideoView;
 
 mod imp {
 
@@ -34,6 +34,8 @@ mod imp {
         pub popular_instance_indicator: TemplateChild<InstanceIndicator>,
         #[template_child]
         pub trending_instance_indicator: TemplateChild<InstanceIndicator>,
+        #[template_child]
+        pub navigation_view: TemplateChild<adw::NavigationView>,
 
         pub model: OnceCell<Arc<AppModel>>,
     }
@@ -112,7 +114,9 @@ impl PryvidWindow {
             .activate(move |win: &Self, _, param| {
                 if let Some(param) = param {
                     let video_id = param.get::<String>().unwrap();
-                    println!("{video_id}");
+                    win.imp()
+                        .navigation_view
+                        .push(&VideoView::new(win.model(), video_id))
                 }
             })
             .build();
@@ -129,8 +133,8 @@ impl PryvidWindow {
             let invidious = window.model().invidious();
 
             let imp = window.imp();
-            imp.popular_grid.set_state(ContentGridState::Loading);
-            imp.trending_grid.set_state(ContentGridState::Loading);
+            imp.popular_grid.set_state(ResultPageState::Loading);
+            imp.trending_grid.set_state(ResultPageState::Loading);
             let popular_instance = invidious.get_popular_instance();
             let trending_instance = invidious.get_trending_instance();
 
@@ -159,17 +163,17 @@ impl PryvidWindow {
                 match popular {
                     Some(Ok(content)) => {
                         if content.len() == 0 {
-                            // TODO: Add a way to know which instance made the request
-                            ContentGridState::NoContent(("No Popular Videos".into(), "Try closing and reopening the app.".into()))
+                            ResultPageState::Message(("dotted-box-symbolic".into(), "No Popular Videos".into(), "Try closing and reopening the app.".into()))
                         } else {
-                            ContentGridState::Success(content)
+                            window.imp().popular_grid.set_content(content);
+                            ResultPageState::Success
                         }
                     },
                     Some(Err(error)) => {
-                        ContentGridState::Error(error.to_string())
+                        ResultPageState::Error(error.to_string())
                     },
                     None => {
-                        ContentGridState::Error("None of your instances support popular videos.".into())
+                        ResultPageState::Error("None of your instances support popular videos.".into())
                     }
                 }
             );
@@ -177,17 +181,17 @@ impl PryvidWindow {
                 match trending {
                     Some(Ok(content)) => {
                         if content.len() == 0 {
-                            // TODO: Add a refresh button
-                            ContentGridState::NoContent(("No Trending Videos".into(), "Try closing and reopening the app.".into()))
+                            ResultPageState::Message(("dotted-box-symbolic".into(), "No Trending Videos".into(), "Try closing and reopening the app.".into()))
                         } else {
-                            ContentGridState::Success(content)
+                            window.imp().trending_grid.set_content(content);
+                            ResultPageState::Success
                         }
                     },
                     Some(Err(error)) => {
-                        ContentGridState::Error(error.to_string())
+                        ResultPageState::Error(error.to_string())
                     },
                     None => {
-                        ContentGridState::Error("None of your instances support trending videos.".into())
+                        ResultPageState::Error("None of your instances support trending videos.".into())
                     }
                 }
             );

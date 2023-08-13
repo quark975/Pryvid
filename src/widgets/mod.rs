@@ -8,5 +8,7 @@ pub mod loading_window;
 pub mod new_instance_window;
 pub mod onboarding;
 pub mod preferences;
+pub mod result_page;
 pub mod video_button;
+pub mod video_view;
 pub mod window;
