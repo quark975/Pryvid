@@ -1,7 +1,9 @@
-use glib::Object;
+use glib::{closure_local, subclass::Signal, Object};
 use gtk::glib;
+use gtk::prelude::*;
 use gtk::subclass::prelude::*;
 use gtk::CompositeTemplate;
+use once_cell::sync::Lazy;
 
 use crate::api::Content;
 use crate::widgets::result_page::{ResultPage, ResultPageState};
@@ -35,7 +37,27 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for ContentGrid {}
+    impl ObjectImpl for ContentGrid {
+        fn constructed(&self) {
+            self.parent_constructed();
+
+            let obj = self.obj();
+
+            self.result_page.connect_closure(
+                "refresh",
+                false,
+                closure_local!(@watch obj => move |_: ResultPage| {
+                    obj.emit_by_name::<()>("refresh", &[]);
+                }),
+            );
+        }
+
+        fn signals() -> &'static [glib::subclass::Signal] {
+            static SIGNALS: Lazy<Vec<Signal>> =
+                Lazy::new(|| vec![Signal::builder("refresh").build()]);
+            SIGNALS.as_ref()
+        }
+    }
     impl WidgetImpl for ContentGrid {}
     impl BoxImpl for ContentGrid {}
 }

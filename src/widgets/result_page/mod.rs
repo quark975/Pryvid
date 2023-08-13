@@ -1,14 +1,12 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use glib::Object;
-use glib::Properties;
+use glib::{clone, subclass::Signal, Object, Properties};
 use gtk::glib;
 use gtk::CompositeTemplate;
+use once_cell::sync::Lazy;
 use std::cell::RefCell;
 
 mod imp {
-
-    use gtk::ffi::GtkWidget;
 
     use super::*;
 
@@ -22,9 +20,13 @@ mod imp {
         pub scrolled_window: TemplateChild<gtk::ScrolledWindow>,
         #[template_child]
         pub status_page: TemplateChild<adw::StatusPage>,
+        #[template_child]
+        pub refresh_button: TemplateChild<gtk::Button>,
 
         #[property(get, set)]
         pub child: RefCell<Option<gtk::Widget>>,
+        #[property(get, set)]
+        pub refreshable: RefCell<bool>,
     }
 
     #[glib::object_subclass]
@@ -53,6 +55,24 @@ mod imp {
                 )
                 .sync_create()
                 .build();
+            self.obj()
+                .bind_property::<gtk::Button>(
+                    "refreshable",
+                    self.refresh_button.as_ref(),
+                    "visible",
+                )
+                .sync_create()
+                .build();
+            self.refresh_button
+                .connect_clicked(clone!(@weak self as imp => move |_| {
+                    imp.obj().emit_by_name::<()>("refresh", &[]);
+                }));
+        }
+
+        fn signals() -> &'static [glib::subclass::Signal] {
+            static SIGNALS: Lazy<Vec<Signal>> =
+                Lazy::new(|| vec![Signal::builder("refresh").build()]);
+            SIGNALS.as_ref()
         }
 
         fn properties() -> &'static [glib::ParamSpec] {

@@ -1,6 +1,6 @@
 use adw::subclass::prelude::*;
 use glib::clone;
-use gtk::glib::MainContext;
+use gtk::glib::{closure_local, MainContext};
 use gtk::prelude::*;
 use gtk::{gio, glib};
 use std::cell::OnceCell;
@@ -59,6 +59,7 @@ mod imp {
         fn constructed(&self) {
             self.parent_constructed();
             self.obj().setup_gactions();
+            self.obj().setup_callbacks();
         }
     }
     impl WidgetImpl for PryvidWindow {}
@@ -124,77 +125,91 @@ impl PryvidWindow {
         self.add_action_entries([notify_action, open_channel_action, open_video_action]);
     }
 
+    fn setup_callbacks(&self) {
+        self.imp().popular_grid.connect_closure(
+            "refresh",
+            false,
+            closure_local!(@watch self as window => move |_: ContentGrid| {
+                MainContext::default().spawn_local(clone!(@weak window => async move {
+                    window.build_popular().await;
+                }));
+            }),
+        );
+        self.imp().trending_grid.connect_closure(
+            "refresh",
+            false,
+            closure_local!(@watch self as window => move |_: ContentGrid| {
+                MainContext::default().spawn_local(clone!(@weak window => async move {
+                    window.build_trending().await;
+                }));
+            }),
+        );
+    }
+
     fn model(&self) -> Arc<AppModel> {
         self.imp().model.get().unwrap().clone()
     }
 
+    async fn build_popular(&self) {
+        let invidious = self.model().invidious();
+        let grid = &self.imp().popular_grid;
+        grid.set_state(ResultPageState::Loading);
+        grid.set_state(if let Ok(instance) = invidious.get_popular_instance() {
+            self.imp()
+                .popular_instance_indicator
+                .set_uri(instance.uri.clone());
+            match instance.popular().await {
+                Ok(content) => {
+                    if content.len() == 0 {
+                        ResultPageState::Message((
+                            "dotted-box-symbolic".into(),
+                            "No Popular Videos".into(),
+                            "This instance supports popular videos but none exist".into(),
+                        ))
+                    } else {
+                        grid.set_content(content);
+                        ResultPageState::Success
+                    }
+                }
+                Err(error) => ResultPageState::Error(error.to_string()),
+            }
+        } else {
+            ResultPageState::Error("None of your instances support popular videos".into())
+        });
+    }
+
+    async fn build_trending(&self) {
+        let invidious = self.model().invidious();
+        let grid = &self.imp().trending_grid;
+
+        grid.set_state(ResultPageState::Loading);
+        grid.set_state(if let Ok(instance) = invidious.get_trending_instance() {
+            self.imp()
+                .trending_instance_indicator
+                .set_uri(instance.uri.clone());
+            match instance.trending().await {
+                Ok(content) => {
+                    if content.len() == 0 {
+                        ResultPageState::Message((
+                            "dotted-box-symbolic".into(),
+                            "No Trending Videos".into(),
+                            "This instance supports trending videos but none exist".into(),
+                        ))
+                    } else {
+                        grid.set_content(content);
+                        ResultPageState::Success
+                    }
+                }
+                Err(error) => ResultPageState::Error(error.to_string()),
+            }
+        } else {
+            ResultPageState::Error("None of your instances support popular videos".into())
+        });
+    }
+
     fn fetch_startup(&self) {
         MainContext::default().spawn_local(clone!(@weak self as window => async move {
-            let invidious = window.model().invidious();
-
-            let imp = window.imp();
-            imp.popular_grid.set_state(ResultPageState::Loading);
-            imp.trending_grid.set_state(ResultPageState::Loading);
-            let popular_instance = invidious.get_popular_instance();
-            let trending_instance = invidious.get_trending_instance();
-
-            // This mess is the best way I could come up with to handle joining the futures while
-            // accounting for the possibility the user hadn't configured an instance that supports
-            // the popular or trending page
-            let (popular, trending) = {
-                if let Ok(popular_instance) = popular_instance {
-                    if let Ok(trending_instance) = trending_instance {
-                        imp.popular_instance_indicator.set_uri(popular_instance.uri.clone());
-                        imp.trending_instance_indicator.set_uri(trending_instance.uri.clone());
-                        let result = futures::join!(popular_instance.popular(), trending_instance.trending());
-                        (Some(result.0), Some(result.1))
-                    } else {
-                        imp.popular_instance_indicator.set_uri(popular_instance.uri.clone());
-                        (Some(popular_instance.popular().await), None)
-                    }
-                } else if let Ok(trending_instance) = trending_instance {
-                        imp.trending_instance_indicator.set_uri(trending_instance.uri.clone());
-                    (None, Some(trending_instance.trending().await))
-                } else {
-                    (None, None)
-                }
-            };
-            window.imp().popular_grid.set_state(
-                match popular {
-                    Some(Ok(content)) => {
-                        if content.len() == 0 {
-                            ResultPageState::Message(("dotted-box-symbolic".into(), "No Popular Videos".into(), "Try closing and reopening the app.".into()))
-                        } else {
-                            window.imp().popular_grid.set_content(content);
-                            ResultPageState::Success
-                        }
-                    },
-                    Some(Err(error)) => {
-                        ResultPageState::Error(error.to_string())
-                    },
-                    None => {
-                        ResultPageState::Error("None of your instances support popular videos.".into())
-                    }
-                }
-            );
-            window.imp().trending_grid.set_state(
-                match trending {
-                    Some(Ok(content)) => {
-                        if content.len() == 0 {
-                            ResultPageState::Message(("dotted-box-symbolic".into(), "No Trending Videos".into(), "Try closing and reopening the app.".into()))
-                        } else {
-                            window.imp().trending_grid.set_content(content);
-                            ResultPageState::Success
-                        }
-                    },
-                    Some(Err(error)) => {
-                        ResultPageState::Error(error.to_string())
-                    },
-                    None => {
-                        ResultPageState::Error("None of your instances support trending videos.".into())
-                    }
-                }
-            );
+            futures::join!(window.build_popular(), window.build_trending());
         }));
     }
 }
