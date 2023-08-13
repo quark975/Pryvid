@@ -250,9 +250,9 @@ pub async fn fetch_instances() -> Result<Instances, Error> {
         })
         .collect();
 
-    // Ping in batches of 4 at a time
+    // Ping in batches of 8 at a time
     // TODO: find a way to improve this maybe
-    for instances in instances.chunks(4).into_iter() {
+    for instances in instances.chunks(8).into_iter() {
         join_all(instances.iter().map(|x| x.update_info())).await;
     }
 
