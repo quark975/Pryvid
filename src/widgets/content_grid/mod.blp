@@ -2,12 +2,24 @@ using Gtk 4.0;
 using Adw 1;
 
 template $ContentGrid : Box {
-  $ResultPage result_page {
-    refreshable: true;
-    child: FlowBox flowbox {
-      vexpand: false;
-      valign: start;
-      selection-mode: none;
-    };
+  ScrolledWindow {
+    valign: fill;
+    halign: fill;
+    vexpand: true;
+    hexpand: true;
+
+    $ResultPage result_page {
+      refreshable: true;
+      valign: fill;
+      halign: fill;
+      vexpand: true;
+      hexpand: true;
+
+      child: FlowBox flowbox {
+        vexpand: false;
+        valign: start;
+        selection-mode: none;
+      };
+    }
   }
 }

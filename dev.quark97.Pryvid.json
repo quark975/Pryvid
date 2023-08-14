@@ -14,7 +14,8 @@
         "--device=dri",
         "--socket=wayland",
         "--filesystem=xdg-run/gvfsd",
-        "--talk-name=org.gtk.vfs.*"
+        "--talk-name=org.gtk.vfs.*",
+        "--socket=pulseaudio"
     ],
     "build-options" : {
         "append-path" : "/usr/lib/sdk/rust-stable/bin",

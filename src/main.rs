@@ -2,6 +2,7 @@ mod api;
 mod application;
 mod appmodel;
 mod config;
+mod utils;
 mod widgets;
 
 use self::application::PryvidApplication;

@@ -151,8 +151,9 @@ pub struct DetailedVideo {
     pub title: String,
     #[serde(rename = "videoId")]
     pub id: String,
-    #[serde(rename = "descriptionHtml")]
     pub description: String,
+    #[serde(rename = "descriptionHtml")]
+    pub description_html: String,
     #[serde(rename = "publishedText")]
     pub published: String,
     #[serde(rename = "lengthSeconds")]
@@ -193,6 +194,7 @@ pub struct FormatStream {
     pub quality: String,
     pub fps: u32,
     pub resolution: String,
+    pub size: String,
 }
 
 #[derive(Debug, Deserialize)]

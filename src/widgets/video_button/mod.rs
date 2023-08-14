@@ -6,6 +6,7 @@ use gtk::CompositeTemplate;
 use std::cell::RefCell;
 
 use crate::api::Video;
+use crate::utils::format_number_magnitude;
 use crate::widgets::async_image::AsyncImage;
 
 mod imp {
@@ -116,18 +117,8 @@ mod imp {
         }
 
         fn set_views(&self, views: u64) {
-            let string = {
-                if views < 1000 {
-                    views.to_string()
-                } else if views < 1000000 {
-                    format!("{}K", views / 1000)
-                } else if views < 1000000000 {
-                    format!("{}M", views / 1000000)
-                } else {
-                    format!("{}B", views / 1000000000)
-                }
-            };
-            self.views_label.set_text(&format!("{} views", string));
+            self.views_label
+                .set_text(&format!("{} views", format_number_magnitude(views)));
         }
 
         #[template_callback]

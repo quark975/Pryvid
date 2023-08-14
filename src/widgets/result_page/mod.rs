@@ -17,7 +17,7 @@ mod imp {
         #[template_child]
         pub stack: TemplateChild<gtk::Stack>,
         #[template_child]
-        pub scrolled_window: TemplateChild<gtk::ScrolledWindow>,
+        pub content_bin: TemplateChild<adw::Bin>,
         #[template_child]
         pub status_page: TemplateChild<adw::StatusPage>,
         #[template_child]
@@ -48,11 +48,7 @@ mod imp {
             self.parent_constructed();
 
             self.obj()
-                .bind_property::<gtk::ScrolledWindow>(
-                    "child",
-                    self.scrolled_window.as_ref(),
-                    "child",
-                )
+                .bind_property::<adw::Bin>("child", self.content_bin.as_ref(), "child")
                 .sync_create()
                 .build();
             self.obj()
@@ -112,7 +108,7 @@ impl ResultPage {
     pub fn set_state(&self, state: ResultPageState) {
         self.imp().stack.set_visible_child_name(match state {
             ResultPageState::Loading => "loading",
-            ResultPageState::Success => "videos",
+            ResultPageState::Success => "content",
             ResultPageState::Message((icon, title, description)) => {
                 let status_page = &self.imp().status_page;
                 status_page.set_icon_name(Some(&icon));

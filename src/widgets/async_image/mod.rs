@@ -1,3 +1,4 @@
+use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gio::prelude::*;
 use glib::Object;
@@ -5,9 +6,11 @@ use glib::{MainContext, Priority, Properties};
 use gtk::gdk_pixbuf::Pixbuf;
 use gtk::CompositeTemplate;
 use gtk::{gio, glib};
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 
 mod imp {
+
+    use gtk::gdk_pixbuf::InterpType;
 
     use super::*;
 
@@ -24,6 +27,10 @@ mod imp {
 
         #[property(get, set = Self::set_uri)]
         uri: RefCell<String>,
+        #[property(get, set)]
+        height: Cell<i32>,
+        #[property(get, set)]
+        width: Cell<i32>,
     }
 
     #[glib::object_subclass]
@@ -77,11 +84,24 @@ mod imp {
                     match file.read_future(Priority::default()).await {
                         Ok(stream) => {
                             if let Ok(pixbuf) = Pixbuf::from_stream_future(&stream).await {
+                                let width = _self.obj().width();
+                                let height = _self.obj().height();
+
+                                let pixbuf = if width > 0 && height > 0 {
+                                    if let Some(pixbuf) = pixbuf.scale_simple(_self.obj().width(), _self.obj().height(), InterpType::Nearest) {
+                                        pixbuf
+                                    } else {
+                                        pixbuf
+                                    }
+                                } else {
+                                    pixbuf
+                                };
+
                                 _self.picture.set_pixbuf(Some(&pixbuf));
                                 _self.stack.set_visible_child_name("picture");
                                 _self.spinner.set_spinning(false);
                                 _self.spinner.stop();
-                            }
+                            } 
                         },
                         Err(error) => {
                             _self.stack.set_visible_child_name("error");

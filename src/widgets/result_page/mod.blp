@@ -3,6 +3,11 @@ using Adw 1;
 
 template $ResultPage : Box {
   Stack stack {
+    vexpand: true;
+    hexpand: true;
+    valign: fill;
+    halign: fill;
+
     StackPage {
       name: "loading";
       child: Spinner {
@@ -16,10 +21,9 @@ template $ResultPage : Box {
       };
     }
     StackPage {
-      name: "videos";
-      child: ScrolledWindow scrolled_window {
-        vexpand: true;
-        hexpand: true;
+      name: "content";
+      child: Adw.Bin content_bin {
+
       };
     }
     StackPage {

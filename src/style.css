@@ -1,17 +1,28 @@
-.thumbnail picture {
+/* Rounding Various Widgets */
+.rounded picture {
 	border-radius: 5px;
 }
+video.rounded {
+  border-radius: 8px;
+}
+video.rounded revealer {
+	border-radius: 8px;
+	margin: 7px;
+}
 
+/* Video length displayed in bottom right corner of thumbnail */
 label.video-time {
   background-color: rgba(0, 0, 0, 0.5);
   padding: 2px 4px;
   border-radius: 3px;
 }
 
+/* Make author button under thumbnail less chunky */
 button.author {
   padding: 2px 10px;
 }
 
+/* Large spinner */
 spinner.large {
   -gtk-icon-size: 35px;
 }

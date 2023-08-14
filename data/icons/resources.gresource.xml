@@ -6,5 +6,9 @@
     <file preprocess="xml-stripblanks">profit-symbolic.svg</file>
     <file preprocess="xml-stripblanks">people-symbolic.svg</file>
     <file preprocess="xml-stripblanks">info-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">dotted-box-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">thumbs-up-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">thumbs-down-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">month-symbolic.svg</file>
   </gresource>
 </gresources>
