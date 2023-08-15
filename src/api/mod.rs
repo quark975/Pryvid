@@ -78,7 +78,7 @@ pub struct InstanceInfo {
     pub open_registrations: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(tag = "type")]
 pub enum Content {
     #[serde(rename = "video")]
@@ -89,7 +89,7 @@ pub enum Content {
     Channel(Channel),
 }
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, Clone)]
 #[serde(default)]
 pub struct Video {
     pub title: String,
@@ -108,7 +108,7 @@ pub struct Video {
     pub published: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Playlist {
     pub title: String,
     #[serde(rename = "playlistId")]
@@ -121,7 +121,7 @@ pub struct Playlist {
     pub thumbnail: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Channel {
     pub title: String,
     pub id: String,
@@ -130,7 +130,7 @@ pub struct Channel {
     pub subscribers: u64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct VideoThumbnail {
     pub quality: String,
     pub url: String,
@@ -138,14 +138,14 @@ pub struct VideoThumbnail {
     pub height: u32,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct AuthorThumbnail {
     pub url: String,
     pub width: u32,
     pub height: u32,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct DetailedVideo {
     // Video Info
     pub title: String,
@@ -188,7 +188,7 @@ pub struct DetailedVideo {
     pub recommended: Vec<Video>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct FormatStream {
     pub url: String,
     pub quality: String,
@@ -197,7 +197,7 @@ pub struct FormatStream {
     pub size: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Caption {
     pub label: String,
     pub language_code: String,
@@ -261,19 +261,12 @@ pub async fn fetch_instances() -> Result<Instances, Error> {
     Ok(instances)
 }
 
-fn fix_thumbnail_urls(uri: &str, content: &mut Vec<Content>) {
-    for item in content.iter_mut() {
-        match item {
-            Content::Video(video) => {
-                for thumbnail in &mut video.thumbnails {
-                    // If domain isn't present (i.e. /vi/lcIObyvI3uw/maxres.jpg)
-                    if thumbnail.url.starts_with("/vi/") {
-                        thumbnail.url = format!("{}{}", uri, &thumbnail.url);
-                    }
-                }
-            }
-            _ => (),
-        }
+fn correct_uri(instance_uri: &str, uri: &str) -> String {
+    // If domain isn't present (i.e. /vi/lcIObyvI3uw/maxres.jpg)
+    if uri.starts_with("/vi/") {
+        format!("{}{}", instance_uri, uri)
+    } else {
+        uri.to_string()
     }
 }
 
@@ -365,7 +358,17 @@ impl Instance {
                 .into_iter()
                 .map(|x| Content::Video(x))
                 .collect();
-            fix_thumbnail_urls(&self.uri, &mut data);
+
+            for item in data.iter_mut() {
+                match item {
+                    Content::Video(video) => {
+                        for thumbnail in &mut video.thumbnails {
+                            thumbnail.url = correct_uri(&self.uri, &thumbnail.url);
+                        }
+                    }
+                    _ => (),
+                }
+            }
             Ok(data)
         } else {
             Err(Error::BadStatusCode)
@@ -386,7 +389,14 @@ impl Instance {
             .await?;
 
         if response.status() == StatusCode::OK {
-            let data: DetailedVideo = response.json().await?;
+            let mut data: DetailedVideo = response.json().await?;
+
+            for video in &mut data.recommended {
+                for thumbnail in &mut video.thumbnails {
+                    thumbnail.url = correct_uri(&self.uri, &thumbnail.url);
+                }
+            }
+
             Ok(data)
         } else {
             Err(Error::BadStatusCode)

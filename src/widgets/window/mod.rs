@@ -1,8 +1,9 @@
 use adw::subclass::prelude::*;
+use gdk::prelude::*;
 use glib::clone;
 use gtk::glib::{closure_local, MainContext};
 use gtk::prelude::*;
-use gtk::{gio, glib};
+use gtk::{gdk, gio, glib};
 use std::cell::OnceCell;
 use std::future::Future;
 use std::pin::Pin;
@@ -115,9 +116,8 @@ impl PryvidWindow {
             .activate(move |win: &Self, _, param| {
                 if let Some(param) = param {
                     let video_id = param.get::<String>().unwrap();
-                    win.imp()
-                        .navigation_view
-                        .push(&VideoView::new(win.model(), video_id))
+                    let video_view = VideoView::new(win.model(), video_id);
+                    win.imp().navigation_view.push(&video_view);
                 }
             })
             .build();

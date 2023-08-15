@@ -2,187 +2,258 @@ using Gtk 4.0;
 using Adw 1;
 
 template $VideoView : Adw.NavigationPage {
-  Box {
-    orientation: vertical;
-
-    Adw.HeaderBar {
-      [end]
-      $InstanceIndicator instance_indicator {}
-
-      // styles ["flat"]
+  Adw.BreakpointBin {
+    width-request: 800;
+    height-request: 500;
+    Adw.Breakpoint {
+      condition ("min-width: 1461px")
+      setters {
+        split_view.collapsed: false;
+        split_view.show-sidebar: true;
+      }
+    }
+    Adw.Breakpoint {
+      condition ("max-width: 1460px")
+      setters {
+        split_view.collapsed: true;
+      }
+    }
+    Adw.Breakpoint {
+      condition ("max-width: 1107px")
+      setters {
+        split_view.collapsed: true;
+        video.height-request: 400;
+        video.width-request: 711;
+      }
     }
 
-    ScrolledWindow {
-      hscrollbar-policy: never;
+    Adw.OverlaySplitView split_view {
+      sidebar-position: end;
+      enable-hide-gesture: true;
+      enable-show-gesture: true;
+      min-sidebar-width: 350;
+      max-sidebar-width: 400;
+      show-sidebar: bind template.show-sidebar bidirectional;
+      collapsed: bind template.sidebar-collapsed bidirectional;
+      
+      [sidebar]
+      Box {
+        orientation: vertical;
 
-      $ResultPage result_page {
-        child: Box {
-          orientation: horizontal;
-          margin-top: 10;
-          margin-bottom: 10;
-          margin-start: 20;
-          margin-end: 20;
-          valign: fill;
-          halign: fill;
+        Adw.HeaderBar {
+          show-back-button: false;
+          show-end-title-buttons: bind split_view.collapsed inverted;
+          show-start-title-buttons: false;
+          title-widget: Label {
+            label: "Recommended Videos";
 
+            styles ["heading"]
+          };
+
+          styles ["flat"]
+        }
+
+        $ContentGrid recommended_grid {}
+      }
+
+      [content]
+      Box {
+        orientation: vertical;
+
+        Adw.HeaderBar {
+          [end]
           Box {
-            orientation: vertical;
-            valign: fill;
-            halign: fill;
-            vexpand: true;
-            hexpand: true;
-            spacing: 15;
+            orientation: horizontal;
+            spacing: 5;
 
-            AspectFrame aspect_frame {
-              Video video {
-                autoplay: true;
-                valign: fill;
-                halign: fill;
-                vexpand: true;
-                hexpand: true;
-                height-request: 600;
-                width-request: 1067;
-
-                styles ["rounded"]
-              }
-            }
-
-            Label {
-              label: bind-property template.title;
-              justify: left;
-              halign: start;
-              wrap: true;
-              wrap-mode: word;
-              selectable: true;
-
-              styles ["title-1"]
-            }
-
-            Box {
-              orientation: horizontal;
-              valign: center;
-              halign: fill;
-              vexpand: false;
-              hexpand: true;
-              homogeneous: true;
-
-              Button {
-                valign: center;
-                halign: start;
-
-                clicked => $on_channel_clicked() swapped;
-
-                Box {
-                  orientation: horizontal;
-                  halign: start;
-                  margin-top: 3;
-                  margin-bottom: 3;
-                  spacing: 10;
-
-                  $AsyncImage author_thumbnail {
-                    width: 64;
-                    height: 64;
-                    vexpand: false;
-                    hexpand: false;
-                    valign: center;
-                    halign: start;
-                  }
-                  Box {
-                    orientation: vertical;
-                    spacing: 2;
-                    halign: start;
-
-                    Label author_name {
-                      justify: left;
-                      halign: start;
-
-                      styles ["heading"]
-                    }
-                    Label author_subs {
-                      justify: left;
-                      halign: start;
-
-                      styles ["dim-label"]
-                    }
-                  }
-                }
-              }
-
-              Box {
-                orientation: horizontal;
-                spacing: 10;
-                halign: end;
-
-                Box {
-                  orientation: horizontal;
-                  spacing: 5;
-
-                  Image {
-                    icon-name: "thumbs-up-symbolic";
-                  }
-
-                  Label likes_label {}
-                }
-
-                Label {
-                  label: "•";
-                  styles ["heading"]
-                }
-
-                Box {
-                  orientation: horizontal;
-                  spacing: 5;
-
-                  Image {
-                    icon-name: "thumbs-down-symbolic";
-                  }
-
-                  Label dislikes_label {}
-                }
-
-                Label {
-                  label: "•";
-                  styles ["heading"]
-                }
-
-                Box {
-                  orientation: horizontal;
-                  spacing: 5;
-
-                  Image {
-                    icon-name: "view-reveal-symbolic";
-                  }
-
-                  Label views_label {}
-                }
-
-                Label {
-                  label: "•";
-                  styles ["heading"]
-                }
-
-                Box {
-                  orientation: horizontal;
-                  spacing: 5;
-
-                  Image {
-                    icon-name: "month-symbolic";
-                  }
-
-                  Label published_label {}
-                }
-              }
-            }
-
-            Label description_label {
-              justify: left;
-              halign: start;
-              selectable: true;
-              wrap: true;
-              wrap-mode: word;
+            $InstanceIndicator instance_indicator {}
+            ToggleButton {
+              icon-name: "sidebar-show-right-symbolic";
+              tooltip-text: "Show Recommended";
+              active: bind split_view.show-sidebar bidirectional;
             }
           }
-        };
+        }
+
+        ScrolledWindow {
+          hscrollbar-policy: never;
+
+          $ResultPage result_page {
+            child: Box {
+              orientation: horizontal;
+              margin-top: 20;
+              margin-bottom: 20;
+              margin-start: 20;
+              margin-end: 20;
+              valign: fill;
+              halign: center;
+
+              Box {
+                orientation: vertical;
+                halign: center;
+                hexpand: false;
+                vexpand: true;
+                valign: fill;
+                spacing: 15;
+
+                Video video {
+                  vexpand: true;
+                  hexpand: true;
+                  valign: fill;
+                  halign: fill;
+                  height-request: 600;
+                  width-request: 1067;
+
+                  styles ["rounded"]
+                }
+                
+                Box {
+                  vexpand: false;
+                  hexpand: false;
+                  valign: center;
+                  halign: fill;
+                  orientation: vertical;
+                  spacing: 15;
+
+                  Label {
+                    label: bind template.title;
+                    justify: left;
+                    halign: start;
+                    wrap: true;
+                    wrap-mode: word;
+                    selectable: true;
+
+                    styles ["title-1"]
+                  }
+
+                  Box {
+                    orientation: horizontal;
+                    valign: center;
+                    halign: fill;
+                    hexpand: true;
+                    vexpand: false;
+                    homogeneous: true;
+
+                    Button {
+                      valign: center;
+                      halign: start;
+
+                      clicked => $on_channel_clicked() swapped;
+
+                      Box {
+                        orientation: horizontal;
+                        halign: start;
+                        margin-top: 3;
+                        margin-bottom: 3;
+                        spacing: 10;
+
+                        $AsyncImage author_thumbnail {
+                          width: 64;
+                          height: 64;
+                          vexpand: false;
+                          hexpand: false;
+                          valign: center;
+                          halign: start;
+                        }
+                        Box {
+                          orientation: vertical;
+                          spacing: 2;
+                          halign: start;
+
+                          Label author_name {
+                            justify: left;
+                            halign: start;
+
+                            styles ["heading"]
+                          }
+                          Label author_subs {
+                            justify: left;
+                            halign: start;
+
+                            styles ["dim-label"]
+                          }
+                        }
+                      }
+                    }
+
+                    Box {
+                      orientation: horizontal;
+                      spacing: 10;
+                      halign: end;
+
+                      Box {
+                        orientation: horizontal;
+                        spacing: 5;
+
+                        Image {
+                          icon-name: "thumbs-up-symbolic";
+                        }
+
+                        Label likes_label {}
+                      }
+
+                      Label {
+                        label: "•";
+                        styles ["heading"]
+                      }
+
+                      Box {
+                        orientation: horizontal;
+                        spacing: 5;
+
+                        Image {
+                          icon-name: "thumbs-down-symbolic";
+                        }
+
+                        Label dislikes_label {}
+                      }
+
+                      Label {
+                        label: "•";
+                        styles ["heading"]
+                      }
+
+                      Box {
+                        orientation: horizontal;
+                        spacing: 5;
+
+                        Image {
+                          icon-name: "view-reveal-symbolic";
+                        }
+
+                        Label views_label {}
+                      }
+
+                      Label {
+                        label: "•";
+                        styles ["heading"]
+                      }
+
+                      Box {
+                        orientation: horizontal;
+                        spacing: 5;
+
+                        Image {
+                          icon-name: "month-symbolic";
+                        }
+
+                        Label published_label {}
+                      }
+                    }
+                  }
+
+                  Label description_label {
+                    justify: left;
+                    halign: start;
+                    selectable: true;
+                    wrap: true;
+                    wrap-mode: word;
+                  }
+                }
+              }
+            };
+          }
+        }
       }
     }
   }

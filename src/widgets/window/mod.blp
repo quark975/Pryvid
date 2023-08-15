@@ -14,7 +14,6 @@ template $PryvidWindow : Adw.ApplicationWindow {
           orientation: vertical;
 
           Adw.HeaderBar {
-
             title-widget: Adw.ViewSwitcher {
               stack: view_stack;
               policy: wide;
@@ -22,8 +21,10 @@ template $PryvidWindow : Adw.ApplicationWindow {
             
             [end]
             Box {
+              spacing: 5;
+
               Stack {
-                visible-child-name: bind-property view_stack.visible-child-name;
+                visible-child-name: bind view_stack.visible-child-name;
 
                 StackPage {
                   name: "popular";
