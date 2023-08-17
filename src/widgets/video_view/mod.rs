@@ -5,7 +5,7 @@ use gtk::glib::{clone, MainContext, Properties};
 use gtk::{gio, glib};
 use gtk::{template_callbacks, CompositeTemplate};
 use once_cell::sync::OnceCell;
-use std::cell::RefCell;
+use std::cell::Cell;
 use std::sync::Arc;
 
 use crate::api::{Content, DetailedVideo, Video};
@@ -28,18 +28,28 @@ mod imp {
         pub model: OnceCell<Arc<AppModel>>,
 
         #[property(get, set)]
-        pub show_sidebar: RefCell<bool>,
+        pub show_sidebar: Cell<bool>,
         #[property(get, set)]
-        pub sidebar_collapsed: RefCell<bool>,
+        pub sidebar_collapsed: Cell<bool>,
+        #[property(get, set = Self::set_fullscreened)]
+        pub fullscreened: Cell<bool>,
 
         #[template_child]
         pub instance_indicator: TemplateChild<InstanceIndicator>,
         #[template_child]
         pub result_page: TemplateChild<ResultPage>,
-        #[template_child(id = "video")]
-        pub video_widget: TemplateChild<gtk::Video>,
+        #[template_child(id = "normal_video")]
+        pub normal_video_widget: TemplateChild<gtk::Video>,
+        #[template_child(id = "fullscreen_video")]
+        pub fullscreen_video_widget: TemplateChild<gtk::Video>,
         #[template_child]
         pub split_view: TemplateChild<adw::OverlaySplitView>,
+        #[template_child]
+        pub fullscreen_stack: TemplateChild<gtk::Stack>,
+        #[template_child]
+        pub hover_box: TemplateChild<gtk::Box>,
+        #[template_child]
+        pub headerbar_revealer: TemplateChild<gtk::Revealer>,
 
         #[template_child]
         pub author_thumbnail: TemplateChild<AsyncImage>,
@@ -79,6 +89,15 @@ mod imp {
     impl ObjectImpl for VideoView {
         fn constructed(&self) {
             self.parent_constructed();
+
+            let controller = gtk::EventControllerMotion::new();
+            controller.connect_enter(clone!(@weak self as imp => move |_, _, _| {
+                imp.headerbar_revealer.set_reveal_child(true);
+            }));
+            controller.connect_leave(clone!(@weak self as imp => move |_| {
+                imp.headerbar_revealer.set_reveal_child(false);
+            }));
+            self.hover_box.add_controller(controller);
         }
 
         fn properties() -> &'static [glib::ParamSpec] {
@@ -99,9 +118,10 @@ mod imp {
             let obj = self.obj();
 
             if obj.sidebar_collapsed() {
-                self.obj().set_show_sidebar(false);
+                obj.set_show_sidebar(false);
             }
-            self.obj().set_playing(false);
+            obj.set_playing(false);
+            obj.set_fullscreened(false);
         }
         fn shown(&self) {
             self.obj().set_playing(true);
@@ -110,6 +130,22 @@ mod imp {
 
     #[template_callbacks]
     impl VideoView {
+        fn set_fullscreened(&self, fullscreened: bool) {
+            self.fullscreened.set(fullscreened);
+            // Media stream being moved old -> new
+            let (old_video_widget, new_video_widget) = if fullscreened {
+                (&self.normal_video_widget, &self.fullscreen_video_widget)
+            } else {
+                (&self.fullscreen_video_widget, &self.normal_video_widget)
+            };
+            if let Some(stream) = old_video_widget.media_stream() {
+                new_video_widget.set_media_stream(Some(&stream));
+                old_video_widget.set_media_stream(None::<&gtk::MediaStream>);
+
+                self.fullscreen_stack
+                    .set_visible_child_name(if fullscreened { "fullscreen" } else { "normal" });
+            }
+        }
         #[template_callback]
         fn on_channel_clicked(&self) {
             self.obj()
@@ -141,13 +177,13 @@ impl VideoView {
     }
 
     fn set_playing(&self, playing: bool) {
-        if let Some(stream) = self.imp().video_widget.media_stream() {
+        if let Some(stream) = self.imp().normal_video_widget.media_stream() {
             stream.set_playing(playing);
         }
     }
 
     fn playing(&self) -> bool {
-        if let Some(stream) = self.imp().video_widget.media_stream() {
+        if let Some(stream) = self.imp().normal_video_widget.media_stream() {
             stream.is_playing()
         } else {
             false
@@ -157,7 +193,26 @@ impl VideoView {
     fn set_video(&self, video: DetailedVideo) {
         let imp = self.imp();
 
-        // Set metadata
+        /// Setup player
+        let selected_stream = video.format_streams.last().unwrap();
+        let (video_widget, page_name) = if self.fullscreened() {
+            (&imp.fullscreen_video_widget, "fullscreen")
+        } else {
+            (&imp.normal_video_widget, "normal")
+        };
+        imp.fullscreen_stack.set_visible_child_name(page_name);
+
+        let file = gio::File::for_uri(&selected_stream.url);
+        video_widget.set_file(Some(&file));
+        let stream = video_widget.media_stream().unwrap();
+
+        // When using GtkVideo:autoplay and resizing the window, the video will play after being
+        // paused. This will give the desired behavior that GtkVideo:autoplay does not
+        stream.connect_prepared_notify(|stream| {
+            stream.play();
+        });
+
+        /// Setup metadata
         self.set_title(&video.title);
         imp.author_name.set_label(&video.author);
         imp.author_subs.set_label(&video.subscribers);
@@ -181,17 +236,6 @@ impl VideoView {
                 .collect(),
         );
         imp.recommended_grid.set_state(ResultPageState::Success);
-
-        let selected_stream = video.format_streams.last().unwrap();
-        let file = gio::File::for_uri(&selected_stream.url);
-        imp.video_widget.set_file(Some(&file));
-        let stream = imp.video_widget.media_stream().unwrap();
-
-        // When using GtkVideo:autoplay and resizing the window, the video will play after being
-        // paused. This will give the desired behavior that GtkVideo:autoplay does not
-        stream.connect_prepared_notify(|stream| {
-            stream.play();
-        });
 
         imp.video.set(video).unwrap();
     }

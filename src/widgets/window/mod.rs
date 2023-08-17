@@ -117,12 +117,55 @@ impl PryvidWindow {
                 if let Some(param) = param {
                     let video_id = param.get::<String>().unwrap();
                     let video_view = VideoView::new(win.model(), video_id);
+                    win.bind_property::<VideoView>(
+                        "fullscreened",
+                        video_view.as_ref(),
+                        "fullscreened",
+                    )
+                    .sync_create()
+                    .build();
                     win.imp().navigation_view.push(&video_view);
                 }
             })
             .build();
 
-        self.add_action_entries([notify_action, open_channel_action, open_video_action]);
+        let fullscreen_action = gio::ActionEntry::builder("fullscreen")
+            .parameter_type(None)
+            .activate(move |win: &Self, _, param| {
+                win.fullscreen();
+            })
+            .build();
+        let unfullscreen_action = gio::ActionEntry::builder("unfullscreen")
+            .parameter_type(None)
+            .activate(move |win: &Self, _, param| {
+                win.unfullscreen();
+            })
+            .build();
+        let toggle_fullscreen_action = gio::ActionEntry::builder("toggle-fullscreen")
+            .parameter_type(None)
+            .activate(move |win: &Self, _, param| {
+                // Only fullscreen if watching a video
+                if win
+                    .imp()
+                    .navigation_view
+                    .visible_page()
+                    .unwrap()
+                    .downcast::<VideoView>()
+                    .is_ok()
+                {
+                    win.set_fullscreened(!win.is_fullscreened())
+                }
+            })
+            .build();
+
+        self.add_action_entries([
+            notify_action,
+            open_channel_action,
+            open_video_action,
+            fullscreen_action,
+            unfullscreen_action,
+            toggle_fullscreen_action,
+        ]);
     }
 
     fn setup_callbacks(&self) {
