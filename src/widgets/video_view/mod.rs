@@ -132,19 +132,8 @@ mod imp {
     impl VideoView {
         fn set_fullscreened(&self, fullscreened: bool) {
             self.fullscreened.set(fullscreened);
-            // Media stream being moved old -> new
-            let (old_video_widget, new_video_widget) = if fullscreened {
-                (&self.normal_video_widget, &self.fullscreen_video_widget)
-            } else {
-                (&self.fullscreen_video_widget, &self.normal_video_widget)
-            };
-            if let Some(stream) = old_video_widget.media_stream() {
-                new_video_widget.set_media_stream(Some(&stream));
-                old_video_widget.set_media_stream(None::<&gtk::MediaStream>);
-
-                self.fullscreen_stack
-                    .set_visible_child_name(if fullscreened { "fullscreen" } else { "normal" });
-            }
+            self.fullscreen_stack
+                .set_visible_child_name(if fullscreened { "fullscreen" } else { "normal" });
         }
         #[template_callback]
         fn on_channel_clicked(&self) {
@@ -205,6 +194,7 @@ impl VideoView {
         let file = gio::File::for_uri(&selected_stream.url);
         video_widget.set_file(Some(&file));
         let stream = video_widget.media_stream().unwrap();
+        imp.fullscreen_video_widget.set_media_stream(Some(&stream));
 
         // When using GtkVideo:autoplay and resizing the window, the video will play after being
         // paused. This will give the desired behavior that GtkVideo:autoplay does not

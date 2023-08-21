@@ -123,6 +123,7 @@ impl PryvidWindow {
                         "fullscreened",
                     )
                     .sync_create()
+                    .bidirectional()
                     .build();
                     win.imp().navigation_view.push(&video_view);
                 }
