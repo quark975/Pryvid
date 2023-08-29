@@ -33,6 +33,8 @@ mod imp {
         pub sidebar_collapsed: Cell<bool>,
         #[property(get, set = Self::set_fullscreened)]
         pub fullscreened: Cell<bool>,
+        #[property(get, set)]
+        pub timestamp: Cell<i64>,
 
         #[template_child]
         pub instance_indicator: TemplateChild<InstanceIndicator>,
@@ -123,6 +125,12 @@ mod imp {
             obj.set_playing(false);
             obj.set_fullscreened(false);
         }
+        fn hidden(&self) {
+            self.obj().destroy_media_stream();
+        }
+        fn showing(&self) {
+            self.obj().init_media_stream();
+        }
         fn shown(&self) {
             self.obj().set_playing(true);
         }
@@ -165,13 +173,13 @@ impl VideoView {
         self.imp().model.get().unwrap().clone()
     }
 
-    fn set_playing(&self, playing: bool) {
+    pub fn set_playing(&self, playing: bool) {
         if let Some(stream) = self.imp().normal_video_widget.media_stream() {
             stream.set_playing(playing);
         }
     }
 
-    fn playing(&self) -> bool {
+    pub fn playing(&self) -> bool {
         if let Some(stream) = self.imp().normal_video_widget.media_stream() {
             stream.is_playing()
         } else {
@@ -179,29 +187,50 @@ impl VideoView {
         }
     }
 
+    pub fn init_media_stream(&self) {
+        let imp = self.imp();
+        if let Some(video) = imp.video.get() {
+            let url = &video.format_streams.last().unwrap().url;
+            let file = gio::File::for_uri(url);
+            let stream = gtk::MediaFile::for_file(&file);
+            imp.normal_video_widget.set_media_stream(Some(&stream));
+            imp.fullscreen_video_widget.set_media_stream(Some(&stream));
+            stream.connect_prepared_notify(clone!(@weak self as obj => move |stream| {
+                stream.seek(obj.timestamp());
+                stream
+                    .bind_property::<Self>("timestamp", obj.as_ref(), "timestamp")
+                    .sync_create()
+                    .build();
+                stream.play();
+            }));
+        }
+    }
+
+    pub fn destroy_media_stream(&self) {
+        let imp = self.imp();
+        imp.normal_video_widget
+            .set_media_stream(None::<&gtk::MediaStream>);
+        imp.fullscreen_video_widget
+            .set_media_stream(None::<&gtk::MediaStream>);
+    }
+
     fn set_video(&self, video: DetailedVideo) {
         let imp = self.imp();
 
         /// Setup player
         let selected_stream = video.format_streams.last().unwrap();
-        let (video_widget, page_name) = if self.fullscreened() {
-            (&imp.fullscreen_video_widget, "fullscreen")
-        } else {
-            (&imp.normal_video_widget, "normal")
-        };
-        imp.fullscreen_stack.set_visible_child_name(page_name);
+        imp.fullscreen_stack
+            .set_visible_child_name(if self.fullscreened() {
+                "fullscreened"
+            } else {
+                "normal"
+            });
 
-        let file = gio::File::for_uri(&selected_stream.url);
-        video_widget.set_file(Some(&file));
-        let stream = video_widget.media_stream().unwrap();
-        imp.fullscreen_video_widget.set_media_stream(Some(&stream));
+        imp.video.set(video.clone()).unwrap();
+        self.init_media_stream();
 
         // When using GtkVideo:autoplay and resizing the window, the video will play after being
         // paused. This will give the desired behavior that GtkVideo:autoplay does not
-        stream.connect_prepared_notify(|stream| {
-            stream.play();
-        });
-
         /// Setup metadata
         self.set_title(&video.title);
         imp.author_name.set_label(&video.author);
@@ -226,8 +255,6 @@ impl VideoView {
                 .collect(),
         );
         imp.recommended_grid.set_state(ResultPageState::Success);
-
-        imp.video.set(video).unwrap();
     }
 
     fn fetch_video(&self, video_id: String) {
