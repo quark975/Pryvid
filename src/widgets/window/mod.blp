@@ -18,6 +18,11 @@ template $PryvidWindow : Adw.ApplicationWindow {
               stack: view_stack;
               policy: wide;
             };
+
+            [start]
+            ToggleButton search_button {
+              icon-name: "system-search-symbolic";
+            }
             
             [end]
             Box {
@@ -34,12 +39,28 @@ template $PryvidWindow : Adw.ApplicationWindow {
                   name: "trending";
                   child: $InstanceIndicator trending_instance_indicator {};
                 }
+                StackPage {
+                  name: "search";
+                  child: $InstanceIndicator search_instance_indicator {};
+                }
 
               }
               MenuButton {
                 icon-name: "open-menu-symbolic";
                 menu-model: primary_menu;
               }
+            }
+          }
+          SearchBar {
+            search-mode-enabled: bind search_button.active;
+            key-capture-widget: template;
+            show-close-button: true;
+
+            SearchEntry search_entry {
+              search-delay: 250;
+              placeholder-text: "Search...";
+
+              search-changed => $on_search_entry_search_changed() swapped;
             }
           }
           Adw.ViewStack view_stack {
@@ -54,6 +75,11 @@ template $PryvidWindow : Adw.ApplicationWindow {
               icon-name: "profit-symbolic";
               title: "Trending";
               child: $ContentGrid trending_grid {};
+            }
+            Adw.ViewStackPage {
+              name: "search";
+              child: $ContentGrid search_grid {};
+              visible: false;
             }
           }
         }

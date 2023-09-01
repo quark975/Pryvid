@@ -123,10 +123,13 @@ pub struct Playlist {
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Channel {
+    #[serde(rename = "author")]
     pub title: String,
+    #[serde(rename = "authorId")]
     pub id: String,
-    pub verified: bool,
+    #[serde(rename = "authorThumbnails")]
     pub thumbnails: Vec<AuthorThumbnail>,
+    #[serde(rename = "subCount")]
     pub subscribers: u64,
 }
 
@@ -397,6 +400,39 @@ impl Instance {
                 }
             }
 
+            Ok(data)
+        } else {
+            Err(Error::BadStatusCode)
+        }
+    }
+
+    pub async fn search(&self, query: &str) -> Result<Vec<Content>, Error> {
+        let mut response = HTTP_CLIENT
+            .get_async(&format!(
+                "{}/api/v1/search?q={}",
+                self.uri,
+                urlencoding::encode(query)
+            ))
+            .await?;
+
+        if response.status() == StatusCode::OK {
+            let mut data: Vec<Content> = response.json().await?;
+
+            for item in data.iter_mut() {
+                match item {
+                    Content::Video(video) => {
+                        for thumbnail in &mut video.thumbnails {
+                            thumbnail.url = correct_uri(&self.uri, &thumbnail.url);
+                        }
+                    }
+                    Content::Channel(channel) => {
+                        for thumbnail in &mut channel.thumbnails {
+                            thumbnail.url = correct_uri(&self.uri, &thumbnail.url);
+                        }
+                    }
+                    _ => (),
+                }
+            }
             Ok(data)
         } else {
             Err(Error::BadStatusCode)

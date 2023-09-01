@@ -78,6 +78,10 @@ impl ContentGrid {
     }
 
     pub fn set_content(&self, content: Vec<Content>) {
+        let flowbox = &self.imp().flowbox;
+        while let Some(child) = flowbox.child_at_index(0) {
+            flowbox.remove(&child);
+        }
         for item in content {
             match item {
                 Content::Video(video) => {

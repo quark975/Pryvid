@@ -3,6 +3,7 @@ use gdk::prelude::*;
 use glib::clone;
 use gtk::glib::{closure_local, MainContext};
 use gtk::prelude::*;
+use gtk::template_callbacks;
 use gtk::{gdk, gio, glib};
 use std::cell::OnceCell;
 use std::future::Future;
@@ -32,11 +33,17 @@ mod imp {
         #[template_child]
         pub trending_grid: TemplateChild<ContentGrid>,
         #[template_child]
+        pub search_grid: TemplateChild<ContentGrid>,
+        #[template_child]
         pub popular_instance_indicator: TemplateChild<InstanceIndicator>,
         #[template_child]
         pub trending_instance_indicator: TemplateChild<InstanceIndicator>,
         #[template_child]
+        pub search_instance_indicator: TemplateChild<InstanceIndicator>,
+        #[template_child]
         pub navigation_view: TemplateChild<adw::NavigationView>,
+        #[template_child]
+        pub search_entry: TemplateChild<gtk::SearchEntry>,
 
         pub model: OnceCell<Arc<AppModel>>,
     }
@@ -49,6 +56,7 @@ mod imp {
 
         fn class_init(klass: &mut Self::Class) {
             klass.bind_template();
+            klass.bind_template_callbacks();
         }
 
         fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
@@ -67,6 +75,26 @@ mod imp {
     impl WindowImpl for PryvidWindow {}
     impl ApplicationWindowImpl for PryvidWindow {}
     impl AdwApplicationWindowImpl for PryvidWindow {}
+
+    #[template_callbacks]
+    impl PryvidWindow {
+        #[template_callback]
+        fn on_search_entry_search_changed(&self) {
+            let search = self.search_entry.text();
+            let view_stack = self.view_stack.clone();
+            if search.len() == 0 {
+                view_stack.set_visible_child_name("popular");
+            } else {
+                let obj = self.obj();
+                MainContext::default().spawn_local(
+                    clone!(@weak obj, @weak view_stack => async move {
+                        obj.build_search(&search).await;
+                        view_stack.set_visible_child_name("search");
+                    }),
+                );
+            }
+        }
+    }
 }
 
 glib::wrapper! {
@@ -192,6 +220,32 @@ impl PryvidWindow {
 
     fn model(&self) -> Arc<AppModel> {
         self.imp().model.get().unwrap().clone()
+    }
+
+    async fn build_search(&self, query: &str) {
+        let invidious = self.model().invidious();
+        let instance = invidious.get_instance();
+        self.imp()
+            .search_instance_indicator
+            .set_uri(instance.uri.clone());
+
+        let grid = &self.imp().search_grid;
+        grid.set_state(ResultPageState::Loading);
+        grid.set_state(match instance.search(query).await {
+            Ok(content) => {
+                if content.len() == 0 {
+                    ResultPageState::Message((
+                        "dotted-box-symbolic".into(),
+                        "No Search Results".into(),
+                        "Check your query for typos and simplify it if possible".into(),
+                    ))
+                } else {
+                    grid.set_content(content);
+                    ResultPageState::Success
+                }
+            }
+            Err(error) => ResultPageState::Error(error.to_string()),
+        });
     }
 
     async fn build_popular(&self) {
