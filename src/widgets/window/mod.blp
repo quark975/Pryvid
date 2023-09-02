@@ -51,8 +51,8 @@ template $PryvidWindow : Adw.ApplicationWindow {
               }
             }
           }
-          SearchBar {
-            search-mode-enabled: bind search_button.active;
+          SearchBar search_bar {
+            search-mode-enabled: bind search_button.active bidirectional;
             key-capture-widget: template;
             show-close-button: true;
 

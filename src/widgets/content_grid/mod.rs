@@ -9,6 +9,8 @@ use crate::api::Content;
 use crate::widgets::result_page::{ResultPage, ResultPageState};
 use crate::widgets::video_button::VideoButton;
 
+use super::channel_button::ChannelButton;
+
 mod imp {
 
     use super::*;
@@ -86,9 +88,12 @@ impl ContentGrid {
             match item {
                 Content::Video(video) => {
                     let video_button = VideoButton::new(&video);
-                    self.imp().flowbox.append(&video_button);
+                    flowbox.append(&video_button);
                 }
-                Content::Channel(channel) => continue, // TODO: Implement
+                Content::Channel(channel) => {
+                    let channel_button = ChannelButton::new(&channel);
+                    flowbox.append(&channel_button);
+                }
                 Content::Playlist(playlist) => continue, // TODO: Implement
             }
         }

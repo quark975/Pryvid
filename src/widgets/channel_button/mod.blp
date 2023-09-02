@@ -1,0 +1,35 @@
+using Gtk 4.0;
+
+template $ChannelButton : Button {
+  styles ["flat"]
+
+  Box {
+    orientation: vertical;
+    spacing: 5;
+    valign: center;
+    halign: center;
+    width-request: 320;
+    
+    $AsyncImage image {
+      uri: bind template.thumbnail;
+      valign: fill;
+      halign: center;
+
+      height-request: 180;
+
+      styles ["rounded"]
+    }
+
+    Label {
+      label: bind template.title;
+      halign: start;
+
+      styles ["heading"]
+    }
+
+    Label subscribers_label {
+      halign: start;
+      styles ["body"]
+    }
+  }
+}

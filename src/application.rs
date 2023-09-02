@@ -36,7 +36,7 @@ mod imp {
             obj.setup_gactions();
             obj.set_accels_for_action("app.quit", &["<primary>q"]);
             obj.set_accels_for_action("win.toggle-fullscreen", &["f"]);
-            obj.set_accels_for_action("win.unfullscreen", &["Escape"]);
+            obj.set_accels_for_action("win.escape-pressed", &["Escape"]);
         }
     }
 

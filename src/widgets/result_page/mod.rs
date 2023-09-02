@@ -22,6 +22,8 @@ mod imp {
         pub status_page: TemplateChild<adw::StatusPage>,
         #[template_child]
         pub refresh_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub spinner: TemplateChild<gtk::Spinner>,
 
         #[property(get, set)]
         pub child: RefCell<Option<gtk::Widget>>,
@@ -107,13 +109,23 @@ impl ResultPage {
 
     pub fn set_state(&self, state: ResultPageState) {
         self.imp().stack.set_visible_child_name(match state {
-            ResultPageState::Loading => "loading",
-            ResultPageState::Success => "content",
+            ResultPageState::Loading => {
+                self.imp().spinner.start();
+                self.imp().spinner.set_spinning(true);
+                "loading"
+            }
+            ResultPageState::Success => {
+                self.imp().spinner.stop();
+                self.imp().spinner.set_spinning(false);
+                "content"
+            }
             ResultPageState::Message((icon, title, description)) => {
                 let status_page = &self.imp().status_page;
                 status_page.set_icon_name(Some(&icon));
                 status_page.set_title(&title);
                 status_page.set_description(Some(&description));
+                self.imp().spinner.stop();
+                self.imp().spinner.set_spinning(false);
                 "status"
             }
             ResultPageState::Error(message) => {
@@ -121,6 +133,8 @@ impl ResultPage {
                 status_page.set_icon_name(Some("dialog-error-symbolic"));
                 status_page.set_title("An Error Occurred");
                 status_page.set_description(Some(&message));
+                self.imp().spinner.stop();
+                self.imp().spinner.set_spinning(false);
                 "status"
             }
         });

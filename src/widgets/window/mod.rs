@@ -44,6 +44,8 @@ mod imp {
         pub navigation_view: TemplateChild<adw::NavigationView>,
         #[template_child]
         pub search_entry: TemplateChild<gtk::SearchEntry>,
+        #[template_child]
+        pub search_bar: TemplateChild<gtk::SearchBar>,
 
         pub model: OnceCell<Arc<AppModel>>,
     }
@@ -88,8 +90,8 @@ mod imp {
                 let obj = self.obj();
                 MainContext::default().spawn_local(
                     clone!(@weak obj, @weak view_stack => async move {
-                        obj.build_search(&search).await;
                         view_stack.set_visible_child_name("search");
+                        obj.build_search(&search).await;
                     }),
                 );
             }
@@ -187,6 +189,20 @@ impl PryvidWindow {
             })
             .build();
 
+        // Not sure if I'm happy with this or not
+        // As of September 1st, it serves its purpose
+        let escape_pressed_action = gio::ActionEntry::builder("escape-pressed")
+            .parameter_type(None)
+            .activate(move |win: &Self, _, _| {
+                let visible_page = win.imp().navigation_view.visible_page().unwrap();
+                if visible_page.downcast::<VideoView>().is_ok() {
+                    win.unfullscreen();
+                } else {
+                    win.imp().search_bar.set_search_mode(false);
+                }
+            })
+            .build();
+
         self.add_action_entries([
             notify_action,
             open_channel_action,
@@ -194,6 +210,7 @@ impl PryvidWindow {
             fullscreen_action,
             unfullscreen_action,
             toggle_fullscreen_action,
+            escape_pressed_action,
         ]);
     }
 
@@ -244,7 +261,7 @@ impl PryvidWindow {
                     ResultPageState::Success
                 }
             }
-            Err(error) => ResultPageState::Error(error.to_string()),
+            Err(error) => ResultPageState::Error(format!("{error:?}")),
         });
     }
 

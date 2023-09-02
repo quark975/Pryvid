@@ -118,6 +118,7 @@ pub struct Playlist {
     pub author_id: String,
     #[serde(rename = "videoCount")]
     pub video_count: u64,
+    #[serde(rename = "playlistThumbnail")]
     pub thumbnail: String,
 }
 
@@ -265,9 +266,12 @@ pub async fn fetch_instances() -> Result<Instances, Error> {
 }
 
 fn correct_uri(instance_uri: &str, uri: &str) -> String {
-    // If domain isn't present (i.e. /vi/lcIObyvI3uw/maxres.jpg)
     if uri.starts_with("/vi/") {
+        // If domain isn't present (i.e. /vi/lcIObyvI3uw/maxres.jpg)
         format!("{}{}", instance_uri, uri)
+    } else if uri.starts_with("//") {
+        // If protocol isn't present (i.e. //yt3.googleusercontent.com/ytc/...)
+        format!("https:{}", uri)
     } else {
         uri.to_string()
     }

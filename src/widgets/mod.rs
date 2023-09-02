@@ -1,4 +1,5 @@
 pub mod async_image;
+pub mod channel_button;
 pub mod content_grid;
 pub mod curation_instance_row;
 pub mod curation_window;

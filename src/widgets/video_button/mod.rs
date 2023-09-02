@@ -154,7 +154,6 @@ impl VideoButton {
             } else {
                 let thumbnails = &video.thumbnails;
                 if thumbnails.len() == 0 {
-                    println!("{video:?}");
                     ""
                 } else {
                     &thumbnails.first().unwrap().url
