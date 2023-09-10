@@ -208,6 +208,31 @@ pub struct Caption {
     pub url: String,
 }
 
+#[derive(Debug, Deserialize, Clone)]
+pub struct DetailedChannel {
+    #[serde(rename = "author")]
+    pub title: String,
+    #[serde(rename = "authorId")]
+    pub id: String,
+    #[serde(rename = "authorThumbnails")]
+    pub thumbnails: Vec<AuthorThumbnail>,
+    #[serde(rename = "authorBanners")]
+    pub banners: Vec<AuthorThumbnail>,
+    #[serde(rename = "subCount")]
+    pub subscribers: u64,
+    #[serde(rename = "totalViews")]
+    pub total_views: u128,
+    pub description: String,
+    #[serde(rename = "descriptionHtml")]
+    pub description_html: String,
+    #[serde(rename = "authorVerified")]
+    pub verified: bool,
+    #[serde(rename = "latestVideos")]
+    pub videos: Vec<Content>,
+    #[serde(rename = "relatedChannels")]
+    pub related_channels: Vec<Content>,
+}
+
 #[derive(Debug)]
 pub struct InvidiousClient {
     instances: RwLock<Instances>,
@@ -438,6 +463,31 @@ impl Instance {
                 }
             }
             Ok(data)
+        } else {
+            Err(Error::BadStatusCode)
+        }
+    }
+
+    pub async fn channel(&self, id: &str) -> Result<DetailedChannel, Error> {
+        let mut response = HTTP_CLIENT
+            .get_async(&format!("{}/api/v1/channels/{}", self.uri, id))
+            .await?;
+
+        if response.status() == StatusCode::OK {
+            let data: DetailedChannel = response.json().await?;
+            Ok(data)
+        } else {
+            Err(Error::BadStatusCode)
+        }
+    }
+
+    pub async fn channel_playlists(&self, id: &str) -> Result<Vec<Content>, Error> {
+        let mut response = HTTP_CLIENT
+            .get_async(&format!("{}/api/v1/channels/{}/playlists", self.uri, id))
+            .await?;
+        if response.status() == StatusCode::OK {
+            let mut data: Value = response.json::<Value>().await?;
+            Ok(serde_json::from_value::<Vec<Content>>(data["playlists"].take()).unwrap())
         } else {
             Err(Error::BadStatusCode)
         }

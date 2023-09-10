@@ -98,6 +98,8 @@ mod imp {
                                 };
 
                                 _self.picture.set_pixbuf(Some(&pixbuf));
+                                _self.picture.set_width_request(width);
+                                _self.picture.set_height_request(height);
                                 _self.stack.set_visible_child_name("picture");
                                 _self.spinner.set_spinning(false);
                                 _self.spinner.stop();

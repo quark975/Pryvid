@@ -1,0 +1,39 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $ChannelView : Adw.NavigationPage {
+  Box {
+    orientation: vertical;
+
+    Adw.HeaderBar {
+      title-widget: Adw.ViewSwitcher {
+        stack: view_stack;
+        policy: wide;
+      };
+
+      [end]
+      $InstanceIndicator instance_indicator {}
+    }
+
+    Adw.ViewStack view_stack {
+      Adw.ViewStackPage {
+        name: "videos";
+        title: "Videos";
+        icon-name: "emblem-videos-symbolic";
+        child: $ContentGrid videos_grid {};
+      }
+      Adw.ViewStackPage {
+        name: "playlists";
+        title: "Playlists";
+        icon-name: "playlist-symbolic";
+        child: $ContentGrid playlists_grid {};
+      }
+      Adw.ViewStackPage {
+        name: "channels";
+        title: "Channels";
+        icon-name: "people-symbolic";
+        child: $ContentGrid channels_grid {};
+      }
+    }
+  }
+}

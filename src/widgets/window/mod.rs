@@ -17,6 +17,8 @@ use crate::widgets::instance_indicator::InstanceIndicator;
 use crate::widgets::result_page::ResultPageState;
 use crate::widgets::video_view::VideoView;
 
+use super::channel_view::ChannelView;
+
 mod imp {
 
     use super::*;
@@ -136,7 +138,18 @@ impl PryvidWindow {
             .activate(move |win: &Self, _, param| {
                 if let Some(param) = param {
                     let channel_id = param.get::<String>().unwrap();
-                    println!("{channel_id}");
+                    let channel_view = ChannelView::new(win.model(), channel_id);
+                    win.imp().navigation_view.push(&channel_view);
+                }
+            })
+            .build();
+
+        let open_playlist_action = gio::ActionEntry::builder("open-playlist")
+            .parameter_type(Some(&String::static_variant_type()))
+            .activate(move |win: &Self, _, param| {
+                if let Some(param) = param {
+                    let playlist_id = param.get::<String>().unwrap();
+                    println!("playlist_id: {playlist_id}");
                 }
             })
             .build();
@@ -207,6 +220,7 @@ impl PryvidWindow {
             notify_action,
             open_channel_action,
             open_video_action,
+            open_playlist_action,
             fullscreen_action,
             unfullscreen_action,
             toggle_fullscreen_action,

@@ -10,6 +10,7 @@ use crate::widgets::result_page::{ResultPage, ResultPageState};
 use crate::widgets::video_button::VideoButton;
 
 use super::channel_button::ChannelButton;
+use super::playlist_button::PlaylistButton;
 
 mod imp {
 
@@ -94,7 +95,10 @@ impl ContentGrid {
                     let channel_button = ChannelButton::new(&channel);
                     flowbox.append(&channel_button);
                 }
-                Content::Playlist(playlist) => continue, // TODO: Implement
+                Content::Playlist(playlist) => {
+                    let playlist_button = PlaylistButton::new(&playlist);
+                    flowbox.append(&playlist_button);
+                }
             }
         }
     }

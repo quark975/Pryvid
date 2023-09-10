@@ -10,5 +10,7 @@
     <file preprocess="xml-stripblanks">thumbs-up-symbolic.svg</file>
     <file preprocess="xml-stripblanks">thumbs-down-symbolic.svg</file>
     <file preprocess="xml-stripblanks">month-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">playlist-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">circle-filled-symbolic.svg</file>
   </gresource>
 </gresources>

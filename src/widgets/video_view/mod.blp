@@ -110,7 +110,7 @@ template $VideoView : Adw.NavigationPage {
                       height-request: 600;
                       width-request: 1067;
 
-                      styles ["rounded"]
+                      styles ["rounded-2"]
                     }
                     
                     Box {
@@ -154,12 +154,14 @@ template $VideoView : Adw.NavigationPage {
                             spacing: 10;
 
                             $AsyncImage author_thumbnail {
-                              width: 64;
-                              height: 64;
+                              width: 48;
+                              height: 48;
                               vexpand: false;
                               hexpand: false;
                               valign: center;
                               halign: start;
+
+                              styles ["rounded-2"]
                             }
                             Box {
                               orientation: vertical;

@@ -1,12 +1,34 @@
 /* Rounding Various Widgets */
-.rounded picture {
+.rounded-3 picture {
 	border-radius: 5px;
 }
-video.rounded {
+video.rounded-3 {
+  border-radius: 5px;
+}
+video.rounded-3 revealer {
+	border-radius: 5px;
+	margin: 7px;
+}
+
+.rounded-2 picture {
+	border-radius: 8px;
+}
+video.rounded-2 {
   border-radius: 8px;
 }
-video.rounded revealer {
+video.rounded-2 revealer {
 	border-radius: 8px;
+	margin: 7px;
+}
+
+.rounded-1 picture {
+	border-radius: 12px;
+}
+video.rounded-1 {
+  border-radius: 12px;
+}
+video.rounded-1 revealer {
+	border-radius: 12px;
 	margin: 7px;
 }
 

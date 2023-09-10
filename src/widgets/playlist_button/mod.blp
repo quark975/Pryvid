@@ -1,7 +1,7 @@
 using Gtk 4.0;
 using Adw 1;
 
-template $VideoButton : Box {
+template $PlaylistButton : Box {
   hexpand: false;
   vexpand: false;
   halign: center;
@@ -17,7 +17,7 @@ template $VideoButton : Box {
       spacing: 2;
 
       Button {
-        clicked => $on_video_clicked() swapped;
+        clicked => $on_playlist_clicked() swapped;
         Box {
           orientation: vertical;
           halign: start;
@@ -25,7 +25,7 @@ template $VideoButton : Box {
 
           Overlay {
             [overlay]
-            Label length_label {
+            Label video_count_label {
               valign: end;
               halign: end;
               margin-end: 5;
@@ -40,12 +40,15 @@ template $VideoButton : Box {
               halign: fill;
               valign: fill;
 
+              uri: bind template.thumbnail;
+
               styles ["rounded-3"]
             }
           }
           Label title_label {
             halign: start;
 
+            label: bind template.title;
             wrap: true;
             wrap-mode: word;
             styles ["body"]
@@ -57,29 +60,11 @@ template $VideoButton : Box {
 
       Button author_button {
         halign: start;
+        label: bind template.author;
 
         clicked => $on_author_clicked() swapped;
 
         styles ["heading", "flat", "author"]
-      }
-      Box {
-        orientation: horizontal;
-        homogeneous: true;
-        halign: fill;
-        hexpand: true;
-        margin-start: 10;
-        margin-end: 10;
-        margin-top: 4;
-
-        Label published_label {
-          halign: start;
-          styles ["caption-heading"]
-        }
-
-        Label views_label {
-          halign: end;
-          styles ["caption-heading"]
-        }
       }
     }
   }
