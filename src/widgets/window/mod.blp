@@ -68,17 +68,23 @@ template $PryvidWindow : Adw.ApplicationWindow {
               name: "popular";
               icon-name: "people-symbolic";
               title: "Popular";
-              child: $ContentGrid popular_grid {};
+              child: $ContentGrid popular_grid {
+                refreshable: true;
+              };
             }
             Adw.ViewStackPage {
               name: "trending";
               icon-name: "profit-symbolic";
               title: "Trending";
-              child: $ContentGrid trending_grid {};
+              child: $ContentGrid trending_grid {
+                refreshable: true;
+              };
             }
             Adw.ViewStackPage {
               name: "search";
-              child: $ContentGrid search_grid {};
+              child: $ContentGrid search_grid {
+                refreshable: true;
+              };
               visible: false;
             }
           }

@@ -314,6 +314,60 @@ fn format_uri(uri: &str) -> String {
     }
 }
 
+impl Video {
+    pub fn correct_uri(&mut self, instance: &Instance) {
+        for thumbnail in &mut self.thumbnails {
+            thumbnail.url = correct_uri(&instance.uri, &thumbnail.url);
+        }
+    }
+}
+
+impl DetailedVideo {
+    pub fn correct_uri(&mut self, instance: &Instance) {
+        for thumbnail in &mut self.thumbnails {
+            thumbnail.url = correct_uri(&instance.uri, &thumbnail.url);
+        }
+    }
+}
+
+impl Channel {
+    pub fn correct_uri(&mut self, instance: &Instance) {
+        for thumbnail in &mut self.thumbnails {
+            thumbnail.url = correct_uri(&instance.uri, &thumbnail.url);
+        }
+    }
+}
+
+impl DetailedChannel {
+    pub fn correct_uri(&mut self, instance: &Instance) {
+        for thumbnail in &mut self.thumbnails {
+            thumbnail.url = correct_uri(&instance.uri, &thumbnail.url);
+        }
+        for channel in &mut self.related_channels {
+            channel.correct_uri(instance);
+        }
+        for video in &mut self.videos {
+            video.correct_uri(instance);
+        }
+    }
+}
+
+impl Playlist {
+    pub fn correct_uri(&mut self, instance: &Instance) {
+        self.thumbnail = correct_uri(&instance.uri, &self.thumbnail)
+    }
+}
+
+impl Content {
+    pub fn correct_uri(&mut self, instance: &Instance) {
+        match self {
+            Self::Playlist(playlist) => playlist.correct_uri(instance),
+            Self::Video(video) => video.correct_uri(instance),
+            Self::Channel(channel) => channel.correct_uri(instance),
+        }
+    }
+}
+
 impl Instance {
     pub async fn from_uri(uri: &str) -> Result<Instance, Error> {
         let uri = format_uri(uri);
@@ -392,14 +446,7 @@ impl Instance {
                 .collect();
 
             for item in data.iter_mut() {
-                match item {
-                    Content::Video(video) => {
-                        for thumbnail in &mut video.thumbnails {
-                            thumbnail.url = correct_uri(&self.uri, &thumbnail.url);
-                        }
-                    }
-                    _ => (),
-                }
+                item.correct_uri(self);
             }
             Ok(data)
         } else {
@@ -424,9 +471,7 @@ impl Instance {
             let mut data: DetailedVideo = response.json().await?;
 
             for video in &mut data.recommended {
-                for thumbnail in &mut video.thumbnails {
-                    thumbnail.url = correct_uri(&self.uri, &thumbnail.url);
-                }
+                video.correct_uri(&self);
             }
 
             Ok(data)
@@ -448,19 +493,7 @@ impl Instance {
             let mut data: Vec<Content> = response.json().await?;
 
             for item in data.iter_mut() {
-                match item {
-                    Content::Video(video) => {
-                        for thumbnail in &mut video.thumbnails {
-                            thumbnail.url = correct_uri(&self.uri, &thumbnail.url);
-                        }
-                    }
-                    Content::Channel(channel) => {
-                        for thumbnail in &mut channel.thumbnails {
-                            thumbnail.url = correct_uri(&self.uri, &thumbnail.url);
-                        }
-                    }
-                    _ => (),
-                }
+                item.correct_uri(self);
             }
             Ok(data)
         } else {
@@ -474,7 +507,8 @@ impl Instance {
             .await?;
 
         if response.status() == StatusCode::OK {
-            let data: DetailedChannel = response.json().await?;
+            let mut data: DetailedChannel = response.json().await?;
+            data.correct_uri(self);
             Ok(data)
         } else {
             Err(Error::BadStatusCode)
@@ -486,8 +520,11 @@ impl Instance {
             .get_async(&format!("{}/api/v1/channels/{}/playlists", self.uri, id))
             .await?;
         if response.status() == StatusCode::OK {
-            let mut data: Value = response.json::<Value>().await?;
-            Ok(serde_json::from_value::<Vec<Content>>(data["playlists"].take()).unwrap())
+            let mut data = serde_json::from_value::<Vec<Content>>(
+                response.json::<Value>().await?["playlists"].take(),
+            )
+            .unwrap();
+            Ok(data)
         } else {
             Err(Error::BadStatusCode)
         }

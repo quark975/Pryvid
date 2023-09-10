@@ -1,9 +1,10 @@
-use glib::{closure_local, subclass::Signal, Object};
+use glib::{closure_local, subclass::Signal, Object, Properties};
 use gtk::glib;
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
 use gtk::CompositeTemplate;
 use once_cell::sync::Lazy;
+use std::cell::Cell;
 
 use crate::api::Content;
 use crate::widgets::result_page::{ResultPage, ResultPageState};
@@ -16,13 +17,17 @@ mod imp {
 
     use super::*;
 
-    #[derive(Default, Debug, CompositeTemplate)]
+    #[derive(Default, Debug, CompositeTemplate, Properties)]
+    #[properties(wrapped_type = super::ContentGrid)]
     #[template(resource = "/dev/quark97/Pryvid/content_grid.ui")]
     pub struct ContentGrid {
         #[template_child]
         pub flowbox: TemplateChild<gtk::FlowBox>,
         #[template_child]
         pub result_page: TemplateChild<ResultPage>,
+
+        #[property(get, set)]
+        pub refreshable: Cell<bool>,
     }
 
     #[glib::object_subclass]
@@ -59,6 +64,18 @@ mod imp {
             static SIGNALS: Lazy<Vec<Signal>> =
                 Lazy::new(|| vec![Signal::builder("refresh").build()]);
             SIGNALS.as_ref()
+        }
+
+        fn properties() -> &'static [glib::ParamSpec] {
+            Self::derived_properties()
+        }
+
+        fn set_property(&self, id: usize, value: &glib::Value, pspec: &glib::ParamSpec) {
+            self.derived_set_property(id, value, pspec)
+        }
+
+        fn property(&self, id: usize, pspec: &glib::ParamSpec) -> glib::Value {
+            self.derived_property(id, pspec)
         }
     }
     impl WidgetImpl for ContentGrid {}

@@ -86,10 +86,27 @@ impl ChannelView {
 
         match instance.channel(channel_id).await {
             Ok(channel) => {
-                videos_grid.set_content(channel.videos.clone());
-                channels_grid.set_content(channel.related_channels.clone());
-                videos_grid.set_state(ResultPageState::Success);
-                channels_grid.set_state(ResultPageState::Success);
+                if channel.videos.len() == 0 {
+                    videos_grid.set_state(ResultPageState::Message((
+                        "dotted-box-symbolic".into(),
+                        "This Channel is Empty!".into(),
+                        "This channel has uploaded no videos".into(),
+                    )));
+                } else {
+                    videos_grid.set_content(channel.videos.clone());
+                    videos_grid.set_state(ResultPageState::Success);
+                }
+
+                if channel.related_channels.len() == 0 {
+                    channels_grid.set_state(ResultPageState::Message((
+                        "dotted-box-symbolic".into(),
+                        "No Related Channels".into(),
+                        "This channel has no related channels listed".into(),
+                    )));
+                } else {
+                    channels_grid.set_content(channel.related_channels.clone());
+                    channels_grid.set_state(ResultPageState::Success);
+                }
             }
             Err(error) => {
                 let msg = error.to_string();
@@ -106,8 +123,16 @@ impl ChannelView {
 
         match instance.channel_playlists(channel_id).await {
             Ok(playlists) => {
-                playlists_grid.set_content(playlists);
-                playlists_grid.set_state(ResultPageState::Success);
+                if playlists.len() == 0 {
+                    playlists_grid.set_state(ResultPageState::Message((
+                        "dotted-box-symbolic".into(),
+                        "No Related Channels".into(),
+                        "This channel has no related channels listed".into(),
+                    )));
+                } else {
+                    playlists_grid.set_content(playlists);
+                    playlists_grid.set_state(ResultPageState::Success);
+                }
             }
             Err(error) => playlists_grid.set_state(ResultPageState::Error(format!("{error:?}"))),
         }

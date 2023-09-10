@@ -9,7 +9,7 @@ template $ContentGrid : Box {
     hexpand: true;
 
     $ResultPage result_page {
-      refreshable: true;
+      refreshable: bind template.refreshable;
       valign: fill;
       halign: fill;
       vexpand: true;
