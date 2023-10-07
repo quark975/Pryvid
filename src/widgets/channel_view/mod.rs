@@ -2,14 +2,15 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use glib::{clone, MainContext, Object};
 use gtk::glib;
+use gtk::template_callbacks;
 use gtk::CompositeTemplate;
 use std::cell::OnceCell;
 use std::sync::Arc;
 
-use crate::api::Channel;
+use crate::api::DetailedChannel;
 use crate::api::Instance;
 use crate::appmodel::AppModel;
-use crate::widgets::async_image::AsyncImage;
+use crate::widgets::channel_info_window::ChannelInfoWindow;
 use crate::widgets::content_grid::ContentGrid;
 use crate::widgets::instance_indicator::InstanceIndicator;
 use crate::widgets::result_page::ResultPageState;
@@ -22,6 +23,7 @@ mod imp {
     #[template(resource = "/dev/quark97/Pryvid/channel_view.ui")]
     pub struct ChannelView {
         pub model: OnceCell<Arc<AppModel>>,
+        pub channel: OnceCell<DetailedChannel>,
 
         #[template_child]
         pub view_stack: TemplateChild<adw::ViewStack>,
@@ -33,6 +35,8 @@ mod imp {
         pub channels_grid: TemplateChild<ContentGrid>,
         #[template_child]
         pub instance_indicator: TemplateChild<InstanceIndicator>,
+        #[template_child]
+        pub info_button: TemplateChild<gtk::Button>,
     }
 
     #[glib::object_subclass]
@@ -43,6 +47,7 @@ mod imp {
 
         fn class_init(klass: &mut Self::Class) {
             klass.bind_template();
+            klass.bind_template_callbacks();
         }
         fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
             obj.init_template();
@@ -56,6 +61,25 @@ mod imp {
     }
     impl WidgetImpl for ChannelView {}
     impl NavigationPageImpl for ChannelView {}
+
+    #[template_callbacks]
+    impl ChannelView {
+        #[template_callback]
+        fn on_info_button_clicked(&self, _: gtk::Button) {
+            if let Some(channel) = self.channel.get() {
+                let window = self
+                    .obj()
+                    .root()
+                    .unwrap()
+                    .downcast::<gtk::Window>()
+                    .unwrap();
+                let dialog = ChannelInfoWindow::new(channel);
+                dialog.set_modal(true);
+                dialog.set_transient_for(Some(&window));
+                dialog.present();
+            }
+        }
+    }
 }
 
 glib::wrapper! {
@@ -107,6 +131,7 @@ impl ChannelView {
                     channels_grid.set_content(channel.related_channels.clone());
                     channels_grid.set_state(ResultPageState::Success);
                 }
+                imp.channel.set(channel).unwrap();
             }
             Err(error) => {
                 let msg = error.to_string();

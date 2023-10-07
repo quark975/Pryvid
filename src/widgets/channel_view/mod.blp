@@ -12,7 +12,16 @@ template $ChannelView : Adw.NavigationPage {
       };
 
       [end]
-      $InstanceIndicator instance_indicator {}
+      Box {
+        spacing: 5;
+
+        $InstanceIndicator instance_indicator {}
+        Button info_button {
+          icon-name: "info-symbolic";
+
+          clicked => $on_info_button_clicked() swapped;
+        }
+      }
     }
 
     Adw.ViewStack view_stack {

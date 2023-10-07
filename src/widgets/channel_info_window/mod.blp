@@ -1,0 +1,96 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $ChannelInfoWindow : Adw.Window {
+  default-width: 500;
+  default-height: 400;
+  Overlay {
+    [overlay]
+    Adw.HeaderBar {
+      valign: start;
+      show-title: false;
+      styles ["flat", "dark-buttons"]
+    }
+
+    Box {
+      orientation: vertical;
+      valign: fill;
+
+      $AsyncImage banner_image {
+        valign: start;
+        vexpand: false;
+        width: 500;
+        height: 85;
+        uri: bind template.banner;
+      }
+
+      Box {
+        orientation: vertical;
+        margin-start: 15;
+        margin-end: 15;
+        margin-top: 15;
+        margin-bottom: 15;
+        spacing: 13; 
+        valign: fill;
+        vexpand: true;
+
+        Box {
+          orientation: horizontal;
+          halign: start;
+          valign: start;
+          vexpand: false;
+          spacing: 12;
+
+          Adw.Clamp {
+            maximum-size: 64;
+            valign: center;
+
+            $AsyncImage thumbnail_image {
+              uri: bind template.thumbnail;
+              width: 64;
+              height: 64;
+
+              styles ["rounded-1"]
+            }
+          }
+
+          Box {
+            orientation: vertical;
+            spacing: 5;
+            Label {
+              label: bind template.title; 
+              justify: left;
+              halign: start;
+
+              styles ["title-1"]
+            }
+            Label subscribers_label {
+              justify: left;
+              halign: start;
+
+              styles ["dim-label"]
+            }
+          }
+        }
+        
+        ScrolledWindow {
+          valign: fill;
+          halign: fill;
+          vexpand: true;
+          hexpand: true;
+          hscrollbar-policy: never;
+          Label description_label {
+            label: bind template.description;
+            wrap: true;
+            selectable: true;
+            justify: left;
+            xalign: 0.0;
+            valign: start;
+            halign: start;
+            can-focus: false;
+          }
+        }
+      }
+    }
+  }
+}

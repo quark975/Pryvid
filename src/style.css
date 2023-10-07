@@ -48,3 +48,8 @@ button.author {
 spinner.large {
   -gtk-icon-size: 35px;
 }
+
+/* Banner Headerbar */
+headerbar.dark-buttons windowcontrols image {
+  background-color: rgba(0, 0, 0, 0.5);
+}

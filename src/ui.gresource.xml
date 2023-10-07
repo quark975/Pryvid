@@ -17,6 +17,7 @@
     <file preprocess="xml-stripblanks" alias="channel_button.ui">widgets/channel_button/mod.ui</file>
     <file preprocess="xml-stripblanks" alias="channel_view.ui">widgets/channel_view/mod.ui</file>
     <file preprocess="xml-stripblanks" alias="playlist_button.ui">widgets/playlist_button/mod.ui</file>
+    <file preprocess="xml-stripblanks" alias="channel_info.ui">widgets/channel_info_window/mod.ui</file>
     <file compressed="true">style.css</file>
   </gresource>
 </gresources>
