@@ -18,6 +18,7 @@ use crate::widgets::result_page::ResultPageState;
 use crate::widgets::video_view::VideoView;
 
 use super::channel_view::ChannelView;
+use super::playlist_view::PlaylistView;
 
 mod imp {
 
@@ -149,7 +150,8 @@ impl PryvidWindow {
             .activate(move |win: &Self, _, param| {
                 if let Some(param) = param {
                     let playlist_id = param.get::<String>().unwrap();
-                    println!("playlist_id: {playlist_id}");
+                    let playlist_view = PlaylistView::new(win.model(), playlist_id);
+                    win.imp().navigation_view.push(&playlist_view);
                 }
             })
             .build();

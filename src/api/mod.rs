@@ -233,6 +233,21 @@ pub struct DetailedChannel {
     pub related_channels: Vec<Content>,
 }
 
+#[derive(Debug, Deserialize, Clone)]
+pub struct DetailedPlaylist {
+    pub title: String,
+    #[serde(rename = "playlistId")]
+    pub id: String,
+    pub author: String,
+    #[serde(rename = "authorId")]
+    pub author_id: String,
+    #[serde(rename = "videoCount")]
+    pub video_count: u64,
+    #[serde(rename = "playlistThumbnail")]
+    pub thumbnail: String,
+    pub videos: Vec<Video>,
+}
+
 #[derive(Debug)]
 pub struct InvidiousClient {
     instances: RwLock<Instances>,
@@ -346,6 +361,15 @@ impl DetailedChannel {
         for channel in &mut self.related_channels {
             channel.correct_uri(instance);
         }
+        for video in &mut self.videos {
+            video.correct_uri(instance);
+        }
+    }
+}
+
+impl DetailedPlaylist {
+    pub fn correct_uri(&mut self, instance: &Instance) {
+        self.thumbnail = correct_uri(&instance.uri, &self.thumbnail);
         for video in &mut self.videos {
             video.correct_uri(instance);
         }
@@ -524,6 +548,20 @@ impl Instance {
                 response.json::<Value>().await?["playlists"].take(),
             )
             .unwrap();
+            Ok(data)
+        } else {
+            Err(Error::BadStatusCode)
+        }
+    }
+
+    pub async fn playlist(&self, id: &str) -> Result<DetailedPlaylist, Error> {
+        let mut response = HTTP_CLIENT
+            .get_async(&format!("{}/api/v1/playlists/{}", self.uri, id))
+            .await?;
+
+        if response.status() == StatusCode::OK {
+            let mut data: DetailedPlaylist = response.json().await?;
+            data.correct_uri(self);
             Ok(data)
         } else {
             Err(Error::BadStatusCode)

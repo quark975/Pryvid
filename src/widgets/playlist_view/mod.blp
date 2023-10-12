@@ -1,0 +1,19 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $PlaylistView : Adw.NavigationPage {
+  Box {
+    orientation: vertical;
+    
+    Adw.HeaderBar {
+      [end]
+      Box {
+        spacing: 5;
+
+        $InstanceIndicator instance_indicator {}
+      }
+    }
+
+    $ContentGrid videos_grid {}
+  }  
+}

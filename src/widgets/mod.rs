@@ -11,6 +11,7 @@ pub mod loading_window;
 pub mod new_instance_window;
 pub mod onboarding;
 pub mod playlist_button;
+pub mod playlist_view;
 pub mod preferences;
 pub mod result_page;
 pub mod video_button;

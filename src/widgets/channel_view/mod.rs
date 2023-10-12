@@ -110,6 +110,7 @@ impl ChannelView {
 
         match instance.channel(channel_id).await {
             Ok(channel) => {
+                self.set_title(&channel.title);
                 if channel.videos.len() == 0 {
                     videos_grid.set_state(ResultPageState::Message((
                         "dotted-box-symbolic".into(),
