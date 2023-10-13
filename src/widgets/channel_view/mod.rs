@@ -88,6 +88,7 @@ impl ChannelView {
     pub fn new(model: Arc<AppModel>, channel_id: String) -> Self {
         let obj: Self = Object::builder().build();
         obj.imp().model.set(model).unwrap();
+        obj.set_tag(Some(&channel_id));
         obj.fetch_content(channel_id);
         obj
     }

@@ -165,6 +165,7 @@ impl VideoView {
     pub fn new(model: Arc<AppModel>, video_id: String) -> Self {
         let obj: VideoView = Object::builder().build();
         obj.imp().model.set(model).unwrap();
+        obj.set_tag(Some(&video_id));
         obj.fetch_video(video_id);
         obj
     }

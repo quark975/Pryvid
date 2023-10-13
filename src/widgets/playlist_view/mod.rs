@@ -58,6 +58,7 @@ impl PlaylistView {
     pub fn new(model: Arc<AppModel>, playlist_id: String) -> Self {
         let obj: Self = Object::builder().build();
         obj.imp().model.set(model).unwrap();
+        obj.set_tag(Some(&playlist_id));
         obj.fetch_content(playlist_id);
         obj
     }

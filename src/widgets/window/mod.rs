@@ -1,16 +1,12 @@
+use adw::prelude::*;
 use adw::subclass::prelude::*;
-use gdk::prelude::*;
 use glib::clone;
-use gtk::glib::{closure_local, MainContext};
-use gtk::prelude::*;
+use gtk::glib::MainContext;
 use gtk::template_callbacks;
-use gtk::{gdk, gio, glib};
+use gtk::{gio, glib};
 use std::cell::OnceCell;
-use std::future::Future;
-use std::pin::Pin;
 use std::sync::Arc;
 
-use crate::api::{Content, Error};
 use crate::appmodel::AppModel;
 use crate::widgets::content_grid::ContentGrid;
 use crate::widgets::instance_indicator::InstanceIndicator;
@@ -150,8 +146,14 @@ impl PryvidWindow {
             .activate(move |win: &Self, _, param| {
                 if let Some(param) = param {
                     let channel_id = param.get::<String>().unwrap();
-                    let channel_view = ChannelView::new(win.model(), channel_id);
-                    win.imp().navigation_view.push(&channel_view);
+                    let nav_view = &win.imp().navigation_view;
+
+                    if nav_view.visible_page().unwrap().tag()
+                        != Some(glib::GString::from_string_unchecked(channel_id.clone()))
+                    {
+                        let channel_view = ChannelView::new(win.model(), channel_id);
+                        nav_view.push(&channel_view);
+                    }
                 }
             })
             .build();
@@ -161,8 +163,14 @@ impl PryvidWindow {
             .activate(move |win: &Self, _, param| {
                 if let Some(param) = param {
                     let playlist_id = param.get::<String>().unwrap();
-                    let playlist_view = PlaylistView::new(win.model(), playlist_id);
-                    win.imp().navigation_view.push(&playlist_view);
+                    let nav_view = &win.imp().navigation_view;
+
+                    if nav_view.visible_page().unwrap().tag()
+                        != Some(glib::GString::from_string_unchecked(playlist_id.clone()))
+                    {
+                        let playlist_view = PlaylistView::new(win.model(), playlist_id);
+                        nav_view.push(&playlist_view);
+                    }
                 }
             })
             .build();
@@ -172,16 +180,22 @@ impl PryvidWindow {
             .activate(move |win: &Self, _, param| {
                 if let Some(param) = param {
                     let video_id = param.get::<String>().unwrap();
-                    let video_view = VideoView::new(win.model(), video_id);
-                    win.bind_property::<VideoView>(
-                        "fullscreened",
-                        video_view.as_ref(),
-                        "fullscreened",
-                    )
-                    .sync_create()
-                    .bidirectional()
-                    .build();
-                    win.imp().navigation_view.push(&video_view);
+                    let nav_view = &win.imp().navigation_view;
+
+                    if nav_view.visible_page().unwrap().tag()
+                        != Some(glib::GString::from_string_unchecked(video_id.clone()))
+                    {
+                        let video_view = VideoView::new(win.model(), video_id);
+                        win.bind_property::<VideoView>(
+                            "fullscreened",
+                            video_view.as_ref(),
+                            "fullscreened",
+                        )
+                        .sync_create()
+                        .bidirectional()
+                        .build();
+                        nav_view.push(&video_view);
+                    }
                 }
             })
             .build();
