@@ -2,7 +2,7 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use glib::{Object, Properties};
 use gtk::glib;
-use gtk::{template_callbacks, CompositeTemplate};
+use gtk::CompositeTemplate;
 use std::cell::RefCell;
 
 use crate::api::Playlist;
@@ -70,7 +70,7 @@ mod imp {
     impl WidgetImpl for PlaylistButton {}
     impl BinImpl for PlaylistButton {}
 
-    #[template_callbacks]
+    #[gtk::template_callbacks]
     impl PlaylistButton {
         fn set_video_count(&self, video_count: u64) {
             self.video_count_label

@@ -2,8 +2,8 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use glib::Object;
 use gtk::glib::{clone, MainContext, Properties};
+use gtk::CompositeTemplate;
 use gtk::{gio, glib};
-use gtk::{template_callbacks, CompositeTemplate};
 use once_cell::sync::OnceCell;
 use std::cell::Cell;
 use std::sync::Arc;
@@ -128,7 +128,7 @@ mod imp {
         }
     }
 
-    #[template_callbacks]
+    #[gtk::template_callbacks]
     impl VideoView {
         fn set_fullscreened(&self, fullscreened: bool) {
             self.fullscreened.set(fullscreened);

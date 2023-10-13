@@ -3,7 +3,7 @@ use adw::subclass::prelude::*;
 use glib::Object;
 use gtk::glib;
 use gtk::glib::subclass::Signal;
-use gtk::{template_callbacks, CompositeTemplate};
+use gtk::CompositeTemplate;
 use once_cell::sync::Lazy;
 
 mod imp {
@@ -41,7 +41,7 @@ mod imp {
     impl WindowImpl for LoadingWindow {}
     impl AdwWindowImpl for LoadingWindow {}
 
-    #[template_callbacks]
+    #[gtk::template_callbacks]
     impl LoadingWindow {
         #[template_callback]
         fn on_cancel_clicked(&self) {

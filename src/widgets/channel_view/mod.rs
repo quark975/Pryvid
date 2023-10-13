@@ -2,7 +2,6 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use glib::{clone, MainContext, Object};
 use gtk::glib;
-use gtk::template_callbacks;
 use gtk::CompositeTemplate;
 use std::cell::OnceCell;
 use std::sync::Arc;
@@ -58,7 +57,7 @@ mod imp {
     impl WidgetImpl for ChannelView {}
     impl NavigationPageImpl for ChannelView {}
 
-    #[template_callbacks]
+    #[gtk::template_callbacks]
     impl ChannelView {
         #[template_callback]
         fn on_info_button_clicked(&self, _: gtk::Button) {

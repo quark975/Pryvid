@@ -2,7 +2,6 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use glib::clone;
 use gtk::glib::MainContext;
-use gtk::template_callbacks;
 use gtk::{gio, glib};
 use std::cell::OnceCell;
 use std::sync::Arc;
@@ -76,7 +75,7 @@ mod imp {
     impl ApplicationWindowImpl for PryvidWindow {}
     impl AdwApplicationWindowImpl for PryvidWindow {}
 
-    #[template_callbacks]
+    #[gtk::template_callbacks]
     impl PryvidWindow {
         #[template_callback]
         fn on_search_entry_search_changed(&self) {
