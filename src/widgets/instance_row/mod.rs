@@ -32,17 +32,7 @@ mod imp {
     impl ObjectImpl for InstanceRow {
         fn constructed(&self) {
             self.parent_constructed();
-
-            let switch = gtk::Switch::builder()
-                .vexpand(false)
-                .valign(Align::Center)
-                .build();
-            let obj = self.obj();
-            obj.add_suffix(&switch);
-            obj.bind_property("selected", &switch, "active")
-                .bidirectional()
-                .sync_create()
-                .build();
+            self.obj().create_switch();
         }
 
         // TODO: All of the property-related function will eventually
@@ -108,6 +98,18 @@ impl InstanceRow {
             .subtitle(content)
             .build();
         self.add_row(&row);
+    }
+
+    fn create_switch(&self) {
+        let switch = gtk::Switch::builder()
+            .vexpand(false)
+            .valign(Align::Center)
+            .build();
+        self.add_suffix(&switch);
+        self.bind_property("selected", &switch, "active")
+            .bidirectional()
+            .sync_create()
+            .build();
     }
 
     fn build(&self) {

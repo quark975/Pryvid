@@ -34,9 +34,7 @@ mod imp {
             let obj = self.obj();
             obj.setup_model();
             obj.setup_gactions();
-            obj.set_accels_for_action("app.quit", &["<primary>q"]);
-            obj.set_accels_for_action("win.toggle-fullscreen", &["f"]);
-            obj.set_accels_for_action("win.escape-pressed", &["Escape"]);
+            obj.setup_accels();
         }
     }
 
@@ -174,6 +172,12 @@ impl PryvidApplication {
             preferences_action,
             getstarted_action,
         ]);
+    }
+
+    fn setup_accels(&self) {
+        self.set_accels_for_action("app.quit", &["<primary>q"]);
+        self.set_accels_for_action("win.toggle-fullscreen", &["f"]);
+        self.set_accels_for_action("win.escape-pressed", &["Escape"]);
     }
 
     fn show_about(&self) {

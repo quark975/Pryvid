@@ -91,15 +91,7 @@ mod imp {
     impl ObjectImpl for VideoView {
         fn constructed(&self) {
             self.parent_constructed();
-
-            let controller = gtk::EventControllerMotion::new();
-            controller.connect_enter(clone!(@weak self as imp => move |_, _, _| {
-                imp.headerbar_revealer.set_reveal_child(true);
-            }));
-            controller.connect_leave(clone!(@weak self as imp => move |_| {
-                imp.headerbar_revealer.set_reveal_child(false);
-            }));
-            self.hover_box.add_controller(controller);
+            self.obj().create_hover_controller();
         }
 
         fn properties() -> &'static [glib::ParamSpec] {
@@ -213,6 +205,18 @@ impl VideoView {
             .set_media_stream(None::<&gtk::MediaStream>);
         imp.fullscreen_video_widget
             .set_media_stream(None::<&gtk::MediaStream>);
+    }
+
+    fn create_hover_controller(&self) {
+        let imp = self.imp();
+        let controller = gtk::EventControllerMotion::new();
+        controller.connect_enter(clone!(@weak imp => move |_, _, _| {
+            imp.headerbar_revealer.set_reveal_child(true);
+        }));
+        controller.connect_leave(clone!(@weak imp => move |_| {
+            imp.headerbar_revealer.set_reveal_child(false);
+        }));
+        imp.hover_box.add_controller(controller);
     }
 
     fn set_video(&self, video: DetailedVideo) {
