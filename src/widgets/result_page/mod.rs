@@ -35,7 +35,7 @@ mod imp {
     impl ObjectSubclass for ResultPage {
         const NAME: &'static str = "ResultPage";
         type Type = super::ResultPage;
-        type ParentType = gtk::Box;
+        type ParentType = adw::Bin;
 
         fn class_init(klass: &mut Self::Class) {
             klass.bind_template();
@@ -86,12 +86,12 @@ mod imp {
         }
     }
     impl WidgetImpl for ResultPage {}
-    impl BoxImpl for ResultPage {}
+    impl BinImpl for ResultPage {}
 }
 
 glib::wrapper! {
     pub struct ResultPage(ObjectSubclass<imp::ResultPage>)
-        @extends gtk::Box, gtk::Widget,
+        @extends adw::Bin, gtk::Widget,
         @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget;
 }
 

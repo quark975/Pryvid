@@ -52,7 +52,7 @@ mod imp {
     impl ObjectSubclass for VideoButton {
         const NAME: &'static str = "VideoButton";
         type Type = super::VideoButton;
-        type ParentType = gtk::Box;
+        type ParentType = adw::Bin;
 
         fn class_init(klass: &mut Self::Class) {
             klass.bind_template();
@@ -95,7 +95,7 @@ mod imp {
         }
     }
     impl WidgetImpl for VideoButton {}
-    impl BoxImpl for VideoButton {}
+    impl BinImpl for VideoButton {}
 
     #[gtk::template_callbacks]
     impl VideoButton {
@@ -142,8 +142,8 @@ mod imp {
 
 glib::wrapper! {
     pub struct VideoButton(ObjectSubclass<imp::VideoButton>)
-        @extends gtk::Box, gtk::Widget,
-        @implements gtk::Accessible, gtk::Orientable, gtk::Buildable, gtk::ConstraintTarget;
+        @extends adw::Bin, gtk::Widget,
+        @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget;
 }
 
 impl VideoButton {

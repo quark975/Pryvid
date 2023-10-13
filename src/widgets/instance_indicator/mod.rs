@@ -27,7 +27,7 @@ mod imp {
     impl ObjectSubclass for InstanceIndicator {
         const NAME: &'static str = "InstanceIndicator";
         type Type = super::InstanceIndicator;
-        type ParentType = gtk::Box;
+        type ParentType = adw::Bin;
 
         fn class_init(klass: &mut Self::Class) {
             klass.bind_template();
@@ -59,13 +59,13 @@ mod imp {
         }
     }
     impl WidgetImpl for InstanceIndicator {}
-    impl BoxImpl for InstanceIndicator {}
+    impl BinImpl for InstanceIndicator {}
 }
 
 glib::wrapper! {
     pub struct InstanceIndicator(ObjectSubclass<imp::InstanceIndicator>)
-        @extends gtk::Button, gtk::Widget,
-        @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget, gtk::Orientable;
+        @extends adw::Bin, gtk::Widget,
+        @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget;
 }
 
 impl InstanceIndicator {

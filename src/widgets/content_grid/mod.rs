@@ -1,7 +1,7 @@
+use adw::prelude::*;
+use adw::subclass::prelude::*;
 use glib::{closure_local, subclass::Signal, Object, Properties};
 use gtk::glib;
-use gtk::prelude::*;
-use gtk::subclass::prelude::*;
 use gtk::CompositeTemplate;
 use once_cell::sync::Lazy;
 use std::cell::Cell;
@@ -34,7 +34,7 @@ mod imp {
     impl ObjectSubclass for ContentGrid {
         const NAME: &'static str = "ContentGrid";
         type Type = super::ContentGrid;
-        type ParentType = gtk::Box;
+        type ParentType = adw::Bin;
 
         fn class_init(klass: &mut Self::Class) {
             klass.bind_template();
@@ -79,13 +79,13 @@ mod imp {
         }
     }
     impl WidgetImpl for ContentGrid {}
-    impl BoxImpl for ContentGrid {}
+    impl BinImpl for ContentGrid {}
 }
 
 glib::wrapper! {
     pub struct ContentGrid(ObjectSubclass<imp::ContentGrid>)
-        @extends gtk::Box, gtk::Widget,
-        @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget, gtk::Orientable;
+        @extends adw::Bin, gtk::Widget,
+        @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget;
 }
 
 impl ContentGrid {

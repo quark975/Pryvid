@@ -37,7 +37,7 @@ mod imp {
     impl ObjectSubclass for AsyncImage {
         const NAME: &'static str = "AsyncImage";
         type Type = super::AsyncImage;
-        type ParentType = gtk::Box;
+        type ParentType = adw::Bin;
 
         fn class_init(klass: &mut Self::Class) {
             klass.bind_template();
@@ -68,7 +68,7 @@ mod imp {
         }
     }
     impl WidgetImpl for AsyncImage {}
-    impl BoxImpl for AsyncImage {}
+    impl BinImpl for AsyncImage {}
 
     impl AsyncImage {
         fn set_uri(&self, value: String) {
@@ -118,8 +118,8 @@ mod imp {
 
 glib::wrapper! {
     pub struct AsyncImage(ObjectSubclass<imp::AsyncImage>)
-        @extends gtk::Box, gtk::Widget,
-        @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget, gtk::Orientable;
+        @extends adw::Bin, gtk::Widget,
+        @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget;
 }
 
 impl AsyncImage {

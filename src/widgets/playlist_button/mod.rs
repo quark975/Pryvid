@@ -43,7 +43,7 @@ mod imp {
     impl ObjectSubclass for PlaylistButton {
         const NAME: &'static str = "PlaylistButton";
         type Type = super::PlaylistButton;
-        type ParentType = gtk::Box;
+        type ParentType = adw::Bin;
 
         fn class_init(klass: &mut Self::Class) {
             klass.bind_template();
@@ -68,7 +68,7 @@ mod imp {
         }
     }
     impl WidgetImpl for PlaylistButton {}
-    impl BoxImpl for PlaylistButton {}
+    impl BinImpl for PlaylistButton {}
 
     #[template_callbacks]
     impl PlaylistButton {
@@ -101,8 +101,8 @@ mod imp {
 
 glib::wrapper! {
     pub struct PlaylistButton(ObjectSubclass<imp::PlaylistButton>)
-        @extends gtk::Box, gtk::Widget,
-        @implements gtk::Accessible, gtk::Orientable, gtk::Buildable, gtk::ConstraintTarget;
+        @extends adw::Bin, gtk::Widget,
+        @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget;
 }
 
 impl PlaylistButton {
