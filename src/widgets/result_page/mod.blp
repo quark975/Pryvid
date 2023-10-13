@@ -23,7 +23,7 @@ template $ResultPage : Adw.Bin {
     StackPage {
       name: "content";
       child: Adw.Bin content_bin {
-
+        child: bind template.child;
       };
     }
     StackPage {
@@ -37,6 +37,8 @@ template $ResultPage : Adw.Bin {
           label: "Refresh";
           halign: center;
           hexpand: false;
+          visible: bind template.refreshable;
+          clicked => $on_refresh_button_clicked() swapped;
 
           styles ["pill"]
         }

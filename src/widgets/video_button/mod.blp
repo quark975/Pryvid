@@ -39,13 +39,14 @@ template $VideoButton : Adw.Bin {
               height-request: 180;
               halign: fill;
               valign: fill;
+              uri: bind template.thumbnail;
 
               styles ["rounded-3"]
             }
           }
           Label title_label {
             halign: start;
-
+            label: bind template.title;
             wrap: true;
             wrap-mode: word;
             styles ["body"]
@@ -57,6 +58,7 @@ template $VideoButton : Adw.Bin {
 
       Button author_button {
         halign: start;
+        label: bind template.author;
 
         clicked => $on_author_clicked() swapped;
 
@@ -73,6 +75,7 @@ template $VideoButton : Adw.Bin {
 
         Label published_label {
           halign: start;
+          label: bind template.published;
           styles ["caption-heading"]
         }
 

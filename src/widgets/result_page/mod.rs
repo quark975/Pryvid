@@ -39,6 +39,7 @@ mod imp {
 
         fn class_init(klass: &mut Self::Class) {
             klass.bind_template();
+            klass.bind_template_callbacks();
         }
         fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
             obj.init_template();
@@ -46,27 +47,6 @@ mod imp {
     }
 
     impl ObjectImpl for ResultPage {
-        fn constructed(&self) {
-            self.parent_constructed();
-
-            self.obj()
-                .bind_property::<adw::Bin>("child", self.content_bin.as_ref(), "child")
-                .sync_create()
-                .build();
-            self.obj()
-                .bind_property::<gtk::Button>(
-                    "refreshable",
-                    self.refresh_button.as_ref(),
-                    "visible",
-                )
-                .sync_create()
-                .build();
-            self.refresh_button
-                .connect_clicked(clone!(@weak self as imp => move |_| {
-                    imp.obj().emit_by_name::<()>("refresh", &[]);
-                }));
-        }
-
         fn signals() -> &'static [glib::subclass::Signal] {
             static SIGNALS: Lazy<Vec<Signal>> =
                 Lazy::new(|| vec![Signal::builder("refresh").build()]);
@@ -87,6 +67,14 @@ mod imp {
     }
     impl WidgetImpl for ResultPage {}
     impl BinImpl for ResultPage {}
+
+    #[gtk::template_callbacks]
+    impl ResultPage {
+        #[template_callback]
+        fn on_refresh_button_clicked(&self, _: gtk::Button) {
+            self.obj().emit_by_name::<()>("refresh", &[]);
+        }
+    }
 }
 
 glib::wrapper! {

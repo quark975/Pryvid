@@ -14,6 +14,7 @@ template $ContentGrid : Adw.Bin {
       halign: fill;
       vexpand: true;
       hexpand: true;
+      refresh => $on_result_page_refresh() swapped;
 
       child: FlowBox flowbox {
         vexpand: false;

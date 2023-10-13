@@ -73,7 +73,6 @@ mod imp {
         fn constructed(&self) {
             self.parent_constructed();
             self.obj().setup_gactions();
-            self.obj().setup_callbacks();
         }
     }
     impl WidgetImpl for PryvidWindow {}
@@ -98,6 +97,18 @@ mod imp {
                     }),
                 );
             }
+        }
+        #[template_callback]
+        fn on_popular_grid_refresh(&self, _: ContentGrid) {
+            MainContext::default().spawn_local(clone!(@weak self as window => async move {
+                window.obj().build_popular().await;
+            }));
+        }
+        #[template_callback]
+        fn on_trending_grid_refresh(&self, _: ContentGrid) {
+            MainContext::default().spawn_local(clone!(@weak self as window => async move {
+                window.obj().build_trending().await;
+            }));
         }
     }
 }
@@ -228,27 +239,6 @@ impl PryvidWindow {
             toggle_fullscreen_action,
             escape_pressed_action,
         ]);
-    }
-
-    fn setup_callbacks(&self) {
-        self.imp().popular_grid.connect_closure(
-            "refresh",
-            false,
-            closure_local!(@watch self as window => move |_: ContentGrid| {
-                MainContext::default().spawn_local(clone!(@weak window => async move {
-                    window.build_popular().await;
-                }));
-            }),
-        );
-        self.imp().trending_grid.connect_closure(
-            "refresh",
-            false,
-            closure_local!(@watch self as window => move |_: ContentGrid| {
-                MainContext::default().spawn_local(clone!(@weak window => async move {
-                    window.build_trending().await;
-                }));
-            }),
-        );
     }
 
     fn model(&self) -> Arc<AppModel> {

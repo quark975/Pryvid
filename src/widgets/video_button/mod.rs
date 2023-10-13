@@ -75,24 +75,6 @@ mod imp {
         fn property(&self, id: usize, pspec: &glib::ParamSpec) -> glib::Value {
             self.derived_property(id, pspec)
         }
-
-        fn constructed(&self) {
-            self.parent_constructed();
-
-            let obj = self.obj();
-            obj.bind_property::<AsyncImage>("thumbnail", self.thumbnail_image.as_ref(), "uri")
-                .sync_create()
-                .build();
-            obj.bind_property::<gtk::Label>("title", self.title_label.as_ref(), "label")
-                .sync_create()
-                .build();
-            obj.bind_property::<gtk::Button>("author", self.author_button.as_ref(), "label")
-                .sync_create()
-                .build();
-            obj.bind_property::<gtk::Label>("published", self.published_label.as_ref(), "label")
-                .sync_create()
-                .build();
-        }
     }
     impl WidgetImpl for VideoButton {}
     impl BinImpl for VideoButton {}

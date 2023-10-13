@@ -49,14 +49,6 @@ mod imp {
         fn property(&self, id: usize, pspec: &glib::ParamSpec) -> glib::Value {
             self.derived_property(id, pspec)
         }
-        fn constructed(&self) {
-            self.parent_constructed();
-
-            self.obj()
-                .bind_property::<adw::ActionRow>("uri", self.instance_row.as_ref(), "title")
-                .sync_create()
-                .build();
-        }
     }
     impl WidgetImpl for InstanceIndicator {}
     impl BinImpl for InstanceIndicator {}

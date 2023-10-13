@@ -54,11 +54,7 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for ChannelView {
-        fn constructed(&self) {
-            self.parent_constructed();
-        }
-    }
+    impl ObjectImpl for ChannelView {}
     impl WidgetImpl for ChannelView {}
     impl NavigationPageImpl for ChannelView {}
 

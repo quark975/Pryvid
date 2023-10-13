@@ -70,6 +70,7 @@ template $PryvidWindow : Adw.ApplicationWindow {
               title: "Popular";
               child: $ContentGrid popular_grid {
                 refreshable: true;
+                refresh => $on_popular_grid_refresh() swapped;
               };
             }
             Adw.ViewStackPage {
@@ -78,6 +79,7 @@ template $PryvidWindow : Adw.ApplicationWindow {
               title: "Trending";
               child: $ContentGrid trending_grid {
                 refreshable: true;
+                refresh => $on_trending_grid_refresh() swapped;
               };
             }
             Adw.ViewStackPage {

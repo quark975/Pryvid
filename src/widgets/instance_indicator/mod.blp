@@ -10,7 +10,7 @@ template $InstanceIndicator : Adw.Bin {
         styles ["boxed-list"]
 
         Adw.ActionRow instance_row {
-          title: "";
+          title: bind template.uri;
         }
       }
       //Box {

@@ -38,6 +38,7 @@ mod imp {
 
         fn class_init(klass: &mut Self::Class) {
             klass.bind_template();
+            klass.bind_template_callbacks();
         }
 
         fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
@@ -46,20 +47,6 @@ mod imp {
     }
 
     impl ObjectImpl for ContentGrid {
-        fn constructed(&self) {
-            self.parent_constructed();
-
-            let obj = self.obj();
-
-            self.result_page.connect_closure(
-                "refresh",
-                false,
-                closure_local!(@watch obj => move |_: ResultPage| {
-                    obj.emit_by_name::<()>("refresh", &[]);
-                }),
-            );
-        }
-
         fn signals() -> &'static [glib::subclass::Signal] {
             static SIGNALS: Lazy<Vec<Signal>> =
                 Lazy::new(|| vec![Signal::builder("refresh").build()]);
@@ -80,6 +67,14 @@ mod imp {
     }
     impl WidgetImpl for ContentGrid {}
     impl BinImpl for ContentGrid {}
+
+    #[gtk::template_callbacks]
+    impl ContentGrid {
+        #[template_callback]
+        fn on_result_page_refresh(&self, _: ResultPage) {
+            self.obj().emit_by_name::<()>("refresh", &[]);
+        }
+    }
 }
 
 glib::wrapper! {
