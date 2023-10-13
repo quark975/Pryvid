@@ -52,6 +52,13 @@ template $VideoView : Adw.NavigationPage {
                 styles ["heading"]
               };
 
+              [start]
+              Button {
+                icon-name: "step-out-symbolic";
+                visible: bind template.sidebar-collapsed;
+                clicked => $on_close_sidebar_button_clicked() swapped;
+              }
+
               styles ["flat"]
             }
 

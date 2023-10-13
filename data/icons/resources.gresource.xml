@@ -12,5 +12,6 @@
     <file preprocess="xml-stripblanks">month-symbolic.svg</file>
     <file preprocess="xml-stripblanks">playlist-symbolic.svg</file>
     <file preprocess="xml-stripblanks">circle-filled-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">step-out-symbolic.svg</file>
   </gresource>
 </gresources>

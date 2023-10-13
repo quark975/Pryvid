@@ -144,6 +144,10 @@ mod imp {
                 )
                 .unwrap();
         }
+        #[template_callback]
+        fn on_close_sidebar_button_clicked(&self, _: gtk::Button) {
+            self.obj().set_show_sidebar(false);
+        }
     }
 }
 
