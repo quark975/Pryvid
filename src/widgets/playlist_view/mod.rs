@@ -1,5 +1,5 @@
-use adw::subclass::prelude::*;
 use adw::prelude::*;
+use adw::subclass::prelude::*;
 use glib::Object;
 use glib::{clone, MainContext};
 use gtk::glib;
@@ -74,11 +74,17 @@ impl PlaylistView {
 
                 imp.instance_indicator.set_uri(instance.uri.clone());
                 imp.videos_grid.set_state(ResultPageState::Loading);
-                
+
                 match instance.playlist(&playlist_id).await {
                     Ok(playlist) => {
                         // TODO: Until boundless scrolling is implemented, we need to limit to 20
-                        imp.videos_grid.set_content(playlist.videos.into_iter().map(Content::Video).collect::<Vec<Content>>()[..20].to_vec());
+                        let size = if playlist.videos.len() >= 20 {
+                            20
+                        } else {
+                            playlist.videos.len()
+                        };
+
+                        imp.videos_grid.set_content(playlist.videos.into_iter().map(Content::Video).collect::<Vec<Content>>()[..size].to_vec());
                         imp.videos_grid.set_state(ResultPageState::Success);
                         obj.set_title(&playlist.title);
                     },
