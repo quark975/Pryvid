@@ -183,8 +183,8 @@ impl VideoView {
     pub fn init_media_stream(&self) {
         let imp = self.imp();
         if let Some(video) = imp.video.get() {
-            let url = &video.format_streams.last().unwrap().url;
-            let file = gio::File::for_uri(url);
+            let uri = &video.format_streams.last().unwrap().uri;
+            let file = gio::File::for_uri(uri);
             let stream = gtk::MediaFile::for_file(&file);
             imp.normal_video_widget.set_media_stream(Some(&stream));
             imp.fullscreen_video_widget.set_media_stream(Some(&stream));
@@ -242,7 +242,7 @@ impl VideoView {
         imp.author_subs.set_label(&video.subscribers);
         // TODO: Select a more reasonable thumbnail
         imp.author_thumbnail
-            .set_uri(video.author_thumbnails.last().unwrap().url.clone());
+            .set_uri(video.author_thumbnails.last().unwrap().uri.clone());
         imp.likes_label
             .set_label(&format_number_magnitude(video.likes as u64));
         imp.dislikes_label

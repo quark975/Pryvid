@@ -130,19 +130,19 @@ glib::wrapper! {
 
 impl VideoButton {
     pub fn new(video: &Video) -> Self {
-        let thumbnail_url: &str =
+        let thumbnail_uri: &str =
             if let Some(thumbnail) = video.thumbnails.iter().find(|&x| x.quality == "medium") {
-                &thumbnail.url
+                &thumbnail.uri
             } else {
                 let thumbnails = &video.thumbnails;
                 if thumbnails.len() == 0 {
                     ""
                 } else {
-                    &thumbnails.first().unwrap().url
+                    &thumbnails.first().unwrap().uri
                 }
             };
         Object::builder()
-            .property("thumbnail", thumbnail_url)
+            .property("thumbnail", thumbnail_uri)
             .property("title", &video.title)
             .property("author", &video.author)
             .property("length", &video.length)

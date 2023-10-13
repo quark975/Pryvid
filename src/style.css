@@ -35,6 +35,7 @@ video.rounded-1 revealer {
 /* Video length displayed in bottom right corner of thumbnail */
 label.video-time {
   background-color: rgba(0, 0, 0, 0.5);
+  color: white;
   padding: 2px 4px;
   border-radius: 3px;
 }

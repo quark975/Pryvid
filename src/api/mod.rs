@@ -137,14 +137,16 @@ pub struct Channel {
 #[derive(Debug, Deserialize, Clone)]
 pub struct VideoThumbnail {
     pub quality: String,
-    pub url: String,
+    #[serde(rename = "url")]
+    pub uri: String,
     pub width: u32,
     pub height: u32,
 }
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct AuthorThumbnail {
-    pub url: String,
+    #[serde(rename = "url")]
+    pub uri: String,
     pub width: u32,
     pub height: u32,
 }
@@ -194,7 +196,8 @@ pub struct DetailedVideo {
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct FormatStream {
-    pub url: String,
+    #[serde(rename = "url")]
+    pub uri: String,
     pub quality: String,
     pub fps: u32,
     pub resolution: String,
@@ -205,7 +208,8 @@ pub struct FormatStream {
 pub struct Caption {
     pub label: String,
     pub language_code: String,
-    pub url: String,
+    #[serde(rename = "url")]
+    pub uri: String,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -332,7 +336,7 @@ fn format_uri(uri: &str) -> String {
 impl Video {
     pub fn correct_uri(&mut self, instance: &Instance) {
         for thumbnail in &mut self.thumbnails {
-            thumbnail.url = correct_uri(&instance.uri, &thumbnail.url);
+            thumbnail.uri = correct_uri(&instance.uri, &thumbnail.uri);
         }
     }
 }
@@ -340,7 +344,7 @@ impl Video {
 impl DetailedVideo {
     pub fn correct_uri(&mut self, instance: &Instance) {
         for thumbnail in &mut self.thumbnails {
-            thumbnail.url = correct_uri(&instance.uri, &thumbnail.url);
+            thumbnail.uri = correct_uri(&instance.uri, &thumbnail.uri);
         }
     }
 }
@@ -348,7 +352,7 @@ impl DetailedVideo {
 impl Channel {
     pub fn correct_uri(&mut self, instance: &Instance) {
         for thumbnail in &mut self.thumbnails {
-            thumbnail.url = correct_uri(&instance.uri, &thumbnail.url);
+            thumbnail.uri = correct_uri(&instance.uri, &thumbnail.uri);
         }
     }
 }
@@ -356,7 +360,7 @@ impl Channel {
 impl DetailedChannel {
     pub fn correct_uri(&mut self, instance: &Instance) {
         for thumbnail in &mut self.thumbnails {
-            thumbnail.url = correct_uri(&instance.uri, &thumbnail.url);
+            thumbnail.uri = correct_uri(&instance.uri, &thumbnail.uri);
         }
         for channel in &mut self.related_channels {
             channel.correct_uri(instance);

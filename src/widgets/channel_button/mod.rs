@@ -78,22 +78,22 @@ glib::wrapper! {
 
 impl ChannelButton {
     pub fn new(channel: &Channel) -> Self {
-        let thumbnail_url: &str =
+        let thumbnail_uri: &str =
             if let Some(thumbnail) = channel.thumbnails.iter().find(|&x| x.height >= 512) {
-                &thumbnail.url
+                &thumbnail.uri
             } else {
                 let thumbnails = &channel.thumbnails;
                 if thumbnails.len() == 0 {
                     ""
                 } else {
-                    &thumbnails.last().unwrap().url
+                    &thumbnails.last().unwrap().uri
                 }
             };
 
         Object::builder()
             .property("title", &channel.title)
             .property("subscribers", &channel.subscribers)
-            .property("thumbnail", &thumbnail_url)
+            .property("thumbnail", &thumbnail_uri)
             .property("author-id", &channel.id)
             .build()
     }
