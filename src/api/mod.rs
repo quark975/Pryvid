@@ -1,3 +1,4 @@
+use enum_dispatch::enum_dispatch;
 use futures::future::join_all;
 use isahc::http::StatusCode;
 use isahc::prelude::*;
@@ -79,6 +80,7 @@ pub struct InstanceInfo {
 }
 
 #[derive(Debug, Deserialize, Clone)]
+#[enum_dispatch]
 #[serde(tag = "type")]
 pub enum Content {
     #[serde(rename = "video")]
@@ -100,7 +102,7 @@ pub struct Video {
     #[serde(rename = "lengthSeconds")]
     pub length: u32,
     #[serde(rename = "videoThumbnails")]
-    pub thumbnails: Vec<VideoThumbnail>,
+    pub thumbnails: Vec<Thumbnail>,
     pub author: String,
     #[serde(rename = "authorId")]
     pub author_id: String,
@@ -129,22 +131,14 @@ pub struct Channel {
     #[serde(rename = "authorId")]
     pub id: String,
     #[serde(rename = "authorThumbnails")]
-    pub thumbnails: Vec<AuthorThumbnail>,
+    pub thumbnails: Vec<Thumbnail>,
     #[serde(rename = "subCount")]
     pub subscribers: u64,
 }
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct VideoThumbnail {
-    pub quality: String,
-    #[serde(rename = "url")]
-    pub uri: String,
-    pub width: u32,
-    pub height: u32,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-pub struct AuthorThumbnail {
+pub struct Thumbnail {
+    pub quality: Option<String>,
     #[serde(rename = "url")]
     pub uri: String,
     pub width: u32,
@@ -180,9 +174,9 @@ pub struct DetailedVideo {
 
     // Thumbnails
     #[serde(rename = "videoThumbnails")]
-    pub thumbnails: Vec<VideoThumbnail>,
+    pub thumbnails: Vec<Thumbnail>,
     #[serde(rename = "authorThumbnails")]
-    pub author_thumbnails: Vec<AuthorThumbnail>,
+    pub author_thumbnails: Vec<Thumbnail>,
 
     // Media
     #[serde(rename = "formatStreams")]
@@ -219,9 +213,9 @@ pub struct DetailedChannel {
     #[serde(rename = "authorId")]
     pub id: String,
     #[serde(rename = "authorThumbnails")]
-    pub thumbnails: Vec<AuthorThumbnail>,
+    pub thumbnails: Vec<Thumbnail>,
     #[serde(rename = "authorBanners")]
-    pub banners: Vec<AuthorThumbnail>,
+    pub banners: Vec<Thumbnail>,
     #[serde(rename = "subCount")]
     pub subscribers: u64,
     #[serde(rename = "totalViews")]
@@ -232,9 +226,9 @@ pub struct DetailedChannel {
     #[serde(rename = "authorVerified")]
     pub verified: bool,
     #[serde(rename = "latestVideos")]
-    pub videos: Vec<Content>,
+    pub videos: Vec<Video>,
     #[serde(rename = "relatedChannels")]
-    pub related_channels: Vec<Content>,
+    pub related_channels: Vec<Channel>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -309,6 +303,18 @@ pub async fn fetch_instances() -> Result<Instances, Error> {
     Ok(instances)
 }
 
+fn format_input_uri(uri: &str) -> String {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"^([a-z0-9]+):\/\/").unwrap();
+    }
+    let uri = uri.trim().trim_end_matches('/');
+    if RE.is_match_at(uri, 0) {
+        uri.into()
+    } else {
+        format!("https://{uri}")
+    }
+}
+
 fn correct_uri(instance_uri: &str, uri: &str) -> String {
     if uri.starts_with("/vi/") {
         // If domain isn't present (i.e. /vi/lcIObyvI3uw/maxres.jpg)
@@ -321,84 +327,86 @@ fn correct_uri(instance_uri: &str, uri: &str) -> String {
     }
 }
 
-fn format_uri(uri: &str) -> String {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"^([a-z0-9]+):\/\/").unwrap();
-    }
-    let uri = uri.trim().trim_end_matches('/');
-    if RE.is_match_at(uri, 0) {
-        uri.into()
-    } else {
-        format!("https://{uri}")
-    }
-}
-
-impl Video {
-    pub fn correct_uri(&mut self, instance: &Instance) {
-        for thumbnail in &mut self.thumbnails {
-            thumbnail.uri = correct_uri(&instance.uri, &thumbnail.uri);
+#[enum_dispatch(Content)]
+pub trait CorrectUri {
+    fn correct_uri(&mut self, instance: &Instance) {
+        if let Some(thumbnail) = self.thumbnail().cloned() {
+            self.thumbnail()
+                .replace(&mut correct_uri(&instance.uri, &thumbnail));
+        }
+        if let Some(x) = self.thumbnails() {
+            x.iter_mut()
+                .for_each(|y| y.uri = correct_uri(&instance.uri, &y.uri))
+        }
+        if let Some(x) = self.channels() {
+            x.iter_mut().for_each(|y| y.correct_uri(instance))
+        }
+        if let Some(x) = self.videos() {
+            x.iter_mut().for_each(|y| y.correct_uri(instance))
         }
     }
-}
-
-impl DetailedVideo {
-    pub fn correct_uri(&mut self, instance: &Instance) {
-        for thumbnail in &mut self.thumbnails {
-            thumbnail.uri = correct_uri(&instance.uri, &thumbnail.uri);
-        }
+    fn thumbnail(&mut self) -> Option<&mut String> {
+        None
     }
-}
-
-impl Channel {
-    pub fn correct_uri(&mut self, instance: &Instance) {
-        for thumbnail in &mut self.thumbnails {
-            thumbnail.uri = correct_uri(&instance.uri, &thumbnail.uri);
-        }
+    fn thumbnails(&mut self) -> Option<&mut Vec<Thumbnail>> {
+        None
+    }
+    fn channels(&mut self) -> Option<&mut Vec<Channel>> {
+        None
+    }
+    fn videos(&mut self) -> Option<&mut Vec<Video>> {
+        None
     }
 }
 
-impl DetailedChannel {
-    pub fn correct_uri(&mut self, instance: &Instance) {
-        for thumbnail in &mut self.thumbnails {
-            thumbnail.uri = correct_uri(&instance.uri, &thumbnail.uri);
-        }
-        for channel in &mut self.related_channels {
-            channel.correct_uri(instance);
-        }
-        for video in &mut self.videos {
-            video.correct_uri(instance);
-        }
+impl CorrectUri for Video {
+    fn thumbnails(&mut self) -> Option<&mut Vec<Thumbnail>> {
+        Some(&mut self.thumbnails)
     }
 }
 
-impl DetailedPlaylist {
-    pub fn correct_uri(&mut self, instance: &Instance) {
-        self.thumbnail = correct_uri(&instance.uri, &self.thumbnail);
-        for video in &mut self.videos {
-            video.correct_uri(instance);
-        }
+impl CorrectUri for DetailedVideo {
+    fn thumbnails(&mut self) -> Option<&mut Vec<Thumbnail>> {
+        Some(&mut self.thumbnails)
     }
 }
 
-impl Playlist {
-    pub fn correct_uri(&mut self, instance: &Instance) {
-        self.thumbnail = correct_uri(&instance.uri, &self.thumbnail)
+impl CorrectUri for Channel {
+    fn thumbnails(&mut self) -> Option<&mut Vec<Thumbnail>> {
+        Some(&mut self.thumbnails)
     }
 }
 
-impl Content {
-    pub fn correct_uri(&mut self, instance: &Instance) {
-        match self {
-            Self::Playlist(playlist) => playlist.correct_uri(instance),
-            Self::Video(video) => video.correct_uri(instance),
-            Self::Channel(channel) => channel.correct_uri(instance),
-        }
+impl CorrectUri for DetailedChannel {
+    fn thumbnails(&mut self) -> Option<&mut Vec<Thumbnail>> {
+        Some(&mut self.thumbnails)
+    }
+    fn channels(&mut self) -> Option<&mut Vec<Channel>> {
+        Some(&mut self.related_channels)
+    }
+    fn videos(&mut self) -> Option<&mut Vec<Video>> {
+        Some(&mut self.videos)
+    }
+}
+
+impl CorrectUri for Playlist {
+    fn thumbnail(&mut self) -> Option<&mut String> {
+        Some(&mut self.thumbnail)
+    }
+}
+
+impl CorrectUri for DetailedPlaylist {
+    fn thumbnail(&mut self) -> Option<&mut String> {
+        Some(&mut self.thumbnail)
+    }
+    fn videos(&mut self) -> Option<&mut Vec<Video>> {
+        Some(&mut self.videos)
     }
 }
 
 impl Instance {
     pub async fn from_uri(uri: &str) -> Result<Instance, Error> {
-        let uri = format_uri(uri);
+        let uri = format_input_uri(uri);
         let response: StatsResponse = HTTP_CLIENT
             .get_async(format!("{}/api/v1/stats", &uri))
             .await?

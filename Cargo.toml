@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+enum_dispatch = "0.3.12"
 futures = "0.3.28"
 gettext-rs = { version = "0.7", features = ["gettext-system"] }
 gtk = { version = "0.7.1", package = "gtk4", features = ["v4_10"] }

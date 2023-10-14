@@ -6,6 +6,7 @@ use gtk::CompositeTemplate;
 use std::cell::OnceCell;
 use std::sync::Arc;
 
+use crate::api::Content;
 use crate::api::DetailedChannel;
 use crate::api::Instance;
 use crate::appmodel::AppModel;
@@ -114,7 +115,14 @@ impl ChannelView {
                         "This channel has uploaded no videos".into(),
                     )));
                 } else {
-                    videos_grid.set_content(channel.videos.clone());
+                    videos_grid.set_content(
+                        channel
+                            .videos
+                            .clone()
+                            .into_iter()
+                            .map(Content::Video)
+                            .collect(),
+                    );
                     videos_grid.set_state(ResultPageState::Success);
                 }
 
@@ -125,7 +133,14 @@ impl ChannelView {
                         "This channel has no related channels listed".into(),
                     )));
                 } else {
-                    channels_grid.set_content(channel.related_channels.clone());
+                    channels_grid.set_content(
+                        channel
+                            .related_channels
+                            .clone()
+                            .into_iter()
+                            .map(Content::Channel)
+                            .collect(),
+                    );
                     channels_grid.set_state(ResultPageState::Success);
                 }
                 imp.channel.set(channel).unwrap();
