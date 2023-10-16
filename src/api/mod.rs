@@ -345,44 +345,44 @@ pub trait CorrectUri {
     fn thumbnail(&mut self) -> Option<&mut String> {
         None
     }
-    fn thumbnails(&mut self) -> Option<&mut Vec<Thumbnail>> {
+    fn thumbnails(&mut self) -> Option<&mut [Thumbnail]> {
         None
     }
-    fn channels(&mut self) -> Option<&mut Vec<Channel>> {
+    fn channels(&mut self) -> Option<&mut [Channel]> {
         None
     }
-    fn videos(&mut self) -> Option<&mut Vec<Video>> {
+    fn videos(&mut self) -> Option<&mut [Video]> {
         None
     }
 }
 
 impl CorrectUri for Video {
-    fn thumbnails(&mut self) -> Option<&mut Vec<Thumbnail>> {
-        Some(&mut self.thumbnails)
+    fn thumbnails(&mut self) -> Option<&mut [Thumbnail]> {
+        Some(self.thumbnails.as_mut_slice())
     }
 }
 
 impl CorrectUri for DetailedVideo {
-    fn thumbnails(&mut self) -> Option<&mut Vec<Thumbnail>> {
-        Some(&mut self.thumbnails)
+    fn thumbnails(&mut self) -> Option<&mut [Thumbnail]> {
+        Some(self.thumbnails.as_mut_slice())
     }
 }
 
 impl CorrectUri for Channel {
-    fn thumbnails(&mut self) -> Option<&mut Vec<Thumbnail>> {
-        Some(&mut self.thumbnails)
+    fn thumbnails(&mut self) -> Option<&mut [Thumbnail]> {
+        Some(self.thumbnails.as_mut_slice())
     }
 }
 
 impl CorrectUri for DetailedChannel {
-    fn thumbnails(&mut self) -> Option<&mut Vec<Thumbnail>> {
-        Some(&mut self.thumbnails)
+    fn thumbnails(&mut self) -> Option<&mut [Thumbnail]> {
+        Some(self.thumbnails.as_mut_slice())
     }
-    fn channels(&mut self) -> Option<&mut Vec<Channel>> {
-        Some(&mut self.related_channels)
+    fn channels(&mut self) -> Option<&mut [Channel]> {
+        Some(self.related_channels.as_mut_slice())
     }
-    fn videos(&mut self) -> Option<&mut Vec<Video>> {
-        Some(&mut self.videos)
+    fn videos(&mut self) -> Option<&mut [Video]> {
+        Some(self.videos.as_mut_slice())
     }
 }
 
@@ -396,8 +396,8 @@ impl CorrectUri for DetailedPlaylist {
     fn thumbnail(&mut self) -> Option<&mut String> {
         Some(&mut self.thumbnail)
     }
-    fn videos(&mut self) -> Option<&mut Vec<Video>> {
-        Some(&mut self.videos)
+    fn videos(&mut self) -> Option<&mut [Video]> {
+        Some(self.videos.as_mut_slice())
     }
 }
 
