@@ -1,19 +1,15 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use glib::clone;
-use gtk::glib::MainContext;
+use glib::{clone, MainContext};
 use gtk::{gio, glib};
 use std::cell::OnceCell;
 use std::sync::Arc;
 
 use crate::appmodel::AppModel;
-use crate::widgets::content_grid::ContentGrid;
-use crate::widgets::instance_indicator::InstanceIndicator;
-use crate::widgets::result_page::ResultPageState;
-use crate::widgets::video_view::VideoView;
-
-use super::channel_view::ChannelView;
-use super::playlist_view::PlaylistView;
+use crate::widgets::{
+    channel_view::ChannelView, content_grid::ContentGrid, instance_indicator::InstanceIndicator,
+    playlist_view::PlaylistView, result_page::ResultPageState, video_view::VideoView,
+};
 
 mod imp {
 
@@ -201,19 +197,19 @@ impl PryvidWindow {
 
         let fullscreen_action = gio::ActionEntry::builder("fullscreen")
             .parameter_type(None)
-            .activate(move |win: &Self, _, param| {
+            .activate(move |win: &Self, _, _param| {
                 win.fullscreen();
             })
             .build();
         let unfullscreen_action = gio::ActionEntry::builder("unfullscreen")
             .parameter_type(None)
-            .activate(move |win: &Self, _, param| {
+            .activate(move |win: &Self, _, _param| {
                 win.unfullscreen();
             })
             .build();
         let toggle_fullscreen_action = gio::ActionEntry::builder("toggle-fullscreen")
             .parameter_type(None)
-            .activate(move |win: &Self, _, param| {
+            .activate(move |win: &Self, _, _param| {
                 // Only fullscreen if watching a video
                 if win
                     .imp()
@@ -269,7 +265,7 @@ impl PryvidWindow {
         grid.set_state(ResultPageState::Loading);
         grid.set_state(match instance.search(query).await {
             Ok(content) => {
-                if content.len() == 0 {
+                if content.is_empty() {
                     ResultPageState::Message((
                         "dotted-box-symbolic".into(),
                         "No Search Results".into(),
@@ -294,7 +290,7 @@ impl PryvidWindow {
                 .set_uri(instance.uri.clone());
             match instance.popular().await {
                 Ok(content) => {
-                    if content.len() == 0 {
+                    if content.is_empty() {
                         ResultPageState::Message((
                             "dotted-box-symbolic".into(),
                             "No Popular Videos".into(),
@@ -323,7 +319,7 @@ impl PryvidWindow {
                 .set_uri(instance.uri.clone());
             match instance.trending().await {
                 Ok(content) => {
-                    if content.len() == 0 {
+                    if content.is_empty() {
                         ResultPageState::Message((
                             "dotted-box-symbolic".into(),
                             "No Trending Videos".into(),

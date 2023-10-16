@@ -1,7 +1,6 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use glib::Object;
-use glib::{clone, MainContext};
+use glib::{clone, MainContext, Object};
 use gtk::glib;
 use gtk::CompositeTemplate;
 use std::cell::OnceCell;
@@ -9,10 +8,9 @@ use std::sync::Arc;
 
 use crate::api::Content;
 use crate::appmodel::AppModel;
-use crate::widgets::content_grid::ContentGrid;
-use crate::widgets::instance_indicator::InstanceIndicator;
-
-use super::result_page::ResultPageState;
+use crate::widgets::{
+    content_grid::ContentGrid, instance_indicator::InstanceIndicator, result_page::ResultPageState,
+};
 
 mod imp {
 

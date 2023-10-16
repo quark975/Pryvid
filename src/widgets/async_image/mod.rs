@@ -1,16 +1,12 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use gio::prelude::*;
-use glib::Object;
-use glib::{MainContext, Priority, Properties};
-use gtk::gdk_pixbuf::Pixbuf;
-use gtk::CompositeTemplate;
+
+use glib::{Object, MainContext, Priority, Properties};
+use gtk::{gdk_pixbuf::{Pixbuf, InterpType}, CompositeTemplate};
 use gtk::{gio, glib};
 use std::cell::{Cell, RefCell};
 
 mod imp {
-
-    use gtk::gdk_pixbuf::InterpType;
 
     use super::*;
 
@@ -74,7 +70,7 @@ mod imp {
         fn set_uri(&self, value: String) {
             // When initializing the object it is set to nothing
             // Ignore this when it happens
-            if value.len() == 0 {
+            if value.is_empty() {
                 return;
             }
 
@@ -120,6 +116,12 @@ glib::wrapper! {
     pub struct AsyncImage(ObjectSubclass<imp::AsyncImage>)
         @extends adw::Bin, gtk::Widget,
         @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget;
+}
+
+impl Default for AsyncImage {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl AsyncImage {

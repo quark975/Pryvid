@@ -2,17 +2,18 @@ use adw::prelude::*;
 use adw::subclass::prelude::*;
 use adw::ResponseAppearance;
 use futures::stream::{AbortHandle, Abortable};
-use gtk::glib::{clone, closure_local, MainContext};
-use gtk::{glib, CompositeTemplate};
-use std::{cell::OnceCell, sync::Arc};
+use glib::{clone, closure_local, MainContext};
+use gtk::glib;
+use gtk::CompositeTemplate;
+use std::cell::OnceCell;
+use std::sync::Arc;
 
 use crate::api::{fetch_instances, Instance, Instances};
 use crate::appmodel::AppModel;
-use crate::widgets::curation_window::CurationWindow;
-use crate::widgets::instance_row::InstanceRow;
-use crate::widgets::new_instance_window::NewInstanceWindow;
-
-use super::loading_window::LoadingWindow;
+use crate::widgets::{
+    curation_window::CurationWindow, instance_row::InstanceRow, loading_window::LoadingWindow,
+    new_instance_window::NewInstanceWindow,
+};
 
 mod imp {
     use super::*;

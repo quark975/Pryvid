@@ -1,20 +1,21 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use glib::Object;
-use gtk::glib::{clone, MainContext, Properties};
+use glib::{clone, MainContext, Object, Properties};
 use gtk::CompositeTemplate;
 use gtk::{gio, glib};
 use once_cell::sync::OnceCell;
 use std::cell::Cell;
 use std::sync::Arc;
 
-use crate::api::{Content, DetailedVideo, Video};
+use crate::api::{Content, DetailedVideo};
 use crate::appmodel::AppModel;
 use crate::utils::format_number_magnitude;
-use crate::widgets::async_image::AsyncImage;
-use crate::widgets::content_grid::ContentGrid;
-use crate::widgets::instance_indicator::InstanceIndicator;
-use crate::widgets::result_page::{ResultPage, ResultPageState};
+use crate::widgets::{
+    async_image::AsyncImage,
+    content_grid::ContentGrid,
+    instance_indicator::InstanceIndicator,
+    result_page::{ResultPage, ResultPageState},
+};
 
 mod imp {
 
@@ -226,8 +227,8 @@ impl VideoView {
     fn set_video(&self, video: DetailedVideo) {
         let imp = self.imp();
 
-        /// Setup player
-        let selected_stream = video.format_streams.last().unwrap();
+        // Setup player
+        let _selected_stream = video.format_streams.last().unwrap();
         imp.fullscreen_stack
             .set_visible_child_name(if self.fullscreened() {
                 "fullscreened"
@@ -240,7 +241,8 @@ impl VideoView {
 
         // When using GtkVideo:autoplay and resizing the window, the video will play after being
         // paused. This will give the desired behavior that GtkVideo:autoplay does not
-        /// Setup metadata
+
+        // Setup metadata
         self.set_title(&video.title);
         imp.author_name.set_label(&video.author);
         imp.author_subs.set_label(&video.subscribers);
@@ -260,7 +262,7 @@ impl VideoView {
                 .recommended
                 .clone()
                 .into_iter()
-                .map(|x| Content::Video(x))
+                .map(Content::Video)
                 .collect(),
         );
         imp.recommended_grid.set_state(ResultPageState::Success);

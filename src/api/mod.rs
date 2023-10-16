@@ -1,21 +1,18 @@
 use enum_dispatch::enum_dispatch;
 use futures::future::join_all;
-use isahc::http::StatusCode;
 use isahc::prelude::*;
-use isahc::{config::RedirectPolicy, HttpClient};
+use isahc::{config::RedirectPolicy, http::StatusCode, HttpClient};
 use lazy_static::lazy_static;
 use rand::{self, seq::SliceRandom};
 use regex::Regex;
-use serde::Serialize;
-use serde::{self, Deserialize};
+use serde::{self, Deserialize, Serialize};
 use serde_json::Value;
 use std::io;
-use std::sync::RwLock;
-use std::sync::{Arc, PoisonError};
-use std::time::Duration;
-use std::time::Instant;
+use std::sync::{Arc, PoisonError, RwLock};
+use std::time::{Duration, Instant};
 use thiserror::Error;
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("Instance already exists")]
@@ -296,7 +293,7 @@ pub async fn fetch_instances() -> Result<Instances, Error> {
 
     // Ping in batches of 8 at a time
     // TODO: find a way to improve this maybe
-    for instances in instances.chunks(8).into_iter() {
+    for instances in instances.chunks(8) {
         join_all(instances.iter().map(|x| x.update_info())).await;
     }
 
@@ -478,7 +475,7 @@ impl Instance {
                 .json::<Vec<Video>>()
                 .await?
                 .into_iter()
-                .map(|x| Content::Video(x))
+                .map(Content::Video)
                 .collect();
 
             for item in data.iter_mut() {
@@ -507,7 +504,7 @@ impl Instance {
             let mut data: DetailedVideo = response.json().await?;
 
             for video in &mut data.recommended {
-                video.correct_uri(&self);
+                video.correct_uri(self);
             }
 
             Ok(data)
@@ -556,7 +553,7 @@ impl Instance {
             .get_async(&format!("{}/api/v1/channels/{}/playlists", self.uri, id))
             .await?;
         if response.status() == StatusCode::OK {
-            let mut data = serde_json::from_value::<Vec<Content>>(
+            let data = serde_json::from_value::<Vec<Content>>(
                 response.json::<Value>().await?["playlists"].take(),
             )
             .unwrap();
@@ -584,7 +581,7 @@ impl Instance {
 impl InvidiousClient {
     pub fn new(instances: Instances) -> Self {
         // TODO: Handle a 'no instances available' a little better
-        let instances = if instances.len() == 0 {
+        let instances = if instances.is_empty() {
             vec![Arc::new(Instance {
                 uri: "https://vid.puffyan.us".into(),
                 info: Arc::new(RwLock::new(InstanceInfo {
@@ -615,14 +612,11 @@ impl InvidiousClient {
         if let Some(ref selected_instance) = *selected {
             return Arc::ptr_eq(selected_instance, instance);
         }
-        return false;
+        false
     }
     pub fn is_added(&self, instance: &Arc<Instance>) -> bool {
         let instances = self.instances();
-        instances
-            .iter()
-            .position(|x| x.uri == instance.uri)
-            .is_some()
+        instances.iter().any(|x| x.uri == instance.uri)
     }
 
     pub fn get_instance(&self) -> Arc<Instance> {
@@ -659,12 +653,7 @@ impl InvidiousClient {
     }
 
     pub fn push_instance(&self, instance: Arc<Instance>) -> Result<(), Error> {
-        if self
-            .instances()
-            .iter()
-            .position(|x| x.uri == instance.uri)
-            .is_some()
-        {
+        if self.instances().iter().any(|x| x.uri == instance.uri) {
             Err(Error::InstanceExists)
         } else {
             self.instances.write().unwrap().push(instance.clone());
@@ -693,7 +682,7 @@ impl InvidiousClient {
 
     pub fn select_instance(&self, instance: Option<&Arc<Instance>>) -> Result<(), Error> {
         let mut current = self.selected.write()?;
-        if let Some(ref instance) = instance {
+        if let Some(instance) = instance {
             *current = Some(Arc::clone(instance));
         } else {
             *current = None;

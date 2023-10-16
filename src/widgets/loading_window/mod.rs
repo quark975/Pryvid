@@ -1,8 +1,7 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use glib::Object;
+use glib::{subclass::Signal, Object};
 use gtk::glib;
-use gtk::glib::subclass::Signal;
 use gtk::CompositeTemplate;
 use once_cell::sync::Lazy;
 

@@ -111,7 +111,7 @@ impl PlaylistButton {
             .property("thumbnail", &playlist.thumbnail)
             .property("title", &playlist.title)
             .property("author", &playlist.author)
-            .property("video-count", &playlist.video_count)
+            .property("video-count", playlist.video_count)
             .property("author-id", &playlist.author_id)
             .property("playlist-id", &playlist.id)
             .build()

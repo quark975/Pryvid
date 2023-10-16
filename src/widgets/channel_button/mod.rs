@@ -3,7 +3,7 @@ use adw::subclass::prelude::*;
 use glib::{Object, Properties};
 use gtk::glib;
 use gtk::CompositeTemplate;
-use once_cell::sync::OnceCell;
+
 use std::cell::{Cell, RefCell};
 
 use crate::api::Channel;
@@ -78,22 +78,11 @@ glib::wrapper! {
 
 impl ChannelButton {
     pub fn new(channel: &Channel) -> Self {
-        let thumbnail_uri: &str =
-            if let Some(thumbnail) = channel.thumbnails.iter().find(|&x| x.height >= 512) {
-                &thumbnail.uri
-            } else {
-                let thumbnails = &channel.thumbnails;
-                if thumbnails.len() == 0 {
-                    ""
-                } else {
-                    &thumbnails.last().unwrap().uri
-                }
-            };
-
+        let thumbnail_uri = channel.thumbnails.last().cloned().map(|x| x.uri);
         Object::builder()
             .property("title", &channel.title)
-            .property("subscribers", &channel.subscribers)
-            .property("thumbnail", &thumbnail_uri)
+            .property("subscribers", channel.subscribers)
+            .property("thumbnail", thumbnail_uri.unwrap_or_default())
             .property("author-id", &channel.id)
             .build()
     }

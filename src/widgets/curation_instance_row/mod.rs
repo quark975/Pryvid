@@ -127,7 +127,7 @@ impl CurationInstanceRow {
                 label.set_text("Failed");
                 label.set_css_classes(&["error"]);
 
-                let button = self.add_button();
+                let _button = self.add_button();
             }
         }
     }

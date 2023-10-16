@@ -1,11 +1,8 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use glib::Object;
-use glib::{clone, closure_local};
+use glib::{clone, closure_local, MainContext, Object};
 use gtk::glib;
-use gtk::glib::MainContext;
-use gtk::CompositeTemplate;
-use gtk::Ordering;
+use gtk::{CompositeTemplate, Ordering};
 use std::cell::OnceCell;
 use std::sync::Arc;
 

@@ -1,17 +1,18 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use glib::{closure_local, subclass::Signal, Object, Properties};
+use glib::{subclass::Signal, Object, Properties};
 use gtk::glib;
 use gtk::CompositeTemplate;
 use once_cell::sync::Lazy;
 use std::cell::Cell;
 
 use crate::api::Content;
-use crate::widgets::result_page::{ResultPage, ResultPageState};
-use crate::widgets::video_button::VideoButton;
-
-use super::channel_button::ChannelButton;
-use super::playlist_button::PlaylistButton;
+use crate::widgets::{
+    channel_button::ChannelButton,
+    playlist_button::PlaylistButton,
+    result_page::{ResultPage, ResultPageState},
+    video_button::VideoButton,
+};
 
 mod imp {
 
@@ -81,6 +82,12 @@ glib::wrapper! {
     pub struct ContentGrid(ObjectSubclass<imp::ContentGrid>)
         @extends adw::Bin, gtk::Widget,
         @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget;
+}
+
+impl Default for ContentGrid {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ContentGrid {

@@ -1,9 +1,7 @@
+use adw::prelude::*;
 use adw::subclass::prelude::*;
-use glib::subclass::Signal;
-use glib::Object;
-use glib::{clone, MainContext};
+use glib::{clone, subclass::Signal, MainContext, Object};
 use gtk::glib;
-use gtk::prelude::*;
 use gtk::CompositeTemplate;
 use once_cell::sync::Lazy;
 use std::cell::OnceCell;

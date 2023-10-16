@@ -1,6 +1,6 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use glib::{clone, subclass::Signal, Object, Properties};
+use glib::{subclass::Signal, Object, Properties};
 use gtk::glib;
 use gtk::CompositeTemplate;
 use once_cell::sync::Lazy;

@@ -1,16 +1,17 @@
+use adw::prelude::*;
 use adw::subclass::prelude::*;
 use gio::Settings;
-use gtk::glib::BoolError;
-use gtk::prelude::*;
+use glib::BoolError;
 use gtk::{gio, glib};
-use std::{cell::OnceCell, sync::Arc};
+use std::cell::OnceCell;
+use std::sync::Arc;
 
 use crate::api::{Instances, InvidiousClient};
 use crate::appmodel::AppModel;
 use crate::config::{APP_ID, VERSION};
-use crate::widgets::onboarding::OnboardingWindow;
-use crate::widgets::preferences::PryvidPreferencesWindow;
-use crate::widgets::window::PryvidWindow;
+use crate::widgets::{
+    onboarding::OnboardingWindow, preferences::PryvidPreferencesWindow, window::PryvidWindow,
+};
 
 mod imp {
     use super::*;
@@ -105,10 +106,10 @@ impl PryvidApplication {
             .select_instance_by_name(settings.string("selected").as_str())
             .unwrap();
         let model = Arc::new(AppModel::new(invidious, settings));
-        match self.imp().model.set(model) {
-            Err(_) => panic!("`model` should not be set before calling `setup_model`"),
-            _ => (),
-        }
+        self.imp()
+            .model
+            .set(model)
+            .expect("`model` should not be set before calling `setup_model`");
     }
 
     fn save_instances(&self) -> Result<(), BoolError> {
@@ -138,7 +139,7 @@ impl PryvidApplication {
         // settings.reset("instances");
         // ---
 
-        Ok(serde_json::from_str(&settings.string("instances"))?)
+        serde_json::from_str(&settings.string("instances"))
     }
 
     fn setup_gactions(&self) {

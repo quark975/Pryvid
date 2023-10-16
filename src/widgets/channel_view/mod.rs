@@ -6,14 +6,12 @@ use gtk::CompositeTemplate;
 use std::cell::OnceCell;
 use std::sync::Arc;
 
-use crate::api::Content;
-use crate::api::DetailedChannel;
-use crate::api::Instance;
+use crate::api::{Content, DetailedChannel, Instance};
 use crate::appmodel::AppModel;
-use crate::widgets::channel_info_window::ChannelInfoWindow;
-use crate::widgets::content_grid::ContentGrid;
-use crate::widgets::instance_indicator::InstanceIndicator;
-use crate::widgets::result_page::ResultPageState;
+use crate::widgets::{
+    channel_info_window::ChannelInfoWindow, content_grid::ContentGrid,
+    instance_indicator::InstanceIndicator, result_page::ResultPageState,
+};
 
 mod imp {
 
@@ -108,7 +106,7 @@ impl ChannelView {
         match instance.channel(channel_id).await {
             Ok(channel) => {
                 self.set_title(&channel.title);
-                if channel.videos.len() == 0 {
+                if channel.videos.is_empty() {
                     videos_grid.set_state(ResultPageState::Message((
                         "dotted-box-symbolic".into(),
                         "This Channel is Empty!".into(),
@@ -126,7 +124,7 @@ impl ChannelView {
                     videos_grid.set_state(ResultPageState::Success);
                 }
 
-                if channel.related_channels.len() == 0 {
+                if channel.related_channels.is_empty() {
                     channels_grid.set_state(ResultPageState::Message((
                         "dotted-box-symbolic".into(),
                         "No Related Channels".into(),
@@ -160,7 +158,7 @@ impl ChannelView {
 
         match instance.channel_playlists(channel_id).await {
             Ok(playlists) => {
-                if playlists.len() == 0 {
+                if playlists.is_empty() {
                     playlists_grid.set_state(ResultPageState::Message((
                         "dotted-box-symbolic".into(),
                         "No Related Channels".into(),

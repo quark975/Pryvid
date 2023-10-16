@@ -1,8 +1,7 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
-use glib::Object;
+use glib::{Object, Properties};
 use gtk::glib;
-use gtk::glib::Properties;
 use gtk::CompositeTemplate;
 use std::cell::RefCell;
 
@@ -58,6 +57,12 @@ glib::wrapper! {
     pub struct InstanceIndicator(ObjectSubclass<imp::InstanceIndicator>)
         @extends adw::Bin, gtk::Widget,
         @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget;
+}
+
+impl Default for InstanceIndicator {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl InstanceIndicator {

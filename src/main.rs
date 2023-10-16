@@ -21,10 +21,9 @@ fn main() -> glib::ExitCode {
 
     // Load resources
     for resource in ["ui", "resources"] {
-        let resources = gio::Resource::load(
-            PKGDATADIR.to_owned() + &format!("/{}.gresource", resource.to_string()),
-        )
-        .expect("Could not load resources");
+        let resources =
+            gio::Resource::load(PKGDATADIR.to_owned() + &format!("/{}.gresource", resource))
+                .expect("Could not load resources");
         gio::resources_register(&resources);
     }
 
