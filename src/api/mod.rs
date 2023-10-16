@@ -548,12 +548,12 @@ impl Instance {
         }
     }
 
-    pub async fn channel_playlists(&self, id: &str) -> Result<Vec<Content>, Error> {
+    pub async fn channel_playlists(&self, id: &str) -> Result<Vec<Playlist>, Error> {
         let mut response = HTTP_CLIENT
             .get_async(&format!("{}/api/v1/channels/{}/playlists", self.uri, id))
             .await?;
         if response.status() == StatusCode::OK {
-            let data = serde_json::from_value::<Vec<Content>>(
+            let data = serde_json::from_value::<Vec<Playlist>>(
                 response.json::<Value>().await?["playlists"].take(),
             )
             .unwrap();

@@ -6,7 +6,10 @@ use gtk::CompositeTemplate;
 use once_cell::sync::Lazy;
 use std::cell::Cell;
 
+use crate::api::Channel;
 use crate::api::Content;
+use crate::api::Playlist;
+use crate::api::Video;
 use crate::widgets::{
     channel_button::ChannelButton,
     playlist_button::PlaylistButton,
@@ -99,26 +102,45 @@ impl ContentGrid {
         self.imp().result_page.set_state(state);
     }
 
-    pub fn set_content(&self, content: Vec<Content>) {
+    pub fn clear(&self) {
         let flowbox = &self.imp().flowbox;
         while let Some(child) = flowbox.child_at_index(0) {
             flowbox.remove(&child);
         }
+    }
+
+    fn add_video(&self, video: &Video) {
+        self.imp().flowbox.append(&VideoButton::new(video));
+    }
+
+    fn add_channel(&self, channel: &Channel) {
+        self.imp().flowbox.append(&ChannelButton::new(channel));
+    }
+
+    fn add_playlist(&self, playlist: &Playlist) {
+        self.imp().flowbox.append(&PlaylistButton::new(playlist));
+    }
+
+    pub fn set_content(&self, content: &[Content]) {
+        self.clear();
         for item in content {
             match item {
-                Content::Video(video) => {
-                    let video_button = VideoButton::new(&video);
-                    flowbox.append(&video_button);
-                }
-                Content::Channel(channel) => {
-                    let channel_button = ChannelButton::new(&channel);
-                    flowbox.append(&channel_button);
-                }
-                Content::Playlist(playlist) => {
-                    let playlist_button = PlaylistButton::new(&playlist);
-                    flowbox.append(&playlist_button);
-                }
+                Content::Video(video) => self.add_video(video),
+                Content::Channel(channel) => self.add_channel(channel),
+                Content::Playlist(playlist) => self.add_playlist(playlist),
             }
         }
+    }
+    pub fn set_videos(&self, videos: &[Video]) {
+        self.clear();
+        videos.into_iter().for_each(|x| self.add_video(x))
+    }
+    pub fn set_channels(&self, channels: &[Channel]) {
+        self.clear();
+        channels.into_iter().for_each(|x| self.add_channel(x))
+    }
+    pub fn set_playlist(&self, playlist: &[Playlist]) {
+        self.clear();
+        playlist.into_iter().for_each(|x| self.add_playlist(x))
     }
 }

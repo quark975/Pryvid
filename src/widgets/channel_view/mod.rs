@@ -6,7 +6,7 @@ use gtk::CompositeTemplate;
 use std::cell::OnceCell;
 use std::sync::Arc;
 
-use crate::api::{Content, DetailedChannel, Instance};
+use crate::api::{DetailedChannel, Instance};
 use crate::appmodel::AppModel;
 use crate::widgets::{
     channel_info_window::ChannelInfoWindow, content_grid::ContentGrid,
@@ -113,14 +113,7 @@ impl ChannelView {
                         "This channel has uploaded no videos".into(),
                     )));
                 } else {
-                    videos_grid.set_content(
-                        channel
-                            .videos
-                            .clone()
-                            .into_iter()
-                            .map(Content::Video)
-                            .collect(),
-                    );
+                    videos_grid.set_videos(channel.videos.as_slice());
                     videos_grid.set_state(ResultPageState::Success);
                 }
 
@@ -131,14 +124,7 @@ impl ChannelView {
                         "This channel has no related channels listed".into(),
                     )));
                 } else {
-                    channels_grid.set_content(
-                        channel
-                            .related_channels
-                            .clone()
-                            .into_iter()
-                            .map(Content::Channel)
-                            .collect(),
-                    );
+                    channels_grid.set_channels(channel.related_channels.as_slice());
                     channels_grid.set_state(ResultPageState::Success);
                 }
                 imp.channel.set(channel).unwrap();
@@ -165,7 +151,7 @@ impl ChannelView {
                         "This channel has no related channels listed".into(),
                     )));
                 } else {
-                    playlists_grid.set_content(playlists);
+                    playlists_grid.set_playlist(playlists.as_slice());
                     playlists_grid.set_state(ResultPageState::Success);
                 }
             }

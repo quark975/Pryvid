@@ -6,7 +6,6 @@ use gtk::CompositeTemplate;
 use std::cell::OnceCell;
 use std::sync::Arc;
 
-use crate::api::Content;
 use crate::appmodel::AppModel;
 use crate::widgets::{
     content_grid::ContentGrid, instance_indicator::InstanceIndicator, result_page::ResultPageState,
@@ -83,7 +82,7 @@ impl PlaylistView {
                             playlist.videos.len()
                         };
 
-                        imp.videos_grid.set_content(playlist.videos.into_iter().map(Content::Video).collect::<Vec<Content>>()[..size].to_vec());
+                        imp.videos_grid.set_videos(&playlist.videos[..size]);
                         imp.videos_grid.set_state(ResultPageState::Success);
                         obj.set_title(&playlist.title);
                     },

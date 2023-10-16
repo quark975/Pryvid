@@ -257,14 +257,8 @@ impl VideoView {
             .set_label(&format_number_magnitude(video.views));
         imp.published_label.set_label(&video.published);
         imp.description_label.set_label(&video.description);
-        imp.recommended_grid.set_content(
-            video
-                .recommended
-                .clone()
-                .into_iter()
-                .map(Content::Video)
-                .collect(),
-        );
+        imp.recommended_grid
+            .set_videos(video.recommended.as_slice());
         imp.recommended_grid.set_state(ResultPageState::Success);
     }
 

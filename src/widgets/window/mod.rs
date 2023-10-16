@@ -272,7 +272,7 @@ impl PryvidWindow {
                         "Check your query for typos and simplify it if possible".into(),
                     ))
                 } else {
-                    grid.set_content(content);
+                    grid.set_content(content.as_slice());
                     ResultPageState::Success
                 }
             }
@@ -297,7 +297,7 @@ impl PryvidWindow {
                             "This instance supports popular videos but none exist".into(),
                         ))
                     } else {
-                        grid.set_content(content);
+                        grid.set_content(content.as_slice());
                         ResultPageState::Success
                     }
                 }
@@ -326,7 +326,7 @@ impl PryvidWindow {
                             "This instance supports trending videos but none exist".into(),
                         ))
                     } else {
-                        grid.set_content(content);
+                        grid.set_content(content.as_slice());
                         ResultPageState::Success
                     }
                 }
