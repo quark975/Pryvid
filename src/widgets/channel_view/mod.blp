@@ -2,9 +2,8 @@ using Gtk 4.0;
 using Adw 1;
 
 template $ChannelView : Adw.NavigationPage {
-  Box {
-    orientation: vertical;
-
+  Adw.ToolbarView {
+    [top]
     Adw.HeaderBar {
       title-widget: Adw.ViewSwitcher {
         stack: view_stack;
@@ -24,7 +23,7 @@ template $ChannelView : Adw.NavigationPage {
       }
     }
 
-    Adw.ViewStack view_stack {
+    content: Adw.ViewStack view_stack {
       Adw.ViewStackPage {
         name: "videos";
         title: "Videos";
@@ -43,6 +42,6 @@ template $ChannelView : Adw.NavigationPage {
         icon-name: "people-symbolic";
         child: $ContentGrid channels_grid {};
       }
-    }
+    };
   }
 }

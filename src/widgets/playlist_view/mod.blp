@@ -2,9 +2,8 @@ using Gtk 4.0;
 using Adw 1;
 
 template $PlaylistView : Adw.NavigationPage {
-  Box {
-    orientation: vertical;
-    
+  Adw.ToolbarView {
+    [top]
     Adw.HeaderBar {
       [end]
       Box {
@@ -14,6 +13,6 @@ template $PlaylistView : Adw.NavigationPage {
       }
     }
 
-    $ContentGrid videos_grid {}
-  }  
+    content: $ContentGrid videos_grid {};
+  }
 }

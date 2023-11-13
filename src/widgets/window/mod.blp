@@ -10,9 +10,8 @@ template $PryvidWindow : Adw.ApplicationWindow {
       Adw.NavigationPage {
         title: "Home";
 
-        Box {
-          orientation: vertical;
-
+        Adw.ToolbarView {
+          [top]
           Adw.HeaderBar {
             title-widget: Adw.ViewSwitcher {
               stack: view_stack;
@@ -51,6 +50,8 @@ template $PryvidWindow : Adw.ApplicationWindow {
               }
             }
           }
+
+          [top]
           SearchBar search_bar {
             search-mode-enabled: bind search_button.active bidirectional;
             key-capture-widget: template;
@@ -63,7 +64,8 @@ template $PryvidWindow : Adw.ApplicationWindow {
               search-changed => $on_search_entry_search_changed() swapped;
             }
           }
-          Adw.ViewStack view_stack {
+
+          content: Adw.ViewStack view_stack {
             Adw.ViewStackPage {
               name: "popular";
               icon-name: "people-symbolic";
@@ -89,7 +91,7 @@ template $PryvidWindow : Adw.ApplicationWindow {
               };
               visible: false;
             }
-          }
+          };
         }
       }
     }

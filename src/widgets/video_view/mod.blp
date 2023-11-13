@@ -66,9 +66,9 @@ template $VideoView : Adw.NavigationPage {
           }
 
           [content]
-          Box {
-            orientation: vertical;
+          Adw.ToolbarView {
 
+            [top]
             Adw.HeaderBar {
               [end]
               Box {
@@ -88,7 +88,7 @@ template $VideoView : Adw.NavigationPage {
               }
             }
 
-            ScrolledWindow {
+            content: ScrolledWindow {
               hscrollbar-policy: never;
 
               $ResultPage result_page {
@@ -268,7 +268,7 @@ template $VideoView : Adw.NavigationPage {
                   }
                 };
               }
-            }
+            };
           }
         };
       }
