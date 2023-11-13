@@ -86,9 +86,25 @@ glib::wrapper! {
 impl ChannelInfoWindow {
     pub fn new(channel: &DetailedChannel) -> Self {
         Object::builder()
-            .property("banner", &channel.banners.last().unwrap().uri)
+            .property(
+                "banner",
+                &channel
+                    .banners
+                    .iter()
+                    .find(|x| x.width == 512)
+                    .unwrap_or(channel.banners.last().unwrap())
+                    .uri,
+            )
             .property("title", &channel.title)
-            .property("thumbnail", &channel.thumbnails.last().unwrap().uri)
+            .property(
+                "thumbnail",
+                &channel
+                    .thumbnails
+                    .iter()
+                    .find(|x| x.width == 512)
+                    .unwrap_or(channel.banners.last().unwrap())
+                    .uri,
+            )
             .property("description", &channel.description)
             .property("subscribers", channel.subscribers)
             .build()
