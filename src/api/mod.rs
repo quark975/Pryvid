@@ -341,7 +341,9 @@ pub trait CorrectUri {
         if let Some(x) = self.videos() {
             x.iter_mut().for_each(|y| y.correct_uri(instance))
         }
+        self.correct_uri_custom(&instance.uri);
     }
+    fn correct_uri_custom(&mut self, _instance_uri: &str) {}
     fn thumbnail(&mut self) -> Option<&mut String> {
         None
     }
@@ -371,6 +373,26 @@ impl CorrectUri for DetailedVideo {
 impl CorrectUri for Channel {
     fn thumbnails(&mut self) -> Option<&mut [Thumbnail]> {
         Some(self.thumbnails.as_mut_slice())
+    }
+    fn correct_uri_custom(&mut self, instance_uri: &str) {
+        lazy_static! {
+            static ref RE: Regex =
+                Regex::new(r"https:\/\/yt3\.googleusercontent\.com\/((ytc\/)?[A-Za-z0-9_-]+).*")
+                    .unwrap();
+        }
+        if let Some(x) = self.thumbnails() {
+            x.iter_mut().for_each(|y| {
+                y.uri = RE
+                    .replace(
+                        &y.uri,
+                        format!(
+                            "{}/ggpht/$1=s{}-c-k-c0x00ffffff-no-rj-mo",
+                            instance_uri, y.height
+                        ),
+                    )
+                    .to_string()
+            });
+        }
     }
 }
 

@@ -103,7 +103,7 @@ mod imp {
                         },
                         Err(error) => {
                             _self.stack.set_visible_child_name("error");
-                            println!("{:?}", error);
+                            println!("{}: {:?}", value, error);
                         }
                     }
                 }),
