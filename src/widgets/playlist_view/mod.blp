@@ -2,6 +2,8 @@ using Gtk 4.0;
 using Adw 1;
 
 template $PlaylistView : Adw.NavigationPage {
+  tag: bind template.playlist-id;
+
   Adw.ToolbarView {
     [top]
     Adw.HeaderBar {
@@ -13,6 +15,9 @@ template $PlaylistView : Adw.NavigationPage {
       }
     }
 
-    content: $ContentGrid videos_grid {};
+    content: $ContentGrid videos_grid {
+      refreshable: true;
+      refresh => $on_refresh() swapped;
+    };
   }
 }

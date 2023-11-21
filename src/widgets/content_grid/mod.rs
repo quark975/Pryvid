@@ -32,6 +32,8 @@ mod imp {
 
         #[property(get, set)]
         pub refreshable: Cell<bool>,
+        #[property(get, set)]
+        pub loaded: Cell<bool>,
     }
 
     #[glib::object_subclass]

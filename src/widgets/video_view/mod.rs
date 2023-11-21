@@ -4,10 +4,10 @@ use glib::{clone, MainContext, Object, Properties};
 use gtk::CompositeTemplate;
 use gtk::{gio, glib};
 use once_cell::sync::OnceCell;
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
 use std::sync::Arc;
 
-use crate::api::{Content, DetailedVideo};
+use crate::api::DetailedVideo;
 use crate::appmodel::AppModel;
 use crate::utils::format_number_magnitude;
 use crate::widgets::{
@@ -36,6 +36,8 @@ mod imp {
         pub fullscreened: Cell<bool>,
         #[property(get, set)]
         pub timestamp: Cell<i64>,
+        #[property(get, set)]
+        pub video_id: RefCell<String>,
 
         #[template_child]
         pub instance_indicator: TemplateChild<InstanceIndicator>,
@@ -149,6 +151,10 @@ mod imp {
         fn on_close_sidebar_button_clicked(&self, _: gtk::Button) {
             self.obj().set_show_sidebar(false);
         }
+        #[template_callback]
+        fn on_refresh_clicked(&self, _: ResultPage) {
+            self.obj().fetch_video();
+        }
     }
 }
 
@@ -162,8 +168,8 @@ impl VideoView {
     pub fn new(model: Arc<AppModel>, video_id: String) -> Self {
         let obj: VideoView = Object::builder().build();
         obj.imp().model.set(model).unwrap();
-        obj.set_tag(Some(&video_id));
-        obj.fetch_video(video_id);
+        obj.set_video_id(video_id);
+        obj.fetch_video();
         obj
     }
 
@@ -262,28 +268,27 @@ impl VideoView {
         imp.recommended_grid.set_state(ResultPageState::Success);
     }
 
-    fn fetch_video(&self, video_id: String) {
-        MainContext::default().spawn_local(
-            clone!(@weak self as obj, @strong video_id => async move {
-                let invidious = obj.model().invidious();
-                let instance = invidious.get_instance();
-                let imp = obj.imp();
+    fn fetch_video(&self) {
+        MainContext::default().spawn_local(clone!(@weak self as obj => async move {
+            let video_id = obj.video_id();
+            let invidious = obj.model().invidious();
+            let instance = invidious.get_instance();
+            let imp = obj.imp();
 
-                imp.instance_indicator.set_uri(instance.uri.clone());
-                imp.result_page.set_state(ResultPageState::Loading);
+            imp.instance_indicator.set_uri(instance.uri.clone());
+            imp.result_page.set_state(ResultPageState::Loading);
 
-                let result = instance.video(&video_id).await;
+            let result = instance.video(&video_id).await;
 
-                imp.result_page.set_state(
-                    match result {
-                        Ok(video) => {
-                            obj.set_video(video);
-                            ResultPageState::Success
-                        },
-                        Err(error) => ResultPageState::Error(error.to_string())
-                    }
-                );
-            }),
-        );
+            imp.result_page.set_state(
+                match result {
+                    Ok(video) => {
+                        obj.set_video(video);
+                        ResultPageState::Success
+                    },
+                    Err(error) => ResultPageState::Error(error.to_string())
+                }
+            );
+        }));
     }
 }

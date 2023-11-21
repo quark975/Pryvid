@@ -1,16 +1,15 @@
 use adw::prelude::*;
 use adw::subclass::prelude::*;
 
-use glib::{MainContext, Object, Priority, Properties};
-use gtk::{
-    gdk_pixbuf::{Pixbuf, PixbufLoader},
-    CompositeTemplate,
-};
-use gtk::{gio, glib};
+use glib::{MainContext, Object, Properties};
+use gtk::glib;
+use gtk::{gdk_pixbuf::PixbufLoader, CompositeTemplate};
 use isahc::prelude::*;
 use std::cell::{Cell, RefCell};
 
 mod imp {
+
+    use gtk::gdk_pixbuf::InterpType;
 
     use super::*;
 
@@ -86,10 +85,23 @@ mod imp {
                                 let pixbuf_loader = PixbufLoader::new();
                                 if pixbuf_loader.write(image_data.as_slice()).is_ok() {
                                     pixbuf_loader.close().unwrap();
+                                    let width = _self.obj().width();
+                                    let height = _self.obj().height();
                                     let pixbuf = pixbuf_loader.pixbuf().unwrap();
+                                    let pixbuf = if width > 0 && height > 0 {
+                                        if let Some(scaled_pixbuf) = pixbuf.scale_simple(width, height, InterpType::Nearest) {
+                                            scaled_pixbuf
+                                        } else {
+                                            pixbuf
+                                        }
+                                    } else {
+                                        pixbuf
+                                    };
 
                                     // Set the Pixbuf on the Image widget
                                     _self.picture.set_pixbuf(Some(&pixbuf));
+                                    _self.picture.set_width_request(width);
+                                    _self.picture.set_height_request(height);
                                     _self.stack.set_visible_child_name("picture");
                                     _self.spinner.set_spinning(false);
                                     _self.spinner.stop();

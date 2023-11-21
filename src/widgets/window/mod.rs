@@ -276,7 +276,7 @@ impl PryvidWindow {
                     ResultPageState::Success
                 }
             }
-            Err(error) => ResultPageState::Error(format!("{error:?}")),
+            Err(error) => ResultPageState::Error(error.to_string()),
         });
     }
 

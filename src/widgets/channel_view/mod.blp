@@ -2,6 +2,7 @@ using Gtk 4.0;
 using Adw 1;
 
 template $ChannelView : Adw.NavigationPage {
+  tag: bind template.channel-id;
   Adw.ToolbarView {
     [top]
     Adw.HeaderBar {
@@ -17,31 +18,35 @@ template $ChannelView : Adw.NavigationPage {
         $InstanceIndicator instance_indicator {}
         Button info_button {
           icon-name: "info-symbolic";
-
+          sensitive: bind videos_grid.loaded;
           clicked => $on_info_button_clicked() swapped;
         }
       }
     }
 
-    content: Adw.ViewStack view_stack {
-      Adw.ViewStackPage {
-        name: "videos";
-        title: "Videos";
-        icon-name: "emblem-videos-symbolic";
-        child: $ContentGrid videos_grid {};
-      }
-      Adw.ViewStackPage {
-        name: "playlists";
-        title: "Playlists";
-        icon-name: "playlist-symbolic";
-        child: $ContentGrid playlists_grid {};
-      }
-      Adw.ViewStackPage {
-        name: "channels";
-        title: "Channels";
-        icon-name: "people-symbolic";
-        child: $ContentGrid channels_grid {};
-      }
+    content: $ResultPage result_page {
+      refreshable: true;
+      refresh => $on_refresh_clicked() swapped;
+      child: Adw.ViewStack view_stack {
+        Adw.ViewStackPage {
+          name: "videos";
+          title: "Videos";
+          icon-name: "emblem-videos-symbolic";
+          child: $ContentGrid videos_grid {};
+        }
+        Adw.ViewStackPage {
+          name: "playlists";
+          title: "Playlists";
+          icon-name: "playlist-symbolic";
+          child: $ContentGrid playlists_grid {};
+        }
+        Adw.ViewStackPage {
+          name: "channels";
+          title: "Channels";
+          icon-name: "people-symbolic";
+          child: $ContentGrid channels_grid {};
+        }
+      };
     };
   }
 }

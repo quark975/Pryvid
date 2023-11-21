@@ -4,7 +4,7 @@ use glib::{subclass::Signal, Object, Properties};
 use gtk::glib;
 use gtk::CompositeTemplate;
 use once_cell::sync::Lazy;
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 
 mod imp {
 
@@ -28,7 +28,9 @@ mod imp {
         #[property(get, set)]
         pub child: RefCell<Option<gtk::Widget>>,
         #[property(get, set)]
-        pub refreshable: RefCell<bool>,
+        pub refreshable: Cell<bool>,
+        #[property(get, set)]
+        pub loaded: Cell<bool>,
     }
 
     #[glib::object_subclass]
@@ -92,7 +94,10 @@ pub enum ResultPageState {
 
 impl ResultPage {
     pub fn new(child: impl IsA<gtk::Widget>) -> Self {
-        Object::builder().property("child", &child).build()
+        Object::builder()
+            .property("child", &child)
+            .property("loaded", false)
+            .build()
     }
 
     pub fn set_state(&self, state: ResultPageState) {
@@ -100,11 +105,13 @@ impl ResultPage {
             ResultPageState::Loading => {
                 self.imp().spinner.start();
                 self.imp().spinner.set_spinning(true);
+                self.set_loaded(false);
                 "loading"
             }
             ResultPageState::Success => {
                 self.imp().spinner.stop();
                 self.imp().spinner.set_spinning(false);
+                self.set_loaded(true);
                 "content"
             }
             ResultPageState::Message((icon, title, description)) => {
@@ -114,6 +121,7 @@ impl ResultPage {
                 status_page.set_description(Some(&description));
                 self.imp().spinner.stop();
                 self.imp().spinner.set_spinning(false);
+                self.set_loaded(true);
                 "status"
             }
             ResultPageState::Error(message) => {
@@ -123,6 +131,7 @@ impl ResultPage {
                 status_page.set_description(Some(&message));
                 self.imp().spinner.stop();
                 self.imp().spinner.set_spinning(false);
+                self.set_loaded(false);
                 "status"
             }
         });

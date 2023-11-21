@@ -2,6 +2,7 @@ using Gtk 4.0;
 using Adw 1;
 
 template $VideoView : Adw.NavigationPage {
+  tag: bind template.video-id;
   Adw.BreakpointBin {
     width-request: 800;
     height-request: 500;
@@ -78,12 +79,14 @@ template $VideoView : Adw.NavigationPage {
                 Button {
                   icon-name: "view-fullscreen-symbolic";
                   action-name: "win.fullscreen";
+                  sensitive: bind result_page.loaded;
                 }
                 $InstanceIndicator instance_indicator {}
                 ToggleButton {
                   icon-name: "sidebar-show-right-symbolic";
                   tooltip-text: "Show Recommended";
                   active: bind split_view.show-sidebar bidirectional;
+                  sensitive: bind recommended_grid.loaded;
                 }
               }
             }
@@ -92,6 +95,8 @@ template $VideoView : Adw.NavigationPage {
               hscrollbar-policy: never;
 
               $ResultPage result_page {
+                refreshable: true;
+                refresh => $on_refresh_clicked() swapped;
                 child: Box {
                   orientation: horizontal;
                   margin-bottom: 20;
