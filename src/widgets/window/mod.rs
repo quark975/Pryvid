@@ -39,7 +39,9 @@ mod imp {
         #[template_child]
         pub search_entry: TemplateChild<gtk::SearchEntry>,
         #[template_child]
-        pub search_bar: TemplateChild<gtk::SearchBar>,
+        pub search_button: TemplateChild<gtk::ToggleButton>,
+        #[template_child]
+        pub title_stack: TemplateChild<gtk::Stack>,
 
         pub model: OnceCell<Arc<AppModel>>,
     }
@@ -64,6 +66,9 @@ mod imp {
         fn constructed(&self) {
             self.parent_constructed();
             self.obj().setup_gactions();
+            MainContext::default().spawn_local(clone!(@weak self as window => async move {
+                window.obj().build_search("").await;
+            }));
         }
     }
     impl WidgetImpl for PryvidWindow {}
@@ -74,20 +79,12 @@ mod imp {
     #[gtk::template_callbacks]
     impl PryvidWindow {
         #[template_callback]
-        fn on_search_entry_search_changed(&self) {
-            let search = self.search_entry.text();
-            let view_stack = self.view_stack.clone();
-            if search.len() == 0 {
-                view_stack.set_visible_child_name("popular");
-            } else {
-                let obj = self.obj();
-                MainContext::default().spawn_local(
-                    clone!(@weak obj, @weak view_stack => async move {
-                        view_stack.set_visible_child_name("search");
-                        obj.build_search(&search).await;
-                    }),
-                );
-            }
+        fn on_search_entry_activated(&self, search_entry: gtk::SearchEntry) {
+            MainContext::default().spawn_local(
+                clone!(@weak self as window, @weak search_entry => async move {
+                    window.obj().build_search(search_entry.text().as_str()).await;
+                }),
+            );
         }
         #[template_callback]
         fn on_popular_grid_refresh(&self, _: ContentGrid) {
@@ -100,6 +97,17 @@ mod imp {
             MainContext::default().spawn_local(clone!(@weak self as window => async move {
                 window.obj().build_trending().await;
             }));
+        }
+        #[template_callback]
+        fn on_search_button_toggled(&self, button: gtk::ToggleButton) {
+            if button.is_active() {
+                self.title_stack.set_visible_child_name("search");
+                self.view_stack.set_visible_child_name("search");
+                self.search_entry.grab_focus();
+            } else {
+                self.title_stack.set_visible_child_name("popular-trending");
+                self.view_stack.set_visible_child_name("popular");
+            }
         }
     }
 }
@@ -233,7 +241,8 @@ impl PryvidWindow {
                 if visible_page.downcast::<VideoView>().is_ok() {
                     win.unfullscreen();
                 } else {
-                    win.imp().search_bar.set_search_mode(false);
+                    win.imp().search_button.set_active(false);
+                    // win.imp().search_bar.set_search_mode(false);
                 }
             })
             .build();
@@ -255,16 +264,30 @@ impl PryvidWindow {
     }
 
     async fn build_search(&self, query: &str) {
+        let grid = &self.imp().search_grid;
+        if query.is_empty() {
+            grid.set_refreshable(false);
+            grid.set_content([].as_slice());
+            grid.set_state(ResultPageState::Message((
+                "system-search-symbolic".to_string(),
+                "Search for something".to_string(),
+                "If you can't find what you're looking for, simplify your search a little bit."
+                    .to_string(),
+            )));
+            return;
+        }
+        grid.set_refreshable(true);
+
         let invidious = self.model().invidious();
         let instance = invidious.get_instance();
         self.imp()
             .search_instance_indicator
             .set_uri(instance.uri.clone());
 
-        let grid = &self.imp().search_grid;
         grid.set_state(ResultPageState::Loading);
         grid.set_state(match instance.search(query).await {
             Ok(content) => {
+                grid.set_content(content.as_slice());
                 if content.is_empty() {
                     ResultPageState::Message((
                         "dotted-box-symbolic".into(),
@@ -272,7 +295,6 @@ impl PryvidWindow {
                         "Check your query for typos and simplify it if possible".into(),
                     ))
                 } else {
-                    grid.set_content(content.as_slice());
                     ResultPageState::Success
                 }
             }
@@ -290,21 +312,21 @@ impl PryvidWindow {
                 .set_uri(instance.uri.clone());
             match instance.popular().await {
                 Ok(content) => {
+                    grid.set_content(content.as_slice());
                     if content.is_empty() {
                         ResultPageState::Message((
                             "dotted-box-symbolic".into(),
                             "No Popular Videos".into(),
-                            "This instance supports popular videos but none exist".into(),
+                            "This instance supports fetching popular videos but none exist".into(),
                         ))
                     } else {
-                        grid.set_content(content.as_slice());
                         ResultPageState::Success
                     }
                 }
                 Err(error) => ResultPageState::Error(error.to_string()),
             }
         } else {
-            ResultPageState::Error("None of your instances support popular videos".into())
+            ResultPageState::Error("None of your instances support fetching popular videos".into())
         });
     }
 
@@ -319,21 +341,21 @@ impl PryvidWindow {
                 .set_uri(instance.uri.clone());
             match instance.trending().await {
                 Ok(content) => {
+                    grid.set_content(content.as_slice());
                     if content.is_empty() {
                         ResultPageState::Message((
                             "dotted-box-symbolic".into(),
                             "No Trending Videos".into(),
-                            "This instance supports trending videos but none exist".into(),
+                            "This instance supports fetching trending videos but none exist".into(),
                         ))
                     } else {
-                        grid.set_content(content.as_slice());
                         ResultPageState::Success
                     }
                 }
                 Err(error) => ResultPageState::Error(error.to_string()),
             }
         } else {
-            ResultPageState::Error("None of your instances support popular videos".into())
+            ResultPageState::Error("None of your instances support fetching trending videos".into())
         });
     }
 

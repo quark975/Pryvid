@@ -13,14 +13,32 @@ template $PryvidWindow : Adw.ApplicationWindow {
         Adw.ToolbarView {
           [top]
           Adw.HeaderBar {
-            title-widget: Adw.ViewSwitcher {
-              stack: view_stack;
-              policy: wide;
+            title-widget: Stack title_stack {
+              transition-type: crossfade;
+              transition-duration: 150;
+              StackPage {
+                name: "popular-trending";
+                child: Adw.ViewSwitcher {
+                  stack: view_stack;
+                  policy: wide;
+                };
+              }
+              StackPage {
+                name: "search";
+                child: SearchEntry search_entry {
+                  search-delay: 250;
+                  placeholder-text: "Search...";
+
+                  //search-changed => $on_search_entry_search_changed() swapped;
+                  activate => $on_search_entry_activated() swapped;
+                };
+              }
             };
 
             [start]
             ToggleButton search_button {
               icon-name: "system-search-symbolic";
+              toggled => $on_search_button_toggled() swapped;
             }
             
             [end]
@@ -48,20 +66,6 @@ template $PryvidWindow : Adw.ApplicationWindow {
                 icon-name: "open-menu-symbolic";
                 menu-model: primary_menu;
               }
-            }
-          }
-
-          [top]
-          SearchBar search_bar {
-            search-mode-enabled: bind search_button.active bidirectional;
-            key-capture-widget: template;
-            show-close-button: true;
-
-            SearchEntry search_entry {
-              search-delay: 250;
-              placeholder-text: "Search...";
-
-              search-changed => $on_search_entry_search_changed() swapped;
             }
           }
 
