@@ -444,6 +444,15 @@ impl Instance {
     }
 
     pub async fn update_info(&self) -> Result<(), Error> {
+        // Some instances don't allow api access (e.g. yewtu.be)
+        // Try to access a video and return an error if it fails
+        // (and pray that Rick never takes down his magnum opus)
+        let response = HTTP_CLIENT
+            .get_async(format!("{}/api/v1/videos/dQw4w9WgXcQ", self.uri))
+            .await?;
+        if !response.status().is_success() {
+            return Err(Error::BadStatusCode);
+        }
         let mut response = HTTP_CLIENT
             .get_async(format!("{}/api/v1/popular", self.uri))
             .await?;
